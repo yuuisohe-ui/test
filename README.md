@@ -62,6 +62,32 @@ src/
 4. 学习分析表展示教学语块，点击朗读按钮可听取发音
 5. 页面顶部有整句朗读按钮
 
+## 环境变量配置
+
+### 本地开发
+
+1. 复制 `.env.example` 文件为 `.env`
+2. 在 `.env` 文件中设置以下环境变量：
+
+```env
+VITE_OPENAI_API_KEY=your-openai-api-key-here
+VITE_OPENAI_API_URL=https://api.openai.com/v1
+```
+
+3. 重启开发服务器：`npm run dev`
+
+### Vercel 部署
+
+在 Vercel 项目设置中添加以下环境变量：
+
+1. 进入 Vercel 项目 Dashboard
+2. 进入 Settings → Environment Variables
+3. 添加以下变量：
+   - `VITE_OPENAI_API_KEY`: 你的 OpenAI API 密钥
+   - `VITE_OPENAI_API_URL`: `https://api.openai.com/v1` (可选，默认值)
+
+4. 重新部署项目
+
 ## 后续开发
 
 当前使用mock数据，后续可接入Opal API获取真实歌词数据。
