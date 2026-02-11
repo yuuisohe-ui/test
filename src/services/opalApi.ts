@@ -13,8 +13,6 @@ import { SongPayload } from '../data/opalMock';
 // 또는: https://opal.google/api/v1/agents/{agent-id}/invoke
 const OPAL_API_BASE_URL = import.meta.env.VITE_OPAL_API_URL || '';
 const OPAL_API_KEY = import.meta.env.VITE_OPAL_API_KEY || '';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const OPAL_AGENT_ID = import.meta.env.VITE_OPAL_AGENT_ID || '103glL7IJrgZfss4rSdNPYrkOYgyx11Oc';
 
 export interface OpalApiRequest {
   audioFile?: File;
