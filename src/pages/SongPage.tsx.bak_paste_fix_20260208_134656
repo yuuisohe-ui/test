@@ -1,0 +1,480 @@
+import { useEffect, useMemo, useState } from "react";
+import { opalMockOk } from "../data/opalMock";
+import { SentenceView } from "../components/SentenceView";
+import { AnalysisTable } from "../components/AnalysisTable";
+import { TTSButton } from "../components/TTSButton";
+import { SentenceData } from "../types";
+
+type StarMap = Record<number, true>;
+
+function buildSongId(text: string, lineCount: number) {
+  const head = text.trim().replace(/\s+/g, " ").slice(0, 50);
+  return `${head}_${lineCount}`;
+}
+
+function safeParseJSON<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function makeFallbackSentenceData(line: string): SentenceData {
+  const clean = line.trim();
+  return {
+    sentence: clean,
+    tokens: [
+      {
+        text: clean,
+        glossZh: "",
+        glossKr: "",
+        example: "",
+      },
+    ],
+    chunks: [
+      {
+        text: clean,
+        pinyin: "",
+        tones: "",
+      },
+    ],
+  };
+}
+
+function downloadHtml(filename: string, html: string) {
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(s: string) {
+  const str = String(s ?? "");
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function formatLineNo(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+export default function SongPage() {
+  // 输入区
+  const [rawText, setRawText] = useState("");
+  const [audioHint, setAudioHint] = useState<string | null>(null);
+
+  const [opalPayload, setOpalPayload] = useState<any>(null);
+
+  // 列表与模式
+  const [search, setSearch] = useState("");
+  const [reviewMode, setReviewMode] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  // 解析输入 → 句子数组（优先 Opal，退回 rawText）
+  const linesAll = useMemo(() => {
+    // Opal mock / 真 Opal 都走这里
+    if (opalPayload?.status === "ok" && Array.isArray(opalPayload.lines)) {
+      return opalPayload.lines;
+    }
+
+    // 退回：rawText 每行一句
+    return rawText
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((line, idx) => ({
+        lineNo: idx + 1,
+        displayLine: "",
+        zhSentence: line,
+        tokensZh: [],
+        chunks: [],
+      }));
+  }, [opalPayload, rawText]);
+
+  const songId = useMemo(() => buildSongId(rawText, linesAll.length), [rawText, linesAll.length]);
+  const storageKey = useMemo(() => `starred_${songId}`, [songId]);
+
+  // 星标状态
+  const [starMap, setStarMap] = useState<StarMap>({});
+
+  useEffect(() => {
+    // songId变化时，读取对应星标
+    const saved = safeParseJSON<StarMap>(localStorage.getItem(storageKey), {});
+    setStarMap(saved);
+    setPage(1);
+  }, [storageKey]);
+
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(starMap));
+  }, [storageKey, starMap]);
+
+  // 过滤（搜索 + 复习模式）
+  const filtered = useMemo(() => {
+    const q = search.trim();
+    const base = linesAll.map((it: any) => ({
+      item: it,
+      lineNo: Number(it?.lineNo ?? 0),
+      starred: !!starMap[Number(it?.lineNo ?? 0)],
+    }));
+
+    const afterReview = reviewMode ? base.filter((x: any) => x.starred) : base;
+
+    const afterSearch = q
+      ? afterReview.filter((x: any) => ((x.item?.displayLine ?? "").includes(q) || (x.item?.zhSentence ?? "").includes(q)))
+      : afterReview;
+
+    return afterSearch;
+  }, [linesAll, search, reviewMode, starMap]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+
+  const pageItems = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, currentPage]);
+
+  // 导出 HTML（本页）
+  function exportCurrentPage() {
+    const items = pageItems;
+    const title = "中文歌词学习笔记";
+    const modeTitle = reviewMode ? "（复习模式：本页星标句子）" : "（普通模式：本页句子）";
+
+    const blocks = items
+      .map((it: any) => {
+        const data = makeFallbackSentenceData(it.line);
+        const tokensRows = (data.tokens ?? []).map((t) => `
+          <tr>
+            <td>${escapeHtml(t.text ?? "")}</td>
+            <td>${escapeHtml(t.glossZh ?? "")}</td>
+            <td>${escapeHtml(t.glossKr ?? "")}</td>
+            <td>${escapeHtml(t.example ?? "")}</td>
+          </tr>
+        `).join("");
+
+        const chunksRows = (data.chunks ?? []).map((c) => `
+          <tr>
+            <td>${escapeHtml(c.text ?? "")}</td>
+            <td>${escapeHtml(c.pinyin ?? "")}</td>
+            <td>${escapeHtml(c.tones ?? "")}</td>
+          </tr>
+        `).join("");
+
+        return `
+          <section style="margin:24px 0; padding:16px; border:1px solid #ddd; border-radius:12px;">
+            <h2 style="margin:0 0 8px 0;">${formatLineNo(it.lineNo)}. ${escapeHtml(it.line)}</h2>
+
+            <h3 style="margin:16px 0 8px 0;">词汇表</h3>
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">词</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">中文释义</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">韩语释义</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">例句</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tokensRows || `<tr><td colspan="4" style="padding:8px; color:#777;">（暂无）</td></tr>`}
+              </tbody>
+            </table>
+
+            <h3 style="margin:16px 0 8px 0;">语块表</h3>
+            <table style="width:100%; border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">语块</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">拼音</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">声调结构</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${chunksRows || `<tr><td colspan="3" style="padding:8px; color:#777;">（暂无）</td></tr>`}
+              </tbody>
+            </table>
+          </section>
+        `;
+      })
+      .join("");
+
+    const html = `
+      <!doctype html>
+      <html lang="zh">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>${title}</title>
+      </head>
+      <body style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial; margin:24px; color:#111;">
+        <h1 style="margin:0 0 8px 0;">${title}</h1>
+        <p style="margin:0 0 24px 0; color:#555;">${modeTitle} · 导出时间：${new Date().toLocaleString()}</p>
+        ${blocks || `<p style="color:#777;">（当前页无内容）</p>`}
+      </body>
+      </html>
+    `;
+
+    const filename = reviewMode ? `review_page_${currentPage}.html` : `page_${currentPage}.html`;
+    downloadHtml(filename, html);
+  }
+
+  // 音频拖拽（仅 UI）
+  function onAudioFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const f = files[0];
+    if (!f.type.startsWith("audio/")) {
+      setAudioHint("仅支持音频文件（mp3 / m4a / wav）。");
+      return;
+    }
+    setAudioHint(null);
+  }
+
+  function onClickTranscribePlaceholder() {
+  setAudioHint(null);
+  setOpalPayload(opalMockOk);
+}
+
+  // 每句卡片内部：复用现有组件
+  function SentenceCard({ item, starred }: { item: any; starred: boolean }) {
+    const lineNo = Number(item?.lineNo ?? 0);
+    const displayLine = String(item?.displayLine ?? "");
+    const zhSentence = String(item?.zhSentence ?? "");
+    const data = makeFallbackSentenceData(zhSentence);
+
+
+    return (
+    <div className="bg-white rounded-2xl shadow-sm border p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="text-sm text-gray-500 w-10">{formatLineNo(lineNo)}</div>
+          <div className="font-medium flex-1 truncate">{displayLine}</div>
+
+          <button
+            className={`text-xl leading-none px-2 py-1 rounded-lg ${
+              starred ? "text-yellow-500" : "text-gray-300"
+            }`}
+            onClick={() =>
+              setStarMap((prev) => {
+                const next = { ...prev };
+                if (next[lineNo]) delete next[lineNo];
+                else next[lineNo] = true;
+                return next;
+              })
+            }
+            aria-label={starred ? "取消星标" : "星标"}
+            title={starred ? "取消星标" : "星标"}
+          >
+            ★
+          </button>
+        </div>
+
+        <div className="mb-4">
+          {/* 整句展示 + 句子朗读 */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-semibold text-gray-700">整句展示</div>
+            <TTSButton text={data.sentence} />
+          </div>
+          <SentenceView sentence={data.sentence ?? ""} tokens={data.tokens ?? []} />
+        </div>
+
+        <div>
+          <div className="text-sm font-semibold text-gray-700 mb-2">学习分析表</div>
+          <AnalysisTable chunks={data.chunks ?? []} />
+        </div>
+      </div>
+    );
+  }
+
+  const showEmpty = linesAll.length === 0;
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-2 bg-black text-white text-xs">✅ SongPage LOADED</div>
+      {/* 顶部固定输入区 */}
+      <div className=" z-50 bg-white/80 backdrop-blur border-b">
+        <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold">中文歌词学习分析</h1>
+            <div className="flex items-center gap-2">
+              <button
+                className={`px-3 py-1 rounded-lg border text-sm ${
+                  reviewMode ? "bg-black text-white" : "bg-white"
+                }`}
+                onClick={() => setReviewMode((v) => !v)}
+              >
+                {reviewMode ? "退出复习模式" : "进入复习模式"}
+              </button>
+              <button
+                className="px-3 py-1 rounded-lg border text-sm bg-white"
+                onClick={exportCurrentPage}
+                disabled={pageItems.length === 0}
+              >
+                导出本页 HTML
+              </button>
+            </div>
+          </div>
+                    {/* ✅ 统一主入口模块（音频优先） */}
+                    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+            {/* 上半：大音频拖拽区 */}
+            <div
+              className="p-8 md:p-12 border-b border-dashed border-gray-300 bg-white">
+              <div className="text-lg md:text-xl font-semibold">
+                上传音频可获得更完整的学习资料
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                建议吐字清晰、节奏稳定（当前仅 UI 占位，不接 Opal）
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer hover:bg-gray-50 text-sm">
+                  选择音频文件
+                  <input
+                    className="hidden"
+                    type="file"
+                    accept="audio/*"
+                    onChange={(e) => onAudioFiles(e.target.files)}
+                  />
+                </label>
+
+                <button
+                  className="px-4 py-2 rounded-xl bg-black text-white text-sm font-semibold hover:opacity-90"
+                  onClick={() => {onClickTranscribePlaceholder(); }}
+                >
+                  开始转写 / 分析（占位）
+                </button>
+
+                <div className="text-xs text-gray-400">或直接拖拽音频到此区域</div>
+              </div>
+
+              {audioHint && (
+                <div className="mt-3 text-xs text-gray-600">{audioHint}</div>
+              )}
+            </div>
+
+            {/* 下半：文本粘贴（次级） */}
+            <div className="p-4">
+              <div className="text-sm font-semibold text-gray-700 mb-2">
+                或直接粘贴歌词文本（支持中文 / 韩文）
+              </div>
+              <textarea
+                className="w-full h-28 p-3 rounded-xl border bg-white"
+                placeholder="在这里粘贴歌词，每行一句…"
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+              />
+            </div>
+          </div>
+
+                   {/* 输入行：文本 + 搜索 */}
+                   <div className="hidden grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">粘贴歌词文本（按换行分句）</div>
+              <textarea
+                className="w-full h-24 p-3 rounded-xl border bg-white"
+                placeholder="在这里粘贴歌词，每行一句…"
+                value={rawText}
+                onChange={(e) => setRawText(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="text-sm font-semibold text-gray-700">搜索（按中文包含匹配）</div>
+              <input
+                className="w-full p-3 rounded-xl border bg-white"
+                placeholder="输入中文词或片段进行过滤…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+
+              <div className="mt-2 p-3 rounded-xl border bg-white">
+                <div className="text-sm font-semibold text-gray-700 mb-2">拖拽音频文件（占位）</div>
+                <input
+                  type="file"
+                  accept="audio/*"
+                  onChange={(e) => onAudioFiles(e.target.files)}
+                />
+                <button
+                  className="ml-2 px-3 py-1 rounded-lg border text-sm bg-white"
+                  onClick={() => {onClickTranscribePlaceholder(); }}
+                >
+                  开始转写（占位）
+                </button>
+                {audioHint && (
+                  <div className="mt-2 text-sm text-gray-600">{audioHint}</div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {showEmpty ? (
+            <div className="text-sm text-gray-600">
+              请粘贴歌词或拖拽音频文件。音频转写当前仅做 UI 占位，不会导致页面崩溃。
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600 flex items-center justify-between">
+              <div>
+                共 {filtered.length} 句（原始 {linesAll.length} 句）
+                {reviewMode ? " · 复习模式（仅星标）" : ""}
+              </div>
+              <div>
+                第 {currentPage} / {totalPages} 页（每页 {pageSize} 句）
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 内容区：本页 10 句全部展开 */}
+      <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
+        {!showEmpty && pageItems.length === 0 ? (
+          <div className="bg-white border rounded-2xl p-6 text-gray-600">
+            没有匹配结果。请调整搜索词或取消复习模式。
+          </div>
+        ) : null}
+
+        {pageItems.map((it: any) => (
+          <SentenceCard
+            key={(it.lineNo + "-" + (((it.item && it.item.zhSentence) || "")))}
+            item={it.item}
+            starred={!!it.starred}
+          />
+        ))}
+
+        {/* 分页 */}
+        {!showEmpty && (
+          <div className="flex items-center justify-between pt-4">
+            <button
+              className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
+              disabled={currentPage <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              上一页
+            </button>
+            <div className="text-sm text-gray-600">
+              第 {currentPage} / {totalPages} 页
+            </div>
+            <button
+              className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              下一页
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
