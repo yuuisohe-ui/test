@@ -21,8 +21,8 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: S
     try {
       // Intl.Segmenter 사용 (중국어 단어 분리)
       if ('Segmenter' in Intl) {
-        const segmenter = new Intl.Segmenter('zh', { granularity: 'word' });
-        const segments = Array.from(segmenter.segment(text));
+        const segmenter = new (Intl as any).Segmenter('zh', { granularity: 'word' });
+        const segments = Array.from(segmenter.segment(text)) as Array<{ segment: string }>;
         return segments
           .map(seg => seg.segment)
           .filter(word => word.trim().length > 0);
