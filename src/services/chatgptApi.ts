@@ -20,11 +20,17 @@ export interface ChatGPTRequest {
 export async function callChatGPTApi(request: ChatGPTRequest): Promise<SongPayload> {
   try {
     // API 키 확인 (환경 변수에서 직접 가져오기)
-    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || OPENAI_API_KEY;
+    // Vite는 빌드 시점에 환경 변수를 주입하므로, 런타임에 직접 읽어야 함
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
     console.log('🔑 API 키 확인:', apiKey ? `${apiKey.substring(0, 10)}...` : '없음');
+    console.log('🔍 환경 변수 전체:', JSON.stringify({
+      hasKey: !!import.meta.env.VITE_OPENAI_API_KEY,
+      keyLength: import.meta.env.VITE_OPENAI_API_KEY?.length || 0,
+      url: import.meta.env.VITE_OPENAI_API_URL || 'default'
+    }));
     
     if (!apiKey || apiKey === 'your-openai-api-key-here' || apiKey.trim() === '') {
-      throw new Error('OpenAI API 키가 설정되지 않았습니다. .env 파일에 VITE_OPENAI_API_KEY를 설정하고 개발 서버를 재시작해주세요.');
+      throw new Error('OpenAI API 키가 설정되지 않았습니다. Vercel Dashboard의 Environment Variables에서 VITE_OPENAI_API_KEY를 설정하고 프로젝트를 재배포해주세요.');
     }
 
     // 텍스트 분석 요청
