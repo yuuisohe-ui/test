@@ -312,6 +312,58 @@ async function analyzeAudioUrlWithChatGPT(audioUrl: string, sourceLang: 'ko' | '
 }
 
 /**
+ * 中文翻译成韩文
+ */
+export async function translateChineseToKorean(chineseText: string): Promise<string> {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+  const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
+
+  if (!apiKey || apiKey === 'your-openai-api-key-here' || apiKey.trim() === '') {
+    throw new Error('OpenAI API 키가 설정되지 않았습니다.');
+  }
+
+  const prompt = `请将以下中文歌词翻译成韩文。只返回翻译结果，不要添加任何解释或其他内容。
+
+中文歌词：
+${chineseText}
+
+韩文翻译：`;
+
+  const response = await fetch(`${apiUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.3,
+      max_tokens: 500,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(errorData.error?.message || `翻译失败: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const translatedText = data.choices[0]?.message?.content?.trim() || '';
+
+  if (!translatedText) {
+    throw new Error('翻译结果为空');
+  }
+
+  return translatedText;
+}
+
+/**
  * 텍스트만으로 ChatGPT API 호출
  */
 export async function callChatGPTApiWithText(text: string, sourceLang: 'ko' | 'zh' = 'ko'): Promise<SongPayload> {
@@ -334,5 +386,199 @@ export async function callChatGPTApiWithAudio(
     sourceLang,
     targetLang: 'zh',
   });
+}
+
+/**
+ * 生成教学提示
+ * @param sentence 中文句子
+ * @param level 学习者水平：初级/中级/高级
+ * @returns 教学提示文本
+ */
+export async function getTeachingTip(sentence: string, level: "初级" | "中级" | "高级"): Promise<string> {
+  try {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+    const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
+
+    if (!apiKey || apiKey === 'your-openai-api-key-here' || apiKey.trim() === '') {
+      throw new Error('OpenAI API 키가 설정되지 않았습니다.');
+    }
+
+    const prompt = `你是一名汉语二语习得专家。
+
+任务：
+根据学习者的水平（${level}），为下面这句话生成学习重点提示。
+
+等级说明：
+
+初级 = HSK1–2
+
+中级 = HSK3–4
+
+高级 = HSK5–6
+
+规则：
+
+${level === "初级" ? "初级：优先选择高于HSK2的词汇或句型" : level === "中级" ? "中级：优先选择高于HSK4的词汇或句型" : "高级：优先选择HSK6词汇或高级句型"}
+
+如果句子没有更高等级内容，则选择同等级重点
+
+词汇不超过3个
+
+句型不超过2条
+
+必须标明HSK等级
+
+不解释原因
+
+不给例句
+
+不使用编号
+
+只输出两部分：词汇 / 句型
+
+输出格式：
+
+词汇
+• 词语（HSK等级）
+• 词语（HSK等级）
+
+句型
+• 结构（HSK等级）
+• 结构（HSK等级）
+
+句子：${sentence}`;
+
+    console.log('📤 教学提示API请求:', { sentence, level });
+
+    const response = await fetch(`${apiUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.error?.message || `API 호출 실패: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+
+    if (!content) {
+      throw new Error('API 응답에 내용이 없습니다.');
+    }
+
+    console.log('✅ 教学提示生成成功');
+    return content;
+  } catch (error) {
+    console.error('❌ 教学提示生成失败:', error);
+    throw error;
+  }
+}
+
+/**
+ * 获取句型的详细信息（韩文解释、中韩文例句）
+ * @param pattern 句型结构
+ * @param sentence 原句（用于生成例句）
+ * @returns 句型详细信息
+ */
+export async function getPatternInfo(pattern: string, sentence: string): Promise<{
+  korean: string;
+  chineseExample: string;
+  koreanExample: string;
+}> {
+  try {
+    const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+    const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
+
+    if (!apiKey || apiKey === 'your-openai-api-key-here' || apiKey.trim() === '') {
+      throw new Error('OpenAI API 키가 설정되지 않았습니다.');
+    }
+
+    const prompt = `请为以下中文句型提供详细信息：
+
+句型：${pattern}
+原句：${sentence}
+
+要求：
+1. 用韩语解释这个句型的含义和用法（韩文解释）
+2. 用这个句型造一个中文例句（中文例句）
+3. 将中文例句翻译成韩文（韩文例句）
+
+请以JSON格式返回：
+{
+  "korean": "韩文解释（用韩语解释这个句型的含义和用法）",
+  "chineseExample": "中文例句（使用这个句型造句）",
+  "koreanExample": "韩文例句（中文例句的韩文翻译）"
+}
+
+只返回JSON，不要其他内容。`;
+
+    const response = await fetch(`${apiUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.7,
+        response_format: { type: 'json_object' },
+        max_tokens: 500,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+      throw new Error(errorData.error?.message || `API 호출 실패: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || '';
+
+    if (!content) {
+      throw new Error('API 응답에 내용이 없습니다.');
+    }
+
+    let parsed;
+    try {
+      parsed = typeof content === 'string' ? JSON.parse(content) : content;
+    } catch (parseError) {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        parsed = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('JSON 파싱 실패');
+      }
+    }
+
+    return {
+      korean: parsed.korean || '',
+      chineseExample: parsed.chineseExample || '',
+      koreanExample: parsed.koreanExample || '',
+    };
+  } catch (error) {
+    console.error('❌ 获取句型信息失败:', error);
+    throw error;
+  }
 }
 

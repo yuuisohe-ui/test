@@ -7,12 +7,30 @@ interface SentenceViewProps {
   tokens: Token[];
   onWordSelect?: (word: string) => void;
   selectedWord?: string | null;
+  item?: any; // 原始行数据，用于获取更多信息
 }
 
-export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: SentenceViewProps) => {
+export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, item }: SentenceViewProps) => {
   const [activeToken, setActiveToken] = useState<Token | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const tokenRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 清除关闭定时器
+  const clearCloseTimeout = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  // 延迟关闭词卡
+  const scheduleClose = () => {
+    clearCloseTimeout();
+    closeTimeoutRef.current = setTimeout(() => {
+      setActiveToken(null);
+    }, 800); // 800ms延迟，给用户足够时间移动到词卡上并点击按钮
+  };
 
   // tokens가 없을 때 자동으로 단어 분리 (중국어는 Intl.Segmenter 사용, 없으면 1-2자씩)
   const segmentWords = (text: string): string[] => {
@@ -54,123 +72,92 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: S
     return words.filter(w => w.trim().length > 0);
   };
 
+  // 创建一个临时Token对象的辅助函数
+  const createTempToken = (word: string): Token => ({
+    text: word,
+    glossZh: '',
+    glossKr: '',
+    example: '',
+  });
+
+  // 渲染单词的辅助函数（统一处理词卡功能）
+  const renderWord = (word: string, key: string, isToken: boolean = false, token?: Token) => {
+    const wordToken = isToken && token ? token : createTempToken(word);
+    
+    return (
+      <span
+        key={key}
+        ref={(el) => {
+          tokenRefs.current[word] = el;
+        }}
+        className={`
+          inline-block
+          cursor-pointer
+          hover:bg-blue-100 hover:text-blue-700
+          active:bg-blue-200
+          ${selectedWord === word ? 'bg-blue-200 text-blue-800' : ''}
+          rounded transition-colors duration-150
+          relative
+        `}
+        data-word="true"
+        onClick={(e) => {
+          clearCloseTimeout();
+          const rect = e.currentTarget.getBoundingClientRect();
+          setActiveToken(wordToken);
+          calculateTooltipPosition(rect);
+          if (onWordSelect) {
+            onWordSelect(word);
+          }
+        }}
+        onMouseEnter={(e) => {
+          if (window.innerWidth > 768) {
+            clearCloseTimeout();
+            const rect = e.currentTarget.getBoundingClientRect();
+            setActiveToken(wordToken);
+            calculateTooltipPosition(rect);
+          }
+        }}
+        onMouseLeave={(e) => {
+          // 不自动关闭词卡
+          // 只有当鼠标悬停到另一个词上时，才会通过 setActiveToken 替换词卡
+          // 或者点击外部时关闭
+          // PC端和移动端都不自动关闭
+        }}
+      >
+        {word}
+      </span>
+    );
+  };
+
   // 将句子按照tokens分割并高亮显示 (tokens가 없으면 자동 분리)
   const renderSentence = () => {
     const elements: JSX.Element[] = [];
     
-    // tokens가 있으면 기존 로직 사용
+    // 如果tokens存在且有效，使用tokens匹配；否则直接分词
     if (tokens && tokens.length > 0 && tokens[0].text !== sentence) {
-      let currentIndex = 0;
-      let tokenIndex = 0;
+      // 创建一个Map来快速查找token
+      const tokenMap = new Map<string, Token>();
+      tokens.forEach(token => {
+        tokenMap.set(token.text, token);
+      });
 
-      // 按照tokens顺序匹配句子
-      while (currentIndex < sentence.length && tokenIndex < tokens.length) {
-        const token = tokens[tokenIndex];
-        const tokenStartIndex = sentence.indexOf(token.text, currentIndex);
-        
-        // 如果找不到token，跳过
-        if (tokenStartIndex === -1) {
-          tokenIndex++;
-          continue;
+      // 将整个句子分词
+      const allWords = segmentWords(sentence);
+      
+      // 遍历所有词，如果词在tokens中，使用token数据；否则创建临时token
+      allWords.forEach((word, idx) => {
+        const token = tokenMap.get(word);
+        if (token) {
+          elements.push(renderWord(word, `token-${idx}`, true, token));
+        } else {
+          elements.push(renderWord(word, `word-${idx}`));
         }
-
-        // 添加token之前的文本
-        if (tokenStartIndex > currentIndex) {
-          const beforeText = sentence.slice(currentIndex, tokenStartIndex);
-          const words = segmentWords(beforeText);
-          words.forEach((word, idx) => {
-            elements.push(
-              <span
-                key={`word-${currentIndex}-${idx}`}
-                className={`
-                  inline-block px-1 mx-0.5
-                  cursor-pointer
-                  hover:bg-blue-100 hover:text-blue-700
-                  ${selectedWord === word ? 'bg-blue-200 text-blue-800' : ''}
-                  rounded transition-colors duration-150
-                `}
-                onClick={(e) => handleWordClick(e, word)}
-              >
-                {word}
-              </span>
-            );
-          });
-        }
-
-        // 添加token
-        elements.push(
-          <span
-            key={`token-${tokenIndex}`}
-            ref={(el) => {
-              tokenRefs.current[token.text] = el;
-            }}
-            className={`
-              inline-block px-1 mx-0.5
-              cursor-pointer
-              hover:bg-blue-100 hover:text-blue-700
-              active:bg-blue-200
-              ${selectedWord === token.text ? 'bg-blue-200 text-blue-800' : ''}
-              rounded transition-colors duration-150
-              relative
-            `}
-            onClick={(e) => handleTokenClick(e, token)}
-            onMouseEnter={(e) => handleTokenHover(e, token)}
-            onMouseLeave={() => {
-              // 移动端不自动关闭，PC端hover离开时关闭
-              if (window.innerWidth > 768) {
-                setActiveToken(null);
-              }
-            }}
-          >
-            {token.text}
-          </span>
-        );
-
-        currentIndex = tokenStartIndex + token.text.length;
-        tokenIndex++;
-      }
-
-      // 添加剩余的文本
-      if (currentIndex < sentence.length) {
-        const remainingText = sentence.slice(currentIndex);
-        const words = segmentWords(remainingText);
-        words.forEach((word, idx) => {
-          elements.push(
-            <span
-              key={`word-end-${idx}`}
-              className={`
-                inline-block px-1 mx-0.5
-                cursor-pointer
-                hover:bg-blue-100 hover:text-blue-700
-                ${selectedWord === word ? 'bg-blue-200 text-blue-800' : ''}
-                rounded transition-colors duration-150
-              `}
-              onClick={(e) => handleWordClick(e, word)}
-            >
-              {word}
-            </span>
-          );
-        });
-      }
+      });
     } else {
-      // tokens가 없으면 전체 문장을 단어별로 분리
+      // tokens가 없으면 전체 문장을 단어별로 분리，并为每个词创建Token对象以显示词卡
       const words = segmentWords(sentence);
       words.forEach((word, idx) => {
-        elements.push(
-          <span
-            key={`word-${idx}`}
-            className={`
-              inline-block px-1 mx-0.5
-              cursor-pointer
-              hover:bg-blue-100 hover:text-blue-700
-              ${selectedWord === word ? 'bg-blue-200 text-blue-800' : ''}
-              rounded transition-colors duration-150
-            `}
-            onClick={(e) => handleWordClick(e, word)}
-          >
-            {word}
-          </span>
-        );
+        elements.push(renderWord(word, `word-${idx}`));
       });
     }
 
@@ -203,6 +190,7 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: S
   const handleTokenHover = (e: React.MouseEvent<HTMLSpanElement>, token: Token) => {
     // PC端hover显示
     if (window.innerWidth > 768) {
+      clearCloseTimeout();
       const rect = e.currentTarget.getBoundingClientRect();
       setActiveToken(token);
       calculateTooltipPosition(rect);
@@ -211,41 +199,64 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: S
 
   const calculateTooltipPosition = (rect: DOMRect) => {
     const tooltipWidth = 320; // 预估tooltip宽度
-    const tooltipHeight = 200; // 预估tooltip高度
+    const tooltipHeight = 250; // 预估tooltip高度（增加以容纳更多内容）
     const padding = 10;
+    const gap = -4; // 让词卡稍微重叠在词上，消除间隙
 
+    // 固定显示在词的下方
+    let top = rect.bottom + gap;
     let left = rect.left + rect.width / 2 - tooltipWidth / 2;
-    let top = rect.bottom + padding;
 
-    // 如果tooltip会超出右边界，调整位置
-    if (left + tooltipWidth > window.innerWidth) {
+    // 如果tooltip会超出右边界，调整位置（但保持在下方）
+    if (left + tooltipWidth > window.innerWidth - padding) {
       left = window.innerWidth - tooltipWidth - padding;
     }
 
-    // 如果tooltip会超出左边界，调整位置
+    // 如果tooltip会超出左边界，调整位置（但保持在下方）
     if (left < padding) {
       left = padding;
     }
 
-    // 如果tooltip会超出下边界，显示在上方
-    if (top + tooltipHeight > window.innerHeight) {
-      top = rect.top - tooltipHeight - padding;
+    // 如果tooltip会超出下边界，仍然显示在下方，但调整垂直位置
+    if (top + tooltipHeight > window.innerHeight - padding) {
+      // 如果下方空间不够，尝试显示在上方（但这是最后的选择）
+      const spaceBelow = window.innerHeight - rect.bottom - padding;
+      const spaceAbove = rect.top - padding;
+      
+      if (spaceAbove > spaceBelow && spaceAbove > tooltipHeight) {
+        // 上方空间更大，显示在上方
+        top = rect.top - tooltipHeight - gap;
+      } else {
+        // 仍然显示在下方，但调整位置避免超出
+        top = Math.max(padding, window.innerHeight - tooltipHeight - padding);
+      }
     }
 
     setTooltipPosition({ top, left });
   };
 
-  // 点击外部关闭tooltip
+  // 点击外部关闭tooltip（PC端和移动端都生效）
   useEffect(() => {
-    const handleClickOutside = (_e: MouseEvent) => {
-      if (activeToken && window.innerWidth <= 768) {
-        setActiveToken(null);
+    const handleClickOutside = (e: MouseEvent) => {
+      if (activeToken) {
+        const target = e.target as HTMLElement;
+        // 如果点击的不是词或词卡内的元素，则关闭词卡
+        if (target && !target.closest('[data-word-tooltip]') && !target.closest('[data-word]')) {
+          setActiveToken(null);
+        }
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, [activeToken]);
+
+  // 组件卸载时清理定时器
+  useEffect(() => {
+    return () => {
+      clearCloseTimeout();
+    };
+  }, []);
 
   return (
     <div className="relative">
@@ -259,6 +270,7 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord }: S
           position={tooltipPosition}
           onClose={() => setActiveToken(null)}
           onCreateDialogue={onWordSelect ? () => onWordSelect(activeToken.text) : undefined}
+          item={item}
         />
       )}
     </div>

@@ -30,23 +30,30 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '' }: TTSButtonPro
 
   return (
     <button
-      onClick={speak}
+      onClick={(e) => {
+        e.stopPropagation(); // 阻止事件冒泡，防止触发词卡关闭
+        speak();
+      }}
+      onMouseDown={(e) => {
+        e.stopPropagation(); // 阻止鼠标按下事件冒泡
+      }}
       disabled={isSpeaking}
       className={`
-        inline-flex items-center justify-center
-        w-8 h-8 rounded-full
-        bg-blue-100 hover:bg-blue-200 active:bg-blue-300
-        text-blue-600 hover:text-blue-700
+        inline-flex items-center justify-center gap-1
+        px-2 py-1 rounded-lg
+        bg-indigo-100 hover:bg-indigo-200 active:bg-indigo-300
+        text-indigo-700 hover:text-indigo-800
         transition-colors duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
+        text-sm font-medium
         ${className}
       `}
-      title="朗读"
-      aria-label="朗读"
+      title="AI朗读"
+      aria-label="AI朗读"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
-        className="h-4 w-4"
+        className="h-5 w-5"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

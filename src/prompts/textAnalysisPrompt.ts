@@ -41,6 +41,18 @@ export function getTextAnalysisPrompt(text: string, sourceLang: 'ko' | 'zh'): st
           "explanation": "문법/의미 설명",
           "tones": "1-2-3"
         }
+      ],
+      "chunkSegments": [
+        {
+          "chunkZh": "语义分段1",
+          "pinyin": "duì yìng pīn yīn",
+          "tones": "4-4-1-1"
+        },
+        {
+          "chunkZh": "语义分段2",
+          "pinyin": "duì yìng pīn yīn",
+          "tones": "4-4-1-1"
+        }
       ]
     }
   ]
@@ -57,6 +69,19 @@ CRITICAL REQUIREMENTS:
 8. Focus on teaching Chinese (zhSentence) that helps Korean learners understand the meaning
 9. 'chunks' should break down the sentence into meaningful grammatical units
 10. **IMPORTANT: Include ALL lines from the input. If the input has 10 lines, the response must have 10 line entries. If it has 20 lines, return 20 entries.**
+11. **SEMANTIC SEGMENTATION (chunkSegments):**
+    - You are a Chinese language processing assistant.
+    - Task: Segment the Chinese sentence (zhSentence) into 2-3 semantic segments based on natural speech boundaries.
+    - Requirements:
+      * Divide the sentence into 2-3 semantic segments (natural speech units)
+      * For each segment, provide:
+        1. chunkZh: The Chinese text of that segment
+        2. pinyin: Complete pinyin with tone marks for ALL characters in that segment (do not miss any character)
+        3. tones: Tone number structure (e.g., "3-4-4") for ALL characters in that segment (do not miss any character)
+    - CRITICAL: The pinyin and tones in each segment must completely correspond to each other and cover ALL characters in the segment. Do not miss any character's pinyin or tone.
+    - Example: For "就像是你多变的表情", you might segment as:
+      * Segment 1: chunkZh: "就像是你", pinyin: "jiù xiàng shì nǐ", tones: "4-4-4-3"
+      * Segment 2: chunkZh: "多变的表情", pinyin: "duō biàn de biǎo qíng", tones: "1-4-0-3-2"
 
 Korean lyrics to analyze (process ALL lines):
 ${text}
