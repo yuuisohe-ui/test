@@ -105,9 +105,6 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
           const rect = e.currentTarget.getBoundingClientRect();
           setActiveToken(wordToken);
           calculateTooltipPosition(rect);
-          if (onWordSelect) {
-            onWordSelect(word);
-          }
         }}
         onMouseEnter={(e) => {
           if (window.innerWidth > 768) {
@@ -133,19 +130,32 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
   const renderSentence = () => {
     const elements: JSX.Element[] = [];
     
-    // 如果tokens存在且有效，使用tokens匹配；否则直接分词
-    if (tokens && tokens.length > 0 && tokens[0].text !== sentence) {
+    // 将整个句子分词，但保留原始空格（作为 fallback）
+    const allWords = segmentWordsWithSpaces(sentence);
+    
+    // ⭐ 优先使用 tokens 作为词卡渲染源
+    const hasTokens = Array.isArray(tokens) && tokens.length > 0;
+    const renderWords = hasTokens
+      ? tokens.map(t => t.text)
+      : allWords;
+
+    console.log("🧩 [SentenceView] word source", {
+      tokensLen: tokens?.length ?? 0,
+      allWordsLen: allWords?.length ?? 0,
+      renderWordsLen: renderWords?.length ?? 0,
+      using: hasTokens ? "tokens" : "segments",
+    });
+    
+    // 如果使用 tokens，直接渲染 tokens
+    if (hasTokens) {
       // 创建一个Map来快速查找token
       const tokenMap = new Map<string, Token>();
       tokens.forEach(token => {
         tokenMap.set(token.text, token);
       });
-
-      // 将整个句子分词
-      const allWords = segmentWords(sentence);
       
-      // 遍历所有词，如果词在tokens中，使用token数据；否则创建临时token
-      allWords.forEach((word, idx) => {
+      // 直接使用 tokens 渲染，不保留空格（tokens 中已包含所有字符）
+      renderWords.forEach((word, idx) => {
         const token = tokenMap.get(word);
         if (token) {
           elements.push(renderWord(word, `token-${idx}`, true, token));
@@ -154,21 +164,66 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
         }
       });
     } else {
-      // tokens가 없으면 전체 문장을 단어별로 분리，并为每个词创建Token对象以显示词卡
-      const words = segmentWords(sentence);
-      words.forEach((word, idx) => {
-        elements.push(renderWord(word, `word-${idx}`));
+      // tokens가 없으면使用 segmentWordsWithSpaces 分词结果，保留空格
+      renderWords.forEach((word, idx) => {
+        // 如果是空格，直接渲染为空格
+        if (word.trim() === '') {
+          elements.push(<span key={`space-${idx}`}>{word}</span>);
+        } else {
+          elements.push(renderWord(word, `word-${idx}`));
+        }
       });
     }
 
     return elements;
   };
 
+  // 分词但保留原始空格
+  const segmentWordsWithSpaces = (text: string): string[] => {
+    if (!text) return [];
+    
+    const result: string[] = [];
+    let currentWord = '';
+    
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      
+      if (char.trim() === '') {
+        // 遇到空格，先保存当前词（如果有）
+        if (currentWord) {
+          result.push(currentWord);
+          currentWord = '';
+        }
+        // 保存空格（保留所有空格字符）
+        result.push(char);
+      } else {
+        // 非空格字符，添加到当前词
+        currentWord += char;
+        
+        // 检查下一个字符
+        if (i + 1 < text.length) {
+          const nextChar = text[i + 1];
+          // 如果下一个字符是空格或标点，保存当前词
+          if (nextChar.trim() === '' || /[，。！？、；：]/.test(nextChar)) {
+            if (currentWord) {
+              result.push(currentWord);
+              currentWord = '';
+            }
+          }
+        }
+      }
+    }
+    
+    // 保存最后一个词
+    if (currentWord) {
+      result.push(currentWord);
+    }
+    
+    return result;
+  };
+
   const handleWordClick = (e: React.MouseEvent<HTMLSpanElement>, word: string) => {
     e.stopPropagation();
-    if (onWordSelect) {
-      onWordSelect(word);
-    }
   };
 
   const handleTokenClick = (e: React.MouseEvent<HTMLSpanElement>, token: Token) => {
@@ -269,7 +324,6 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
           token={activeToken}
           position={tooltipPosition}
           onClose={() => setActiveToken(null)}
-          onCreateDialogue={onWordSelect ? () => onWordSelect(activeToken.text) : undefined}
           item={item}
         />
       )}

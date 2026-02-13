@@ -7,11 +7,10 @@ interface WordTooltipProps {
   token: Token;
   position: { top: number; left: number };
   onClose: () => void;
-  onCreateDialogue?: (word: string) => void;
   item?: any; // 原始行数据，用于获取拼音等信息
 }
 
-export const WordTooltip = ({ token, position, onClose, onCreateDialogue, item }: WordTooltipProps) => {
+export const WordTooltip = ({ token, position, onClose, item }: WordTooltipProps) => {
   const [isStarred, setIsStarred] = useState(false);
   const [wordInfo, setWordInfo] = useState<WordCardInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -275,25 +274,6 @@ export const WordTooltip = ({ token, position, onClose, onCreateDialogue, item }
             </div>
           )}
           
-          {/* 造句按钮 */}
-          {onCreateDialogue && (
-            <div className="pt-2 border-t border-gray-200 mt-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 阻止事件冒泡
-                  onCreateDialogue(token.text);
-                  // 不立即关闭，让用户可以看到对话结果
-                  // onClose();
-                }}
-                onMouseDown={(e) => {
-                  e.stopPropagation(); // 阻止鼠标按下事件冒泡
-                }}
-                className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-semibold"
-              >
-                💬 造句
-              </button>
-            </div>
-          )}
         </div>
       )}
     </div>

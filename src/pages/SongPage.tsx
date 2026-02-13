@@ -1,4 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
+
+/**
+ * 将语言代码统一映射为内部格式（与 chatgptApi.ts 中的 normalizeWhisperLanguage 保持一致）
+ * @param lang 语言代码（可能是 "korean", "chinese", "ko", "zh" 等）
+ * @returns 统一格式：'ko' | 'zh' | null
+ */
+function normalizeLanguage(lang: string | null | undefined): 'ko' | 'zh' | null {
+  if (!lang) return null;
+  
+  const langLower = lang.toLowerCase().trim();
+  
+  // 韩语映射
+  if (langLower === 'korean' || langLower === 'ko' || langLower === 'kor') {
+    return 'ko';
+  }
+  
+  // 中文映射
+  if (langLower === 'chinese' || langLower === 'zh' || langLower === 'zh-cn' || langLower === 'zh-tw' || langLower === 'cmn') {
+    return 'zh';
+  }
+  
+  // 未知语言，返回 null
+  return null;
+}
 import { opalMockOk } from "../data/opalMock";
 import { SentenceView } from "../components/SentenceView";
 import { AnalysisTable } from "../components/AnalysisTable";
@@ -7,7 +31,7 @@ import { SingAlongButton } from "../components/SingAlongButton";
 import { SentenceData } from "../types";
 import { SongPayload } from "../data/opalMock";
 import { callOpalApiWithAudio, callOpalApiWithText } from "../services/opalApi";
-import { callChatGPTApiWithText, callChatGPTApiWithAudio, translateChineseToKorean, getTeachingTip, getPatternInfo } from "../services/chatgptApi";
+import { callChatGPTApiWithText, callChatGPTApiWithAudioAndTranscription, translateChineseToKorean, getTeachingTip, getPatternInfo, evaluateSentence } from "../services/chatgptApi";
 import { createDialogue } from "../services/dialogueApi";
 import { getWordCardInfo } from "../services/wordCardApi";
 
@@ -49,16 +73,136 @@ function makeFallbackSentenceData(line: string): SentenceData {
   };
 }
 
+/**
+ * 一致性校验与修复：确保 tokensZh 与 zhSentence 一致
+ * 如果 tokensZh 连接后（忽略空格/标点）与 zhSentence（忽略空格/标点）不一致，以 zhSentence 为准重建 tokensZh
+ */
+function ensureTokensZhConsistency(payload: SongPayload): void {
+  if (payload.status !== 'ok' || !payload.lines || payload.lines.length === 0) {
+    return;
+  }
+  
+  const normalize = (s: string): string => {
+    if (!s) return '';
+    // 去空格 + 去常见标点（，。！？、；：,.!?;:）
+    return s.replace(/\s+/g, '').replace(/[，。！？、；：,.!?;:]/g, '');
+  };
+  
+  const segmentChineseWords = (text: string): string[] => {
+    if (!text) return [];
+    
+    try {
+      // 使用 Intl.Segmenter（如果支持）
+      if ('Segmenter' in Intl) {
+        const segmenter = new (Intl as any).Segmenter('zh', { granularity: 'word' });
+        const segments = Array.from(segmenter.segment(text)) as Array<{ segment: string }>;
+        const words = segments
+          .map(seg => seg.segment)
+          .filter(word => word.trim().length > 0);
+        
+        // 如果 Segmenter 返回的词太长（超过2个字符），进一步按字符分割
+        const result: string[] = [];
+        words.forEach(word => {
+          if (word.length > 2) {
+            // 按字符分割（避免把整个短语作为一个词）
+            for (let i = 0; i < word.length; i++) {
+              const char = word[i];
+              if (/[\u4e00-\u9fff]/.test(char)) {
+                result.push(char);
+              } else if (char.trim()) {
+                result.push(char);
+              }
+            }
+          } else {
+            result.push(word);
+          }
+        });
+        return result.filter(w => w.trim().length > 0);
+      }
+    } catch (e) {
+      console.warn('Intl.Segmenter not supported, using fallback');
+    }
+    
+    // Fallback: 按字符分割（每个中文字符作为一个词）
+    const words: string[] = [];
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (/[\u4e00-\u9fff]/.test(char)) {
+        words.push(char);
+      } else if (char.trim()) {
+        words.push(char);
+      }
+    }
+    return words.filter(w => w.trim().length > 0);
+  };
+  
+  payload.lines.forEach((line: any, index: number) => {
+    const zhSentence = line.zhSentence || '';
+    const tokensZh = line.tokensZh || [];
+    
+    if (!zhSentence) return; // 跳过没有中文句子的行
+    
+    // 计算 tokensZh 连接后的字符串（忽略空格/标点）
+    const joinTokens = tokensZh.map((t: any) => t?.text || '').join('');
+    const normalizedTokens = normalize(joinTokens);
+    const normalizedSentence = normalize(zhSentence);
+    
+    // 如果不一致，以 zhSentence 为准重建 tokensZh
+    if (normalizedTokens !== normalizedSentence) {
+      console.warn(`⚠️ [Token Consistency] line[${index}] tokensZh 与 zhSentence 不一致，正在修复...`, {
+        zhSentence: zhSentence.substring(0, 30),
+        tokensZhJoin: joinTokens.substring(0, 30),
+        normalizedSentence,
+        normalizedTokens,
+      });
+      
+      // 以 zhSentence 为准重建 tokensZh
+      const segmentedWords = segmentChineseWords(zhSentence);
+      line.tokensZh = segmentedWords.map((word: string) => {
+        // 尝试从原有 tokensZh 中查找匹配的 token（保留原有信息）
+        const existingToken = tokensZh.find((t: any) => t?.text === word);
+        if (existingToken) {
+          return existingToken;
+        }
+        // 创建新的 token
+        return {
+          text: word,
+          glossZh: "",
+          glossKr: "",
+          example: "",
+          pinyin: "",
+        };
+      });
+      
+      console.log(`✅ [Token Consistency] line[${index}] 修复完成，新 tokensZh 数量:`, line.tokensZh.length);
+    }
+  });
+}
+
 // OpalLine을 SentenceData로 변환
 function opalLineToSentenceData(line: any): SentenceData {
   if (!line) {
     return makeFallbackSentenceData("");
   }
 
-  const zhSentence = line.zhSentence || line.displayLine || "";
+  // 优先使用 zhSentence（中文翻译），如果为空则使用 displayLine
+  // 但需要确保 zhSentence 是中文，displayLine 是韩文
+  let zhSentence = line.zhSentence || "";
+  const isKorean = (text: string) => /[\uac00-\ud7a3]/.test(text);
+  const isChinese = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
+  
+  // 如果 zhSentence 是韩文，说明数据被调换了，使用 displayLine（如果 displayLine 是中文）
+  if (!zhSentence || isKorean(zhSentence)) {
+    if (isChinese(line.displayLine)) {
+      zhSentence = line.displayLine;
+    } else {
+      // 如果都找不到中文，使用空字符串
+      zhSentence = "";
+    }
+  }
   
   // tokensZh를 Token[]로 변환，并从chunks中提取拼音
-  const tokens = (line.tokensZh || []).map((token: any) => {
+  let tokens = (line.tokensZh || []).map((token: any) => {
     // 从chunks中查找包含该词的chunk，提取拼音
     let pinyin = '';
     if (line.chunks) {
@@ -77,6 +221,49 @@ function opalLineToSentenceData(line: any): SentenceData {
       pinyin: pinyin,
     };
   });
+
+  // ⭐ 如果 tokensZh 为空或只包含整句，对 zhSentence 进行分词
+  if (tokens.length === 0 || (tokens.length === 1 && tokens[0].text === zhSentence)) {
+    // 使用 Intl.Segmenter 或 fallback 方法对中文句子进行分词
+    const segmentChineseWords = (text: string): string[] => {
+      if (!text) return [];
+      
+      try {
+        // 使用 Intl.Segmenter（如果支持）
+        if ('Segmenter' in Intl) {
+          const segmenter = new (Intl as any).Segmenter('zh', { granularity: 'word' });
+          const segments = Array.from(segmenter.segment(text)) as Array<{ segment: string }>;
+          return segments
+            .map(seg => seg.segment)
+            .filter(word => word.trim().length > 0);
+        }
+      } catch (e) {
+        console.warn('Intl.Segmenter not supported, using fallback');
+      }
+      
+      // Fallback: 按字符分割（每个中文字符作为一个词）
+      const words: string[] = [];
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (/[\u4e00-\u9fff]/.test(char)) {
+          words.push(char);
+        } else if (char.trim()) {
+          // 非中文字符但非空格，也作为一个词
+          words.push(char);
+        }
+      }
+      return words.filter(w => w.trim().length > 0);
+    };
+    
+    const segmentedWords = segmentChineseWords(zhSentence);
+    tokens = segmentedWords.map((word: string) => ({
+      text: word,
+      glossZh: "",
+      glossKr: "",
+      example: "",
+      pinyin: "",
+    }));
+  }
 
   // chunks를 Chunk[]로 변환 - 整句分析，只显示整句拼音、声调和HSK等级
   const chunks = (() => {
@@ -212,14 +399,7 @@ function opalLineToSentenceData(line: any): SentenceData {
 
   return {
     sentence: zhSentence,
-    tokens: tokens.length > 0 ? tokens : [
-      {
-        text: zhSentence,
-        glossZh: "",
-        glossKr: "",
-        example: "",
-      },
-    ],
+    tokens: tokens, // 使用分词后的 tokens（如果为空或只包含整句，已在上方进行分词处理）
     chunks: chunks.length > 0 ? chunks : [
       {
         text: zhSentence,
@@ -268,6 +448,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [languageMode, setLanguageMode] = useState<'auto' | 'ko' | 'zh'>('auto');
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   
   // initialLyrics가 변경되면 rawText 업데이트
   useEffect(() => {
@@ -279,6 +461,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [loadingMessage, setLoadingMessage] = useState<string>("");
   const [opalPayload, setOpalPayload] = useState<SongPayload | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
+  // 保存原始输入文本（用于中文输入时直接显示）
+  const [originalText, setOriginalText] = useState<string>("");
+  // 保存原始转写文本（用于音频转文字时直接显示）
+  const [transcribedText, setTranscribedText] = useState<string>("");
   
   // 단어 선택 및 대화 생성
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -294,93 +480,46 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  // 去重函数：处理连续5个字以上相同或连续几行相同的内容
-  function deduplicateLines(lines: any[]): any[] {
-    if (lines.length === 0) return [];
-    
-    const result: any[] = [];
-    const seenPatterns = new Map<string, number>(); // 记录模式出现的次数
-    let lastLineText: string | null = null;
-    let consecutiveSameLineCount = 0;
-    
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const displayText = line.displayLine || line.zhSentence || '';
-      const trimmedText = displayText.trim();
-      
-      // 跳过空行
-      if (!trimmedText) {
-        continue;
-      }
-      
-      // 1. 检查连续相同行（连续几行都是相同的内容）
-      if (lastLineText === trimmedText) {
-        consecutiveSameLineCount++;
-        // 如果连续相同行超过1行（即第2行及以后），跳过
-        if (consecutiveSameLineCount > 1) {
-          continue;
-        }
-      } else {
-        consecutiveSameLineCount = 0;
-      }
-      
-      // 2. 检查连续5个字以上相同的内容
-      if (trimmedText.length >= 5) {
-        // 提取前5个字符作为模式
-        const pattern = trimmedText.substring(0, 5);
-        const patternCount = seenPatterns.get(pattern) || 0;
-        
-        // 如果这个模式已经出现过，检查是否是完全相同的行
-        if (patternCount > 0) {
-          // 检查是否与之前出现过的相同模式的行完全相同
-          const previousLineWithPattern = result.find(r => {
-            const prevText = (r.displayLine || r.zhSentence || '').trim();
-            return prevText.length >= 5 && prevText.substring(0, 5) === pattern && prevText === trimmedText;
-          });
-          
-          // 如果找到完全相同的行，跳过
-          if (previousLineWithPattern) {
-            continue;
-          }
-        }
-        
-        seenPatterns.set(pattern, patternCount + 1);
-      }
-      
-      // 通过所有检查，添加到结果中
-      result.push(line);
-      lastLineText = trimmedText;
-    }
-    
-    return result;
-  }
 
   // 解析输入 → 句子数组（只有 API 分析结果才显示，粘贴文本时不自动显示）
   const linesAll = useMemo(() => {
     // ✅ 只有 API 분석 결과가 있을 때만 표시
     if (opalPayload?.status === "ok" && Array.isArray(opalPayload.lines) && opalPayload.lines.length > 0) {
-      // 去重处理
-      const deduplicated = deduplicateLines(opalPayload.lines);
-      
+      // 直接使用原始数据，不再去重
       // ✅ 保持原始时间戳，不重新计算
       // API返回的时间戳已经对应了正确的文本内容（中文或韩文），保持原样即可
       
-      // 确保每个line的displayLine都是韩文
-      return deduplicated.map((line: any, index: number) => {
+      // 确保每个line的displayLine都是韩文，zhSentence都是中文
+      return opalPayload.lines.map((line: any, index: number) => {
         let displayLine = String(line?.displayLine ?? "");
         let zhSentence = String(line?.zhSentence ?? "");
         
         const isKorean = (text: string) => /[\uac00-\ud7a3]/.test(text);
         const isChinese = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
         
+        // 如果 displayLine 和 zhSentence 被调换了，先调换回来
+        if (isChinese(displayLine) && isKorean(zhSentence)) {
+          const temp = displayLine;
+          displayLine = zhSentence;
+          zhSentence = temp;
+        }
+        
         // 如果displayLine是中文或者是占位符文本，强制替换为韩文
         if (isChinese(displayLine) || displayLine.includes("한국어 가사 원문") || displayLine.includes("한국어")) {
-          // 策略1: 如果zhSentence是韩文，使用它
-          if (isKorean(zhSentence)) {
-            displayLine = zhSentence;
-            zhSentence = line?.displayLine || zhSentence;
-          } 
-          // 策略2: 从rawText中查找韩文
+          // 策略1: 从转写文本中查找韩文（音频输入）
+          if (transcribedText && isKorean(transcribedText)) {
+            const transcribedLines = transcribedText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            const koreanLines = transcribedLines.filter(l => isKorean(l));
+            const lineNo = Number(line?.lineNo ?? index + 1);
+            if (koreanLines.length > 0) {
+              if (lineNo > 0 && lineNo <= koreanLines.length) {
+                displayLine = koreanLines[lineNo - 1];
+              } else {
+                displayLine = koreanLines[0];
+              }
+            }
+          }
+          // 策略2: 从rawText中查找韩文（文本输入）
           else if (rawText) {
             const rawLines = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
             const lineNo = Number(line?.lineNo ?? index + 1);
@@ -410,28 +549,34 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           // 这种情况下，displayLine会在useEffect中异步翻译
         }
         
-        // 返回修正后的line
+        // 确保 zhSentence 是中文（如果被错误地设置为韩文，需要修正）
+        if (isKorean(zhSentence)) {
+          // 如果 zhSentence 是韩文，说明数据被调换了，应该清空等待从其他地方获取
+          zhSentence = "";
+        }
+        
+        // 返回修正后的line（保持原始时间戳不变）
         return {
           ...line,
           displayLine: displayLine, // 强制确保是韩文
-          zhSentence: zhSentence,  // 确保是中文
+          zhSentence: zhSentence || line?.zhSentence || "",  // 确保是中文
         };
       });
     }
 
     // ✅ 粘贴文本时，不自动显示分析内容（返回空数组）
     return [];
-  }, [opalPayload, rawText, translationCache]);
+  }, [opalPayload, rawText, transcribedText, translationCache]);
 
   // 异步翻译需要翻译的中文行
   useEffect(() => {
     if (opalPayload?.status === "ok" && Array.isArray(opalPayload.lines) && opalPayload.lines.length > 0) {
-      const deduplicated = deduplicateLines(opalPayload.lines);
+      // 直接使用原始数据，不再去重
       
       // 找出所有需要翻译的中文displayLine
       const needsTranslation: Array<{ chinese: string }> = [];
       
-      deduplicated.forEach((line: any) => {
+      opalPayload.lines.forEach((line: any) => {
         let displayLine = String(line?.displayLine ?? "");
         const isKorean = (text: string) => /[\uac00-\ud7a3]/.test(text);
         const isChinese = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
@@ -704,6 +849,23 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       
       if (result.status === 'ok') {
         setTestResult(`✅ 성공! 응답 시간: ${duration}ms, 라인 수: ${result.lines?.length || 0}`);
+        // ⭐ 调试日志：排查并发请求覆盖问题
+        try {
+          const firstLine = (result as any)?.lines?.[0];
+          const t = firstLine?.tokensZh ?? [];
+          console.log("🧾 [B] about to setOpalPayload", {
+            requestId: "NO_REQUEST_ID_IN_SCOPE",
+            zhSentence: firstLine?.zhSentence,
+            tokensZhLen: t.length,
+            tokensZhHead: t.slice(0, 10).map((x: any) => x?.text),
+          });
+        } catch (e) {
+          console.warn("🧾 [B] log failed", e);
+        }
+        
+        // ⭐ 一致性校验与修复：确保 tokensZh 与 zhSentence 一致
+        ensureTokensZhConsistency(result);
+        
         setOpalPayload(result);
         setAudioHint(`ChatGPT API 테스트 성공! ${result.lines?.length || 0}개 라인 분석 완료.`);
       } else {
@@ -722,6 +884,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   // API 호출 (ChatGPT 우선, Opal 대체, Mock 폴백)
   async function onClickTranscribe() {
+    // ⭐ 生成 requestId
+    const requestId = Date.now();
+    console.log(`🆔 [Request Start] requestId: ${requestId}`);
+    
     // 检查是否选择了中文水平
     if (!userLevel) {
       setShowLevelWarning(true);
@@ -747,6 +913,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     
     // 清除之前的分析结果
     setOpalPayload(null);
+    setOriginalText(""); // 清除原始文本
+    setTranscribedText(""); // 清除转写文本
     setPage(1);
     
     try {
@@ -772,7 +940,18 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           setLoadingMessage("음성 파일을 텍스트로 변환 중... (30%)");
           setLoadingProgress(30);
           
-          result = await callChatGPTApiWithAudio(audioFile);
+          // 使用优化后的函数，只调用一次 Whisper API，同时获取转写文本和分析结果
+          const { result: apiResult, transcribedText: transcribed, detectedLang: whisperDetectedLang } = 
+            await callChatGPTApiWithAudioAndTranscription(audioFile, languageMode, requestId);
+          
+          // 保存检测到的语言（确保格式统一为 'ko' 或 'zh'）
+          const normalizedDetectedLang = normalizeLanguage(whisperDetectedLang) || whisperDetectedLang;
+          setDetectedLanguage(normalizedDetectedLang || null);
+          
+          // 保存转写文本（用于中文输入时直接显示）
+          setTranscribedText(transcribed);
+          
+          result = apiResult;
           
           setLoadingMessage("ChatGPT로 가사 분석 중... (80%)");
           setLoadingProgress(80);
@@ -788,12 +967,19 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         setLoadingMessage("텍스트 분석 준비 중... (10%)");
         setLoadingProgress(10);
         
+        // 保存原始文本（用于中文输入时直接显示）
+        setOriginalText(rawText.trim());
+        
+        // 检测输入语言
+        const isChineseInput = /[\u4e00-\u9fff]/.test(rawText.trim());
+        const detectedLang = isChineseInput ? 'zh' : 'ko';
+        
         if (useChatGPT) {
           setLoadingMessage("ChatGPT로 가사 분석 중... (30%)");
           setLoadingProgress(30);
           
-          // ChatGPT API로 텍스트 분석 (한국어 가사로 가정)
-          result = await callChatGPTApiWithText(rawText.trim(), 'ko');
+          // ChatGPT API로 텍스트 분석
+          result = await callChatGPTApiWithText(rawText.trim(), detectedLang, requestId);
           
           setLoadingMessage("분석 결과 처리 중... (80%)");
           setLoadingProgress(80);
@@ -814,6 +1000,120 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       setLoadingProgress(90);
       
       console.log('✅ API 응답 받음:', result);
+      console.log(`🆔 [setState Before] requestId: ${requestId}, 准备写入 setOpalPayload`);
+      // ⭐ 调试日志：排查并发请求覆盖问题
+      try {
+        const firstLine = (result as any)?.lines?.[0];
+        const t = firstLine?.tokensZh ?? [];
+        console.log("🧾 [B] about to setOpalPayload", {
+          requestId: requestId ?? "NO_REQUEST_ID_IN_SCOPE",
+          zhSentence: firstLine?.zhSentence,
+          tokensZhLen: t.length,
+          tokensZhHead: t.slice(0, 10).map((x: any) => x?.text),
+        });
+      } catch (e) {
+        console.warn("🧾 [B] log failed", e);
+      }
+      
+      // ⭐ 一致性校验与修复：确保 tokensZh 与 zhSentence 一致
+      if (result.status === 'ok' && result.lines && result.lines.length > 0) {
+        const normalize = (s: string): string => {
+          if (!s) return '';
+          // 去空格 + 去常见标点
+          return s.replace(/\s+/g, '').replace(/[，。！？、；：,.!?;:]/g, '');
+        };
+        
+        const segmentChineseWords = (text: string): string[] => {
+          if (!text) return [];
+          
+          try {
+            // 使用 Intl.Segmenter（如果支持）
+            if ('Segmenter' in Intl) {
+              const segmenter = new (Intl as any).Segmenter('zh', { granularity: 'word' });
+              const segments = Array.from(segmenter.segment(text)) as Array<{ segment: string }>;
+              const words = segments
+                .map(seg => seg.segment)
+                .filter(word => word.trim().length > 0);
+              
+              // 如果 Segmenter 返回的词太长（超过2个字符），进一步按字符分割
+              const result: string[] = [];
+              words.forEach(word => {
+                if (word.length > 2) {
+                  // 按字符分割
+                  for (let i = 0; i < word.length; i++) {
+                    const char = word[i];
+                    if (/[\u4e00-\u9fff]/.test(char)) {
+                      result.push(char);
+                    } else if (char.trim()) {
+                      result.push(char);
+                    }
+                  }
+                } else {
+                  result.push(word);
+                }
+              });
+              return result.filter(w => w.trim().length > 0);
+            }
+          } catch (e) {
+            console.warn('Intl.Segmenter not supported, using fallback');
+          }
+          
+          // Fallback: 按字符分割（每个中文字符作为一个词）
+          const words: string[] = [];
+          for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            if (/[\u4e00-\u9fff]/.test(char)) {
+              words.push(char);
+            } else if (char.trim()) {
+              words.push(char);
+            }
+          }
+          return words.filter(w => w.trim().length > 0);
+        };
+        
+        result.lines.forEach((line: any, index: number) => {
+          const zhSentence = line.zhSentence || '';
+          const tokensZh = line.tokensZh || [];
+          
+          if (!zhSentence) return; // 跳过没有中文句子的行
+          
+          // 计算 tokensZh 连接后的字符串（忽略空格/标点）
+          const joinTokens = tokensZh.map((t: any) => t?.text || '').join('');
+          const normalizedTokens = normalize(joinTokens);
+          const normalizedSentence = normalize(zhSentence);
+          
+          // 如果不一致，以 zhSentence 为准重建 tokensZh
+          if (normalizedTokens !== normalizedSentence) {
+            console.warn(`⚠️ [Token Consistency] line[${index}] tokensZh 与 zhSentence 不一致，正在修复...`, {
+              zhSentence: zhSentence.substring(0, 30),
+              tokensZhJoin: joinTokens.substring(0, 30),
+              normalizedSentence,
+              normalizedTokens,
+            });
+            
+            // 以 zhSentence 为准重建 tokensZh
+            const segmentedWords = segmentChineseWords(zhSentence);
+            line.tokensZh = segmentedWords.map((word: string) => {
+              // 尝试从原有 tokensZh 中查找匹配的 token（保留原有信息）
+              const existingToken = tokensZh.find((t: any) => t?.text === word);
+              if (existingToken) {
+                return existingToken;
+              }
+              // 创建新的 token
+              return {
+                text: word,
+                glossZh: "",
+                glossKr: "",
+                example: "",
+                pinyin: "",
+              };
+            });
+            
+            console.log(`✅ [Token Consistency] line[${index}] 修复完成，新 tokensZh 数量:`, line.tokensZh.length);
+          }
+        });
+      }
+      
       setOpalPayload(result);
       
       setLoadingMessage("완료! (100%)");
@@ -837,6 +1137,24 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       setLoadingProgress(0);
       setAudioHint('API 호출 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
       // 에러 발생 시 Mock 데이터로 폴백
+      console.log(`🆔 [setState Before] requestId: ${requestId}, 准备写入 setOpalPayload (Mock 数据)`);
+      // ⭐ 调试日志：排查并发请求覆盖问题
+      try {
+        const firstLine = (opalMockOk as any)?.lines?.[0];
+        const t = firstLine?.tokensZh ?? [];
+        console.log("🧾 [B] about to setOpalPayload", {
+          requestId: requestId ?? "NO_REQUEST_ID_IN_SCOPE",
+          zhSentence: firstLine?.zhSentence,
+          tokensZhLen: t.length,
+          tokensZhHead: t.slice(0, 10).map((x: any) => x?.text),
+        });
+      } catch (e) {
+        console.warn("🧾 [B] log failed", e);
+      }
+      
+      // ⭐ 一致性校验与修复：确保 tokensZh 与 zhSentence 一致（Mock 数据也需要修复）
+      ensureTokensZhConsistency(opalMockOk);
+      
       setOpalPayload(opalMockOk);
     } finally {
       setIsLoading(false);
@@ -999,30 +1317,59 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   // 每句卡片内部：复用现有组件
   function SentenceCard({ item, starred }: { item: any; starred: boolean }) {
+    // ⭐ 检查是否为重复句
+    const isDuplicate = (item as any).isDuplicate === true;
     // 每个句子卡片独立的教学提示状态
     const [isGeneratingTipForThis, setIsGeneratingTipForThis] = useState(false);
+    const [teachingTipProgress, setTeachingTipProgress] = useState(0);
     const [teachingTipContent, setTeachingTipContent] = useState<{
       vocabulary: Array<{ word: string; hskLevel: string; pinyin?: string; korean?: string }>;
       patterns: Array<{ pattern: string; hskLevel: string; korean?: string; chineseExample?: string; koreanExample?: string }>;
     } | null>(null);
     const [showTeachingTip, setShowTeachingTip] = useState(false);
-    const [isAnalyzingPractice, setIsAnalyzingPractice] = useState(false);
+    const [showPracticeDialog, setShowPracticeDialog] = useState(false);
+    const [practiceInput, setPracticeInput] = useState("");
+    const [practiceFeedback, setPracticeFeedback] = useState<string | null>(null);
+    const [isAnalyzingSentence, setIsAnalyzingSentence] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
     const lineNo = Number(item?.lineNo ?? 0);
     
     // displayLine已经在linesAll中处理过了，应该已经是韩文
     // 这里再次确保，作为双重保险
     let displayLine = String(item?.displayLine ?? "");
-    const zhSentence = String(item?.zhSentence ?? "");
+    let zhSentence = String(item?.zhSentence ?? "");
     
     // 最终检查：如果displayLine仍然是中文或占位符，强制从rawText获取韩文或使用翻译
-    const isKorean = (text: string) => /[\uac00-\ud7a3]/.test(text);
-    const isChinese = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
+    const checkKorean = (text: string) => /[\uac00-\ud7a3]/.test(text);
+    const checkChinese = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
     
-    if (isChinese(displayLine) || displayLine.includes("한국어 가사 원문") || displayLine.includes("한국어")) {
-      // 策略1: 从rawText中查找韩文
-      if (rawText) {
+    // 如果 displayLine 和 zhSentence 被调换了，需要修正
+    if (checkChinese(displayLine) && checkKorean(zhSentence)) {
+      // 调换回来
+      const temp = displayLine;
+      displayLine = zhSentence;
+      zhSentence = temp;
+    }
+    
+    // 如果 displayLine 仍然是中文或占位符，强制从 rawText 或转写文本获取韩文
+    if (checkChinese(displayLine) || displayLine.includes("한국어 가사 원문") || displayLine.includes("한국어")) {
+      // 策略1: 从转写文本中查找韩文（音频输入）
+      if (transcribedText && checkKorean(transcribedText)) {
+        const transcribedLines = transcribedText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        const koreanLines = transcribedLines.filter(l => checkKorean(l));
+        if (koreanLines.length > 0) {
+          if (lineNo > 0 && lineNo <= koreanLines.length) {
+            displayLine = koreanLines[lineNo - 1];
+          } else {
+            displayLine = koreanLines[0];
+          }
+        }
+      }
+      // 策略2: 从 rawText 中查找韩文（文本输入）
+      else if (rawText) {
         const rawLines = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        const koreanLines = rawLines.filter(l => isKorean(l));
+        const koreanLines = rawLines.filter(l => checkKorean(l));
         if (koreanLines.length > 0) {
           if (lineNo > 0 && lineNo <= koreanLines.length) {
             displayLine = koreanLines[lineNo - 1];
@@ -1032,35 +1379,109 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         }
       }
       
-      // 策略2: 如果rawText中没有韩文，检查翻译缓存
-      if ((isChinese(displayLine) || displayLine.includes("한국어")) && translationCache[displayLine]) {
+      // 策略3: 如果 rawText 和转写文本中都没有韩文，检查翻译缓存
+      if ((checkChinese(displayLine) || displayLine.includes("한국어")) && translationCache[displayLine]) {
         displayLine = translationCache[displayLine];
       }
       
-      // 策略3: 如果还是没有，使用zhSentence作为displayLine（如果zhSentence是韩文）
-      if ((isChinese(displayLine) || displayLine.includes("한국어")) && isKorean(zhSentence)) {
+      // 策略4: 如果 displayLine 仍然是中文，且 zhSentence 是韩文，说明数据被调换了
+      if (checkChinese(displayLine) && checkKorean(zhSentence)) {
         displayLine = zhSentence;
-      }
-      
-      // 策略4: 如果displayLine仍然是中文，且zhSentence也是中文，说明原始输入是中文
-      // 这种情况下，displayLine应该显示"翻译中..."或等待异步翻译
-      if (isChinese(displayLine) && isChinese(zhSentence) && !translationCache[displayLine]) {
-        // 保持displayLine为中文，等待翻译完成
-        // 或者可以显示一个占位符
+        // zhSentence 需要从其他地方获取中文，或者保持为空等待翻译
+        zhSentence = "";
       }
     }
     
+    // 确保 zhSentence 是中文（如果被错误地设置为韩文，需要修正）
+    if (checkKorean(zhSentence)) {
+      // 如果 zhSentence 是韩文，尝试从其他地方获取中文
+      // 如果找不到，保持为空或使用 data.sentence
+      zhSentence = "";
+    }
+    
     // OpalLine 데이터가 있으면 사용 (tokensZh 또는 chunks가 있으면 실제 데이터)
+    // 注意：这里使用修正后的 zhSentence（确保是中文）
     const data = (item?.tokensZh || item?.chunks) 
-      ? opalLineToSentenceData(item)
+      ? opalLineToSentenceData({ ...item, zhSentence: zhSentence || item?.zhSentence || "" })
       : makeFallbackSentenceData(zhSentence);
 
+    // 判断输入语言（通过langDisplay或检查原始文本）
+    const isChineseInput = opalPayload?.langDisplay === 'zh' || 
+                          (originalText && /[\u4e00-\u9fff]/.test(originalText)) ||
+                          (transcribedText && /[\u4e00-\u9fff]/.test(transcribedText));
+    
+    // 确保 zhSentence 是中文（如果被错误地设置为韩文，需要修正）
+    // 优先使用修正后的 zhSentence，如果为空则使用 data.sentence
+    let correctedZhSentence = zhSentence || data.sentence || "";
+    const checkIsKorean2 = (text: string) => /[\uac00-\ud7a3]/.test(text);
+    const checkIsChinese2 = (text: string) => /[\u4e00-\u9fff]/.test(text) && !/[\uac00-\ud7a3]/.test(text);
+    
+    // 如果 correctedZhSentence 是韩文，说明 API 返回的数据可能有问题，需要从原始数据中获取正确的中文
+    if (checkIsKorean2(correctedZhSentence)) {
+      // 如果 zhSentence 是韩文，尝试从 item 的原始数据中获取
+      // 或者使用 displayLine（如果 displayLine 是中文）
+      if (checkIsChinese2(displayLine)) {
+        correctedZhSentence = displayLine;
+      } else {
+        // 如果都找不到中文，尝试从 item 的原始数据中获取
+        const originalZhSentence = item?.zhSentence || "";
+        if (checkIsChinese2(originalZhSentence)) {
+          correctedZhSentence = originalZhSentence;
+        } else {
+          // 如果还是找不到，使用 data.sentence（从 opalLineToSentenceData 转换来的）
+          correctedZhSentence = data.sentence || "";
+        }
+      }
+    }
+    
+    // 对于中文输入，优先使用原始文本或转写文本
+    let finalZhSentence = correctedZhSentence;
+    if (isChineseInput) {
+      // 优先使用转写文本（音频输入）
+      if (transcribedText) {
+        const transcribedLines = transcribedText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        if (lineNo > 0 && lineNo <= transcribedLines.length) {
+          finalZhSentence = transcribedLines[lineNo - 1];
+        } else if (transcribedLines.length > 0) {
+          // 如果行号不匹配，尝试按顺序匹配
+          const index = Math.min(lineNo - 1, transcribedLines.length - 1);
+          if (index >= 0) {
+            finalZhSentence = transcribedLines[index];
+          }
+        }
+      }
+      // 如果没有转写文本，使用原始文本（文本输入）
+      else if (originalText) {
+        const originalLines = originalText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+        if (lineNo > 0 && lineNo <= originalLines.length) {
+          finalZhSentence = originalLines[lineNo - 1];
+        } else if (originalLines.length > 0) {
+          // 如果行号不匹配，尝试按顺序匹配
+          const index = Math.min(lineNo - 1, originalLines.length - 1);
+          if (index >= 0) {
+            finalZhSentence = originalLines[index];
+          }
+        }
+      }
+    }
+    // 对于韩文输入（音频或文本），直接使用 API 返回的 zhSentence（中文翻译）
+    // 不要使用转写文本（韩文）作为中文整句展示
+    // finalZhSentence 已经是 correctedZhSentence，即 API 返回的正确的中文翻译
+    // 如果 correctedZhSentence 为空，使用 data.sentence 作为后备
+    if (!finalZhSentence || finalZhSentence.trim() === "" || checkIsKorean2(finalZhSentence)) {
+      finalZhSentence = data.sentence || "";
+    }
 
     return (
     <div className="bg-white rounded-2xl shadow-sm border p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="text-sm text-gray-500 w-10">{formatLineNo(lineNo)}</div>
-          <div className="font-medium flex-1 truncate">{displayLine}</div>
+          <div className="font-medium flex-1 truncate">
+            {displayLine}
+            {isDuplicate && (
+              <span className="ml-2 text-xs text-gray-400 italic">(重复)</span>
+            )}
+          </div>
 
           <button
             className={`text-xl leading-none px-2 py-1 rounded-lg ${
@@ -1086,13 +1507,13 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           <div className="flex items-center justify-between mb-2">
             <div className="text-sm font-semibold text-gray-700">中文整句展示</div>
             <SingAlongButton 
-              text={(zhSentence || data.sentence) ?? ""}
+              text={finalZhSentence}
+              userLevel={userLevel}
             />
           </div>
           <SentenceView 
-            sentence={(zhSentence || data.sentence) ?? ""} 
+            sentence={finalZhSentence} 
             tokens={data.tokens ?? []} 
-            onWordSelect={handleCreateDialogue}
             selectedWord={selectedWord}
             item={item}
           />
@@ -1116,18 +1537,23 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 }
                 
                 setIsGeneratingTipForThis(true);
+                setTeachingTipProgress(0);
                 
                 try {
+                  setTeachingTipProgress(10);
                   const tip = await getTeachingTip(zhSentence || data.sentence || "", userLevel);
                   
+                  setTeachingTipProgress(30);
                   // 解析教学提示内容
                   const parsed = parseTeachingTip(tip);
                   
+                  setTeachingTipProgress(50);
                   // 为每个词汇获取详细信息（拼音、韩文）
                   const vocabularyWithDetails = await Promise.all(
-                    parsed.vocabulary.map(async (vocab) => {
+                    parsed.vocabulary.map(async (vocab, index) => {
                       try {
                         const wordInfo = await getWordCardInfo(vocab.word);
+                        setTeachingTipProgress(50 + (index + 1) * 10 / parsed.vocabulary.length);
                         return {
                           ...vocab,
                           pinyin: wordInfo.pinyin,
@@ -1140,11 +1566,13 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     })
                   );
                   
+                  setTeachingTipProgress(70);
                   // 为句型获取详细信息
                   const patternsWithDetails = await Promise.all(
                     parsed.patterns.slice(0, 1).map(async (pattern) => {
                       try {
                         const patternInfo = await getPatternInfo(pattern.pattern, zhSentence || data.sentence || "");
+                        setTeachingTipProgress(90);
                         return {
                           ...pattern,
                           korean: patternInfo.korean,
@@ -1164,6 +1592,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     })
                   );
                   
+                  setTeachingTipProgress(100);
                   setTeachingTipContent({
                     vocabulary: vocabularyWithDetails,
                     patterns: patternsWithDetails.slice(0, 1), // 只显示第一个句型
@@ -1174,6 +1603,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   alert('生成教学提示失败，请稍后重试');
                 } finally {
                   setIsGeneratingTipForThis(false);
+                  setTeachingTipProgress(0);
                 }
               }}
               disabled={isGeneratingTipForThis || !userLevel}
@@ -1196,7 +1626,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  生成中...
+                  生成中... {teachingTipProgress > 0 && `${teachingTipProgress}%`}
                 </>
               ) : showTeachingTip ? (
                 <>
@@ -1266,34 +1696,173 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               
               {/* 练习按钮 */}
               <button
-                onClick={async () => {
-                  setIsAnalyzingPractice(true);
-                  try {
-                    // 假接API，暂时模拟
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    alert('练习分析功能开发中，敬请期待！');
-                  } catch (error) {
-                    console.error('练习分析失败:', error);
-                    alert('练习分析失败，请稍后重试');
-                  } finally {
-                    setIsAnalyzingPractice(false);
-                  }
+                onClick={() => {
+                  setShowPracticeDialog(true);
+                  setPracticeInput("");
+                  setPracticeFeedback(null);
                 }}
-                disabled={isAnalyzingPractice}
-                className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
               >
-                {isAnalyzingPractice ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    分析中...
-                  </>
-                ) : (
-                  '来试试读一读或造句练习吧'
-                )}
+                试着造个句子，我来点评
               </button>
+              </div>
+            )}
+            
+            {/* 练习对话框 */}
+            {showPracticeDialog && (
+              <div className="absolute top-full left-0 mt-2 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-xl border-2 border-blue-300 p-4">
+                {/* 气泡箭头 */}
+                <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-l-2 border-t-2 border-blue-300 transform rotate-45"></div>
+                
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-800">造句练习</h4>
+                  <button
+                    onClick={() => {
+                      setShowPracticeDialog(false);
+                      setPracticeInput("");
+                      setPracticeFeedback(null);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                {/* 输入区域 */}
+                <div className="mb-3">
+                  <textarea
+                    value={practiceInput}
+                    onChange={(e) => setPracticeInput(e.target.value)}
+                    placeholder="在这里输入你造的句子..."
+                    className="w-full p-2 border border-gray-300 rounded-lg text-sm resize-none"
+                    rows={3}
+                    disabled={isAnalyzingSentence}
+                  />
+                  
+                  {/* 语音输入按钮 */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <button
+                      onClick={async () => {
+                        if (isRecording) {
+                          // 停止录音
+                          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                            mediaRecorder.stop();
+                          }
+                          setIsRecording(false);
+                        } else {
+                          // 开始录音
+                          try {
+                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                            const recorder = new MediaRecorder(stream);
+                            const chunks: Blob[] = [];
+                            
+                            recorder.ondataavailable = (e) => {
+                              if (e.data.size > 0) {
+                                chunks.push(e.data);
+                              }
+                            };
+                            
+                            recorder.onstop = async () => {
+                              const blob = new Blob(chunks, { type: 'audio/wav' });
+                              // 使用 Whisper API 转写
+                              try {
+                                const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+                                const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
+                                
+                                const formData = new FormData();
+                                formData.append('file', blob, 'recording.wav');
+                                formData.append('model', 'whisper-1');
+                                formData.append('language', 'zh');
+                                
+                                const response = await fetch(`${apiUrl}/audio/transcriptions`, {
+                                  method: 'POST',
+                                  headers: {
+                                    'Authorization': `Bearer ${apiKey}`,
+                                  },
+                                  body: formData,
+                                });
+                                
+                                if (response.ok) {
+                                  const data = await response.json();
+                                  setPracticeInput(data.text || '');
+                                }
+                              } catch (error) {
+                                console.error('语音转写失败:', error);
+                              }
+                              
+                              stream.getTracks().forEach(track => track.stop());
+                            };
+                            
+                            recorder.start();
+                            setMediaRecorder(recorder);
+                            setIsRecording(true);
+                          } catch (error) {
+                            console.error('无法访问麦克风:', error);
+                            alert('无法访问麦克风，请检查权限设置');
+                          }
+                        }
+                      }}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        isRecording
+                          ? 'bg-red-500 text-white hover:bg-red-600'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      {isRecording ? '停止录音' : '语音输入'}
+                    </button>
+                  </div>
+                </div>
+                
+                {/* 提交按钮 */}
+                <button
+                  onClick={async () => {
+                    if (!practiceInput.trim()) {
+                      alert('请输入你造的句子');
+                      return;
+                    }
+                    
+                    if (!userLevel) {
+                      alert('请先选择语言等级');
+                      return;
+                    }
+                    
+                    setIsAnalyzingSentence(true);
+                    setPracticeFeedback(null);
+                    
+                    try {
+                      const feedback = await evaluateSentence(practiceInput, userLevel, zhSentence || data.sentence || "");
+                      setPracticeFeedback(feedback);
+                    } catch (error) {
+                      console.error('评价失败:', error);
+                      alert('评价失败，请稍后重试');
+                    } finally {
+                      setIsAnalyzingSentence(false);
+                    }
+                  }}
+                  disabled={isAnalyzingSentence || !practiceInput.trim()}
+                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isAnalyzingSentence ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      分析中...
+                    </>
+                  ) : (
+                    '提交评价'
+                  )}
+                </button>
+                
+                {/* 反馈显示 */}
+                {practiceFeedback && (
+                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div className="text-sm text-gray-800 whitespace-pre-wrap">{practiceFeedback}</div>
+                  </div>
+                )}
               </div>
             )}
             </div>
@@ -1393,8 +1962,108 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   const showEmpty = linesAll.length === 0;
 
+  // 猫咪助手状态
+  const [showCatHelper, setShowCatHelper] = useState(false);
+  const [showCatDialog, setShowCatDialog] = useState(false);
+  const [catDialogInput, setCatDialogInput] = useState("");
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* 猫咪助手 - 左侧浮动 */}
+      <div className="fixed left-4 bottom-4 z-40">
+        {!showCatDialog ? (
+          <div className="relative">
+            <button
+              onClick={() => setShowCatDialog(true)}
+              onMouseEnter={() => setShowCatHelper(true)}
+              onMouseLeave={() => setShowCatHelper(false)}
+              className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-3xl hover:scale-110"
+              aria-label="帮助助手"
+            >
+              🐱
+            </button>
+            {showCatHelper && (
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg px-3 py-2 border border-gray-200 whitespace-nowrap">
+                <div className="text-sm text-gray-700">卡住了吗？我来帮你🌱</div>
+                {/* 小箭头 */}
+                <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-white border-b-8 border-b-transparent"></div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-80 bg-white rounded-lg shadow-xl border-2 border-orange-300 p-4">
+            {/* 对话框头部 */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🐱</span>
+                <h4 className="text-sm font-semibold text-gray-800">学习助手</h4>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCatDialog(false);
+                  setCatDialogInput("");
+                }}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* 对话框内容 */}
+            <div className="mb-3 max-h-64 overflow-y-auto space-y-2">
+              <div className="bg-gray-50 rounded-lg p-2 text-sm text-gray-700">
+                你好！我是你的学习助手，有什么问题可以问我哦 😊
+              </div>
+            </div>
+            
+            {/* 输入区域 */}
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={catDialogInput}
+                onChange={(e) => setCatDialogInput(e.target.value)}
+                placeholder="输入你的问题..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter' && catDialogInput.trim()) {
+                    // 暂时不处理，后续接入AI
+                    setCatDialogInput("");
+                  }
+                }}
+              />
+              <button
+                onClick={() => {
+                  if (catDialogInput.trim()) {
+                    // 暂时不处理，后续接入AI
+                    setCatDialogInput("");
+                  }
+                }}
+                disabled={!catDialogInput.trim()}
+                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              >
+                发送
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 点击外部关闭对话框 */}
+      {showCatDialog && (
+        <div
+          className="fixed inset-0 z-30"
+          onClick={(e) => {
+            // 如果点击的是对话框外部，关闭对话框
+            if (e.target === e.currentTarget) {
+              setShowCatDialog(false);
+              setCatDialogInput("");
+            }
+          }}
+        />
+      )}
+
       {/* 主内容区 */}
       <div className="flex-1">
       {/* 顶部固定输入区 */}
@@ -1469,6 +2138,44 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     onChange={(e) => onAudioFiles(e.target.files)}
                   />
                 </label>
+
+                <div className="flex items-center gap-2">
+                  <label className="text-sm text-gray-700">语言：</label>
+                  <select
+                    value={languageMode}
+                    onChange={(e) => setLanguageMode(e.target.value as 'auto' | 'ko' | 'zh')}
+                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="auto">自动</option>
+                    <option value="ko">韩文</option>
+                    <option value="zh">中文</option>
+                  </select>
+                </div>
+
+                {/* 显示检测结果和冲突提示 */}
+                {detectedLanguage && (() => {
+                  // ⭐ 使用映射函数确保格式统一（双重保险，即使 API 返回格式不一致也能正确处理）
+                  const normalizedDetectedLang = normalizeLanguage(detectedLanguage) || detectedLanguage;
+                  
+                  return (
+                    <div className="text-xs text-gray-600">
+                      {languageMode === 'auto' ? (
+                        // 自动模式：只显示检测语言
+                        <span>检测语言：{normalizedDetectedLang === 'ko' ? '韩文' : '中文'}</span>
+                      ) : (
+                        // 手动选择模式：显示检测语言，如果不一致则显示冲突提示
+                        <>
+                          <span>检测语言：{normalizedDetectedLang === 'ko' ? '韩文' : '中文'}</span>
+                          {normalizedDetectedLang !== languageMode && (
+                            <span className="ml-2 text-orange-600">
+                              （检测为 {normalizedDetectedLang === 'ko' ? '韩文' : '中文'}，仍按你选择的 {languageMode === 'ko' ? '韩文' : '中文'} 处理）
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="flex flex-col items-center gap-3">
                   <button

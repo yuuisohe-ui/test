@@ -35,18 +35,66 @@ export const AudioPlayer = ({
         // 使用上传的音频文件
         const url = URL.createObjectURL(audioFile);
         audio = new Audio(url);
+        console.log('🎵 [AudioPlayer] source: audioFile');
+        console.log('🎵 [AudioPlayer] audioFile.name:', audioFile.name);
       } else if (audioUrl) {
         // 使用URL
         audio = new Audio(audioUrl);
+        console.log('🎵 [AudioPlayer] source: audioUrl');
       } else {
         return;
       }
 
       audioRef.current = audio;
 
+      // ⭐ 调试日志：打印 audio.src 和传入的时间戳
+      console.log('🎵 [AudioPlayer] audio.src:', audio.src);
+      console.log('🎵 [AudioPlayer] startSec:', startSec, 'endSec:', endSec);
+
+      // ⭐ 事件日志：loadedmetadata
+      audio.addEventListener('loadedmetadata', () => {
+        console.log('🎵 [AudioPlayer] loadedmetadata - duration:', audio.duration, 'currentTime:', audio.currentTime);
+      });
+
+      // ⭐ 事件日志：seeked
+      audio.addEventListener('seeked', () => {
+        console.log('🎵 [AudioPlayer] seeked - currentTime:', audio.currentTime);
+      });
+
+      // ⭐ 事件日志：play
+      audio.addEventListener('play', () => {
+        console.log('🎵 [AudioPlayer] play - currentTime:', audio.currentTime);
+      });
+
       // 设置播放时间范围
       if (startSec !== undefined && startSec >= 0) {
+        // ⭐ 重要：等 seeked 触发后再播放
+        const playAfterSeek = () => {
+          console.log('🎵 [AudioPlayer] seeked 事件触发，准备播放 - currentTime:', audio.currentTime);
+          audio.play().then(() => {
+            console.log('🎵 [AudioPlayer] 开始播放 - currentTime:', audio.currentTime);
+          }).catch((err) => {
+            console.error('🎵 [AudioPlayer] 播放失败:', err);
+          });
+          audio.removeEventListener('seeked', playAfterSeek);
+        };
+        audio.addEventListener('seeked', playAfterSeek);
+        console.log('🎵 [AudioPlayer] 设置 currentTime 前:', audio.currentTime);
         audio.currentTime = startSec;
+        console.log('🎵 [AudioPlayer] 设置 currentTime 后:', audio.currentTime, '(目标:', startSec, ')');
+        
+        // ⭐ 如果 seeked 事件没有触发，添加超时保护
+        setTimeout(() => {
+          if (audio.readyState >= 2) { // HAVE_CURRENT_DATA
+            console.log('🎵 [AudioPlayer] seeked 事件可能未触发，直接播放 - currentTime:', audio.currentTime);
+            audio.play().catch((err) => {
+              console.error('🎵 [AudioPlayer] 超时后播放失败:', err);
+            });
+          }
+        }, 1000);
+      } else {
+        // 如果没有设置起始时间，直接播放
+        await audio.play();
       }
 
       // 如果设置了结束时间，在到达时停止

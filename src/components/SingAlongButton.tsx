@@ -1,28 +1,46 @@
 import { useState, useRef, useEffect } from 'react';
+import { generateReadingFeedback, transcribeAudio } from '../services/chatgptApi';
+import { SpeechRadarChart } from './RadarChart';
 
 interface SingAlongButtonProps {
-  text: string; // 要跟唱的文本
+  text: string; // 要跟读的目标文本
+  userLevel: "初级" | "中级" | "高级" | null; // 用户水平
   className?: string;
 }
 
-export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) => {
+interface ReadingFeedback {
+  scores: {
+    contentAccuracy: number;
+    tonePerformance: number;
+    speakingFluency: number;
+  };
+  overallComment: string;
+  keyIssue: string;
+  oneAction: string;
+  contentCheck: {
+    asrText: string;
+    missing: string[];
+    extra: string[];
+    substitutions: Array<{ original: string; replaced: string }>;
+  };
+}
+
+export const SingAlongButton = ({ text, userLevel, className = '' }: SingAlongButtonProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
-  const [isScoring, setIsScoring] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(false);
-  const [analysisData, setAnalysisData] = useState<{
-    pronunciation: { accuracy: number; issues: string[] };
-    rhythm: { accuracy: number; issues: string[] };
-    emotion: { accuracy: number; issues: string[] };
-    fluency: number;
-  } | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [feedback, setFeedback] = useState<ReadingFeedback | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<number>(0);
 
   // 清理函数
   useEffect(() => {
@@ -34,11 +52,19 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
         audioRef.current.pause();
         URL.revokeObjectURL(audioRef.current.src);
       }
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+      }
     };
   }, []);
 
   // 开始录音
   const startRecording = async () => {
+    if (!userLevel) {
+      alert('请先选择您的语言等级');
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
@@ -53,7 +79,7 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         const audioUrl = URL.createObjectURL(audioBlob);
         
@@ -67,11 +93,22 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
         audioRef.current.onpause = () => setIsPlaying(false);
         
         setHasRecording(true);
-        setScore(null); // 重置评分
+        setFeedback(null);
+        setShowFeedback(false);
+
+        // 自动开始分析和转写
+        await analyzeRecording(audioBlob);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
+      setRecordingDuration(0);
+      startTimeRef.current = Date.now();
+      
+      // 开始计时
+      durationIntervalRef.current = setInterval(() => {
+        setRecordingDuration(Math.floor((Date.now() - startTimeRef.current) / 1000));
+      }, 100);
     } catch (error) {
       console.error('录音失败:', error);
       alert('无法访问麦克风，请检查浏览器权限设置');
@@ -85,8 +122,40 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
+      if (durationIntervalRef.current) {
+        clearInterval(durationIntervalRef.current);
+        durationIntervalRef.current = null;
+      }
       setIsRecording(false);
     }
+  };
+
+  // 重新录音
+  const restartRecording = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      URL.revokeObjectURL(audioRef.current.src);
+      audioRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    if (durationIntervalRef.current) {
+      clearInterval(durationIntervalRef.current);
+      durationIntervalRef.current = null;
+    }
+    setHasRecording(false);
+    setFeedback(null);
+    setShowFeedback(false);
+    setRecordingDuration(0);
+    setIsRecording(false);
+    setIsPlaying(false);
+    setIsAnalyzing(false);
+    setAnalysisProgress(0);
+    // 延迟一下再开始录音，确保状态已重置
+    setTimeout(() => {
+      startRecording();
+    }, 100);
   };
 
   // 播放录音
@@ -100,76 +169,107 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
     }
   };
 
-  // 评分（模拟评分，后续可以集成真实的语音识别API）
-  const evaluateRecording = async () => {
-    if (!hasRecording) return;
-    
-    setIsScoring(true);
-    setScore(null);
-    setAnalysisData(null);
-    
-    // 模拟评分过程（实际应该调用语音识别和评分API）
-    setTimeout(() => {
-      // 这里可以集成真实的评分API，比如：
-      // const result = await callSpeechEvaluationAPI(audioBlob, text);
-      // setScore(result.score);
-      
-      // 暂时使用随机分数作为演示
-      const mockScore = Math.floor(Math.random() * 30) + 70; // 70-100分
-      setScore(mockScore);
-      
-      // 生成详细分析数据（假数据）
-      const mockAnalysis = {
-        pronunciation: {
-          accuracy: Math.floor(Math.random() * 20) + 75, // 75-95%
-          issues: [
-            "第三声调需要更明显",
-            "注意'的'字的轻声发音",
-            "'了'字的音调可以更自然",
-          ].slice(0, Math.floor(Math.random() * 3) + 1),
+  // 分析录音
+  const analyzeRecording = async (audioBlob: Blob) => {
+    if (!userLevel || !text) return;
+
+    setIsAnalyzing(true);
+    setAnalysisProgress(0);
+    setFeedback(null);
+    setShowFeedback(false);
+
+    try {
+      // 模拟进度更新
+      const progressInterval = setInterval(() => {
+        setAnalysisProgress((prev) => {
+          // 在转写阶段，进度到40%
+          if (prev < 40) {
+            return Math.min(prev + 2, 40);
+          }
+          // 在分析阶段，进度到90%
+          if (prev < 90) {
+            return Math.min(prev + 1, 90);
+          }
+          return prev;
+        });
+      }, 200);
+
+      // 1. 转写音频
+      setAnalysisProgress(10);
+      const asrText = await transcribeAudio(audioBlob);
+      console.log('🎤 转写结果:', asrText);
+      setAnalysisProgress(40);
+
+      // 2. 计算音频时长
+      const durationSec = recordingDuration;
+
+      // 3. 生成反馈
+      setAnalysisProgress(50);
+      const feedbackData = await generateReadingFeedback(
+        userLevel,
+        text,
+        asrText,
+        durationSec
+      );
+      setAnalysisProgress(90);
+
+      // 清除进度更新定时器
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
+
+      // 确保 substitutions 格式正确，并确保评分最低50分
+      const normalizedFeedback = {
+        ...feedbackData,
+        scores: {
+          contentAccuracy: Math.max(50, feedbackData.scores.contentAccuracy),
+          tonePerformance: Math.max(50, feedbackData.scores.tonePerformance),
+          speakingFluency: Math.max(50, feedbackData.scores.speakingFluency),
         },
-        rhythm: {
-          accuracy: Math.floor(Math.random() * 20) + 70, // 70-90%
-          issues: [
-            "节奏稍快，建议放慢",
-            "注意停顿的位置",
-            "整体节奏感良好",
-          ].slice(0, Math.floor(Math.random() * 2) + 1),
+        contentCheck: {
+          ...feedbackData.contentCheck,
+          substitutions: feedbackData.contentCheck.substitutions.map((sub: any) => {
+            if (typeof sub === 'string') {
+              // 如果 API 返回的是字符串，尝试解析
+              return { original: sub, replaced: '' };
+            }
+            return {
+              original: sub.original || sub[0] || '',
+              replaced: sub.replaced || sub[1] || '',
+            };
+          }),
         },
-        emotion: {
-          accuracy: Math.floor(Math.random() * 25) + 70, // 70-95%
-          issues: [
-            "可以增加更多情感表达",
-            "语调变化可以更丰富",
-            "整体表达自然流畅",
-          ].slice(0, Math.floor(Math.random() * 2) + 1),
-        },
-        fluency: Math.floor(Math.random() * 20) + 75, // 75-95%
       };
+
+      setFeedback(normalizedFeedback);
+      setShowFeedback(true);
       
-      setAnalysisData(mockAnalysis);
-      setIsScoring(false);
-    }, 2000);
+      // 短暂延迟后重置进度，为下次分析做准备
+      setTimeout(() => {
+        setAnalysisProgress(0);
+      }, 500);
+    } catch (error) {
+      console.error('分析失败:', error);
+      alert('分析失败，请稍后重试');
+      setAnalysisProgress(0);
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
-  // 删除录音
-  const deleteRecording = () => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      URL.revokeObjectURL(audioRef.current.src);
-      audioRef.current = null;
-    }
-    setHasRecording(false);
-    setScore(null);
-    setIsPlaying(false);
+  // 格式化时长显示
+  const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
-    <div className={`relative inline-flex items-center gap-2 flex-wrap ${className}`}>
-      {/* 录音按钮 */}
+    <div className={`relative inline-block ${className}`}>
+      {/* 跟读按钮 */}
       {!hasRecording && !isRecording && (
         <button
           onClick={startRecording}
+          disabled={!userLevel}
           className="
             inline-flex items-center justify-center gap-1
             px-3 py-1.5 rounded-lg
@@ -177,8 +277,9 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
             text-purple-700 hover:text-purple-800
             transition-colors duration-200
             text-sm font-medium
+            disabled:opacity-50 disabled:cursor-not-allowed
           "
-          title="开始跟唱录音"
+          title={!userLevel ? "请先选择语言等级" : "开始跟读录音"}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -194,313 +295,208 @@ export const SingAlongButton = ({ text, className = '' }: SingAlongButtonProps) 
               d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
             />
           </svg>
-          跟读
+          🎤 跟读
         </button>
       )}
 
       {/* 录音中 */}
       {isRecording && (
-        <button
-          onClick={stopRecording}
-          className="
-            inline-flex items-center justify-center gap-1
-            px-3 py-1.5 rounded-lg
-            bg-red-100 hover:bg-red-200 active:bg-red-300
-            text-red-700 hover:text-red-800
-            transition-colors duration-200
-            text-sm font-medium
-            animate-pulse
-          "
-          title="停止录音"
-        >
-          <div className="w-2 h-2 bg-red-600 rounded-full"></div>
-          录音中...
-        </button>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200">
+            <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+            <span className="text-sm text-red-700 font-medium">
+              正在录音，录音目前为 {formatDuration(recordingDuration)}
+            </span>
+          </div>
+          <button
+            onClick={stopRecording}
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1.5 rounded-lg
+              bg-red-100 hover:bg-red-200
+              text-red-700 text-sm font-medium
+              transition-colors
+            "
+          >
+            结束录音
+          </button>
+          <button
+            onClick={async () => {
+              // 先停止当前录音
+              if (mediaRecorderRef.current && isRecording) {
+                mediaRecorderRef.current.stop();
+              }
+              if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
+              }
+              if (durationIntervalRef.current) {
+                clearInterval(durationIntervalRef.current);
+                durationIntervalRef.current = null;
+              }
+              setIsRecording(false);
+              setRecordingDuration(0);
+              
+              // 清理之前的录音
+              if (audioRef.current) {
+                audioRef.current.pause();
+                URL.revokeObjectURL(audioRef.current.src);
+                audioRef.current = null;
+              }
+              setHasRecording(false);
+              setFeedback(null);
+              setShowFeedback(false);
+              setAnalysisProgress(0);
+              setIsAnalyzing(false);
+              
+              // 延迟一下再开始新录音
+              setTimeout(() => {
+                startRecording();
+              }, 200);
+            }}
+            className="
+              inline-flex items-center justify-center
+              px-3 py-1.5 rounded-lg
+              bg-gray-100 hover:bg-gray-200
+              text-gray-700 text-sm font-medium
+              transition-colors
+            "
+          >
+            重新录音
+          </button>
+        </div>
       )}
 
-      {/* 录音完成后的操作按钮 */}
-      {hasRecording && !isRecording && (
-        <>
-          {/* 播放/暂停按钮 */}
-          <button
-            onClick={playRecording}
-            className="
-              inline-flex items-center justify-center
-              w-8 h-8 rounded-full
-              bg-green-100 hover:bg-green-200 active:bg-green-300
-              text-green-700 hover:text-green-800
-              transition-colors duration-200
-            "
-            title={isPlaying ? "暂停播放" : "播放录音"}
-          >
-            {isPlaying ? (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-              </svg>
-            ) : (
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            )}
-          </button>
-
-          {/* 评分按钮 */}
-          <button
-            onClick={evaluateRecording}
-            disabled={isScoring}
-            className="
-              inline-flex items-center justify-center gap-1
-              px-3 py-1.5 rounded-lg
-              bg-yellow-100 hover:bg-yellow-200 active:bg-yellow-300
-              text-yellow-700 hover:text-yellow-800
-              transition-colors duration-200
-              text-sm font-medium
-              disabled:opacity-50 disabled:cursor-not-allowed
-            "
-            title="获取评分"
-          >
-            {isScoring ? (
-              <>
-                <svg
-                  className="animate-spin h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                评分中...
-              </>
-            ) : (
-              <>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"
-                  />
-                </svg>
-                评分
-              </>
-            )}
-          </button>
-
-          {/* 删除按钮 */}
-          <button
-            onClick={deleteRecording}
-            className="
-              inline-flex items-center justify-center
-              w-8 h-8 rounded-full
-              bg-gray-100 hover:bg-gray-200 active:bg-gray-300
-              text-gray-600 hover:text-gray-700
-              transition-colors duration-200
-            "
-            title="删除录音"
-          >
+      {/* 分析中 */}
+      {hasRecording && isAnalyzing && (
+        <div className="flex flex-col gap-2 min-w-[200px]">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
             <svg
+              className="animate-spin h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
-              className="h-4 w-4"
               fill="none"
               viewBox="0 0 24 24"
-              stroke="currentColor"
             >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
               <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
             </svg>
-          </button>
-        </>
+            <span>分析中... {analysisProgress}%</span>
+          </div>
+          {/* 进度条 */}
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-purple-500 h-full rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${analysisProgress}%` }}
+            ></div>
+          </div>
+        </div>
       )}
 
-      {/* 评分结果显示 */}
-      {score !== null && (
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="
-            inline-flex items-center gap-1
-            px-2 py-1 rounded
-            bg-gradient-to-r from-yellow-50 to-orange-50
-            border border-yellow-200
-            text-sm font-semibold
-          ">
-            <span className="text-yellow-700">得分:</span>
-            <span className={`
-              ${score >= 90 ? 'text-green-600' : score >= 80 ? 'text-blue-600' : score >= 70 ? 'text-yellow-600' : 'text-red-600'}
-            `}>
-              {score}分
-            </span>
-            {score >= 90 && <span className="text-yellow-500">⭐</span>}
-          </div>
+      {/* AI跟读点评面板 - 使用绝对定位，出现在按钮下方，确保右边不超出页面 */}
+      {showFeedback && feedback && (
+        <div className="absolute top-full right-0 mt-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4" style={{ right: 0 }}>
+          {/* 气泡箭头 */}
+          <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l-2 border-t-2 border-purple-300 transform rotate-45"></div>
           
-          {/* 详细分析按钮 */}
-          {analysisData && (
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-sm font-semibold text-gray-800">AI跟读点评</h3>
             <button
-              onClick={() => setShowAnalysis(!showAnalysis)}
+              onClick={() => setShowFeedback(false)}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* 一、本次发音表现（雷达图）- 放到第一位 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-600 mb-2">一、本次发音表现</div>
+            <SpeechRadarChart 
+              data={[
+                { subject: '内容准确度', score: feedback.scores.contentAccuracy, fullMark: 100 },
+                { subject: '声调表现', score: feedback.scores.tonePerformance, fullMark: 100 },
+                { subject: '说话流畅度', score: feedback.scores.speakingFluency, fullMark: 100 },
+              ]}
+            />
+          </div>
+
+          {/* 二、整体评价 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">二、整体评价</div>
+            <div className="text-sm text-gray-800">{feedback.overallComment}</div>
+          </div>
+
+          {/* 三、本次主要问题 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">三、本次主要问题</div>
+            <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">
+              {feedback.keyIssue}
+            </div>
+          </div>
+
+          {/* 四、下一步练习 */}
+          <div>
+            <div className="text-xs font-semibold text-gray-600 mb-1">四、下一步练习</div>
+            <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">
+              {feedback.oneAction}
+            </div>
+          </div>
+
+          {/* 底部操作按钮 */}
+          <div className="flex items-center gap-2 pt-2 border-t">
+            <button
+              onClick={restartRecording}
               className="
-                inline-flex items-center gap-1
-                px-2 py-1 rounded
-                bg-blue-50 hover:bg-blue-100
-                border border-blue-200
-                text-blue-700 text-xs font-medium
+                flex-1 px-3 py-2 rounded-lg
+                bg-purple-100 hover:bg-purple-200
+                text-purple-700 text-sm font-medium
                 transition-colors
               "
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-3 w-3"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                />
-              </svg>
-              {showAnalysis ? '隐藏分析' : '详细分析'}
+              再读一次
             </button>
-          )}
-        </div>
-      )}
-      
-      {/* 详细分析面板 */}
-      {showAnalysis && analysisData && (
-        <div className="absolute top-full left-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50">
-          <div className="space-y-4">
-            {/* 发音分析 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">发音准确度</span>
-                <span className="text-sm font-bold text-blue-600">{analysisData.pronunciation.accuracy}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${analysisData.pronunciation.accuracy}%` }}
-                ></div>
-              </div>
-              {analysisData.pronunciation.issues.length > 0 && (
-                <ul className="mt-2 text-xs text-gray-600 space-y-1">
-                  {analysisData.pronunciation.issues.map((issue, idx) => (
-                    <li key={idx} className="flex items-start gap-1">
-                      <span className="text-red-500">•</span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
+            <button
+              onClick={playRecording}
+              className="
+                flex-1 px-3 py-2 rounded-lg
+                bg-green-100 hover:bg-green-200
+                text-green-700 text-sm font-medium
+                transition-colors
+                flex items-center justify-center gap-1
+              "
+            >
+              {isPlaying ? (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                  </svg>
+                  暂停
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  播放我的录音
+                </>
               )}
-            </div>
-            
-            {/* 节奏分析 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">节奏准确度</span>
-                <span className="text-sm font-bold text-green-600">{analysisData.rhythm.accuracy}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${analysisData.rhythm.accuracy}%` }}
-                ></div>
-              </div>
-              {analysisData.rhythm.issues.length > 0 && (
-                <ul className="mt-2 text-xs text-gray-600 space-y-1">
-                  {analysisData.rhythm.issues.map((issue, idx) => (
-                    <li key={idx} className="flex items-start gap-1">
-                      <span className="text-orange-500">•</span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            
-            {/* 情感表达 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">情感表达</span>
-                <span className="text-sm font-bold text-purple-600">{analysisData.emotion.accuracy}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-purple-500 h-2 rounded-full transition-all"
-                  style={{ width: `${analysisData.emotion.accuracy}%` }}
-                ></div>
-              </div>
-              {analysisData.emotion.issues.length > 0 && (
-                <ul className="mt-2 text-xs text-gray-600 space-y-1">
-                  {analysisData.emotion.issues.map((issue, idx) => (
-                    <li key={idx} className="flex items-start gap-1">
-                      <span className="text-purple-500">•</span>
-                      <span>{issue}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            
-            {/* 流畅度 */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-semibold text-gray-700">整体流畅度</span>
-                <span className="text-sm font-bold text-indigo-600">{analysisData.fluency}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-indigo-500 h-2 rounded-full transition-all"
-                  style={{ width: `${analysisData.fluency}%` }}
-                ></div>
-              </div>
-            </div>
+            </button>
           </div>
         </div>
       )}
     </div>
   );
 };
-

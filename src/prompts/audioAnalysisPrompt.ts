@@ -12,8 +12,7 @@ export function getAudioAnalysisPrompt(
 
 The lyrics were transcribed from audio, so please:
 1. Parse the transcribed text into lines (split by natural pauses or line breaks)
-2. Estimate timing (startSec/endSec) based on line position - assume each line takes approximately 3-4 seconds
-3. Extract key vocabulary and grammar patterns
+2. Extract key vocabulary and grammar patterns
 4. Provide detailed analysis for Korean learners studying Chinese
 
 Please generate a JSON response following this exact structure:
@@ -35,6 +34,7 @@ Please generate a JSON response following this exact structure:
       "romanization": "hangugeo gasa wonmun",
       "startSec": 0.0,
       "endSec": 3.5,
+      "NOTE: startSec and endSec will be filled by Whisper segments timestamps - you can set them to 0 or any placeholder value",
       "tokensZh": [
         {
           "text": "중국어 단어",
@@ -79,10 +79,7 @@ CRITICAL REQUIREMENTS:
    - "예뻐" → "예쁘다"  
    - "먹었어" → "먹다"
    - "갔어" → "가다"
-5. **Ensure precise 'startSec' and 'endSec'** for audio synchronization:
-   - Line 1: startSec: 0.0, endSec: ~3.5
-   - Line 2: startSec: ~3.5, endSec: ~7.0
-   - Continue incrementing by ~3.5 seconds per line
+5. **IMPORTANT: Timestamps (startSec/endSec) will be automatically filled by Whisper segments** - you do NOT need to calculate or estimate them. You can set them to 0 or any placeholder value, they will be overridden by the system.
 6. **Provide accurate 'pos'** (part of speech) for each chunk
 7. **'romanization'** should use Revised Romanization of Korean
 8. **'chunks'** should break sentences into meaningful grammatical units
