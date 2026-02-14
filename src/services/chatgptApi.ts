@@ -28,6 +28,361 @@ function normalizeWhisperLanguage(lang: string | null | undefined): 'ko' | 'zh' 
 }
 
 /**
+ * 选择最佳断点（用于长句切分）：在 [min, max] 范围内找到最自然的断点位置
+ * @param s 需要切分的文本
+ * @param min 最小断点位置（默认 12）
+ * @param max 最大断点位置（默认 22）
+ * @returns 最佳断点位置
+ */
+function chooseBestBreakIndex(s: string, min: number = 12, max: number = 22): number {
+  const len = s.length;
+  if (len <= max) return len; // 不需要切分
+  
+  let bestIndex = 18; // 兜底值
+  let bestScore = -Infinity;
+  
+  // 常见连接/转折词
+  const connectives = ['但是', '不过', '而且', '而', '所以', '因此', '然后', '如果', '因为', '虽然', '可是', '只是', '或者'];
+  
+  // 常见收尾词
+  const endings = ['了', '着', '过', '吗', '吧', '呢', '啊', '呀', '啦', '的'];
+  
+  // 常见结构模式（用于检测是否切断结构）
+  const structures = [
+    { pattern: /不是.*?而是/g, name: '不是…而是' },
+    { pattern: /因为.*?所以/g, name: '因为…所以' },
+    { pattern: /虽然.*?但是/g, name: '虽然…但是' },
+    { pattern: /一.*?就/g, name: '一…就' },
+  ];
+  
+  // 枚举所有可能的断点
+  for (let i = min; i <= max && i < len; i++) {
+    let score = 0;
+    
+    // 1. 断在标点后 +100
+    const beforeChar = s[i - 1];
+    const afterChar = s[i];
+    const punctuation = /[，、；：。！？,;:\.!?]/;
+    if (punctuation.test(beforeChar)) {
+      score += 100;
+    }
+    
+    // 2. 断在连接/转折词边界 +60
+    for (const conn of connectives) {
+      // 检查是否在连接词前（断点在连接词之前，可以加分）
+      if (i >= conn.length && s.substring(i - conn.length, i) === conn) {
+        score += 60;
+        break;
+      }
+      // 检查是否在连接词后（断点在连接词之后，可以加分）
+      if (i + conn.length <= len && s.substring(i, i + conn.length) === conn) {
+        score += 60;
+        break;
+      }
+    }
+    
+    // 3. 断在收尾词后 +40
+    if (endings.includes(beforeChar)) {
+      score += 40;
+    }
+    
+    // 4. 避免切断常见结构 -80
+    const beforeText = s.substring(0, i);
+    const afterText = s.substring(i);
+    for (const struct of structures) {
+      const fullMatch = s.match(struct.pattern);
+      if (fullMatch) {
+        const matchStart = s.indexOf(fullMatch[0]);
+        const matchEnd = matchStart + fullMatch[0].length;
+        // 如果断点在结构中间
+        if (i > matchStart && i < matchEnd) {
+          score -= 80;
+        }
+      }
+    }
+    
+    // 5. 避免切断两个汉字中间 -30
+    const isChinese = /[\u4e00-\u9fff]/;
+    if (isChinese.test(beforeChar) && isChinese.test(afterChar)) {
+      const isPunctuationOrSpace = /[，、；：。！？,;:\.!?\s]/;
+      if (!isPunctuationOrSpace.test(beforeChar) && !isPunctuationOrSpace.test(afterChar)) {
+        score -= 30;
+      }
+    }
+    
+    // 6. 越接近 18 字越好
+    score -= Math.abs(i - 18);
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
+  }
+  
+  // 如果最高分过低，返回兜底值 18
+  if (bestScore < 0) {
+    return 18;
+  }
+  
+  return bestIndex;
+}
+
+/**
+ * 选择最佳断点（用于二次细分）：在 [min, max] 范围内找到最自然的断点位置
+ * @param s 需要切分的文本
+ * @param min 最小断点位置（默认 8）
+ * @param max 最大断点位置（默认 15）
+ * @param target 目标断点位置（默认 12）
+ * @returns 最佳断点位置
+ */
+function chooseBestBreakIndexForRefinement(s: string, min: number = 8, max: number = 15, target: number = 12): number {
+  const len = s.length;
+  if (len <= max) return len; // 不需要切分
+  
+  let bestIndex = target; // 兜底值
+  let bestScore = -Infinity;
+  
+  // 常见连接/转折词
+  const connectives = ['但是', '不过', '而', '而且', '所以', '因此', '然后', '如果', '因为', '虽然', '可是', '只是', '或者'];
+  
+  // 常见收尾词
+  const endings = ['了', '着', '过', '吧', '呢', '啊', '呀', '啦', '的'];
+  
+  // 枚举所有可能的断点
+  for (let i = min; i <= max && i < len; i++) {
+    let score = 0;
+    
+    // 1. 优先断在标点后 +100（最高分）
+    const beforeChar = s[i - 1];
+    const afterChar = s[i];
+    const punctuation = /[，、；：。！？,;:\.!?]/;
+    if (punctuation.test(beforeChar)) {
+      score += 100;
+    }
+    
+    // 2. 次优先断在连词/转折词前后边界 +60
+    for (const conn of connectives) {
+      // 检查是否在连接词前
+      if (i >= conn.length && s.substring(i - conn.length, i) === conn) {
+        score += 60;
+        break;
+      }
+      // 检查是否在连接词后
+      if (i + conn.length <= len && s.substring(i, i + conn.length) === conn) {
+        score += 60;
+        break;
+      }
+    }
+    
+    // 3. 次优先断在句末助词后 +40
+    if (endings.includes(beforeChar)) {
+      score += 40;
+    }
+    
+    // 4. 避免把两个汉字词切开 -30
+    const isChinese = /[\u4e00-\u9fff]/;
+    if (isChinese.test(beforeChar) && isChinese.test(afterChar)) {
+      const isPunctuationOrSpace = /[，、；：。！？,;:\.!?\s]/;
+      if (!isPunctuationOrSpace.test(beforeChar) && !isPunctuationOrSpace.test(afterChar)) {
+        score -= 30;
+      }
+    }
+    
+    // 5. 越接近 TARGET(12) 越好
+    score -= Math.abs(i - target);
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestIndex = i;
+    }
+  }
+  
+  return bestIndex;
+}
+
+/**
+ * 二次细分单个 segment：强制每个输出小段中文长度 ≤ MAX_CHARS
+ * @param seg 原始 segment
+ * @param words 所有 words（用于时间戳分配）
+ * @param segStart segment 的起始时间
+ * @param segEnd segment 的结束时间
+ * @returns 细分后的 segments 数组
+ */
+function refineSegment(
+  seg: any,
+  words: Array<{ word: string; start: number; end: number }> | null,
+  segStart: number,
+  segEnd: number
+): Array<{ text: string; start: number; end: number; isEstimated?: boolean }> {
+  const MAX_CHARS = 15;
+  const MIN_CHARS = 8;
+  const TARGET = 12;
+  
+  const text = seg.text?.trim() || '';
+  const textLength = text.length;
+  
+  // 如果长度 <= MAX_CHARS，直接返回
+  if (textLength <= MAX_CHARS) {
+    return [{
+      text: text,
+      start: segStart,
+      end: segEnd,
+      isEstimated: false,
+    }];
+  }
+  
+  // 如果没有 words，不要二次细分，直接用原 seg
+  if (!words || words.length === 0) {
+    return [{
+      text: text,
+      start: segStart,
+      end: segEnd,
+      isEstimated: false,
+    }];
+  }
+  
+  // 反复切分，直到每段 <= MAX_CHARS
+  const pieces: Array<{ text: string; start: number; end: number; isEstimated?: boolean }> = [];
+  let remainingText = text;
+  let currentStart = segStart;
+  
+  while (remainingText.length > MAX_CHARS) {
+    // 选择最佳断点
+    const breakIndex = chooseBestBreakIndexForRefinement(remainingText, MIN_CHARS, MAX_CHARS, TARGET);
+    const firstPart = remainingText.substring(0, breakIndex);
+    const secondPart = remainingText.substring(breakIndex);
+    
+    // 计算第一段的时间戳
+    const normalizedFirstPart = firstPart.replace(/[。！？\n.!?;:\s]+/g, '');
+    let pieceStart = currentStart;
+    let pieceEnd = segEnd;
+    let isEstimated = false;
+    
+    // 尝试匹配 words
+    if (normalizedFirstPart.length > 0) {
+      // 计算累计字符长度（从 segment 开始到当前 piece 之前）
+      let accumulatedLength = 0;
+      for (let i = 0; i < pieces.length; i++) {
+        const prevText = pieces[i].text.replace(/[。！？\n.!?;:\s]+/g, '');
+        accumulatedLength += prevText.length;
+      }
+      
+      // 找到匹配的 words
+      let wordStartIdx = -1;
+      let wordEndIdx = -1;
+      let wordPos = 0;
+      
+      for (let i = 0; i < words.length; i++) {
+        const wordText = words[i].word.replace(/\s+/g, '');
+        wordPos += wordText.length;
+        
+        // 找到当前 piece 的起始位置
+        if (wordStartIdx === -1 && wordPos > accumulatedLength) {
+          wordStartIdx = i;
+        }
+        
+        // 找到当前 piece 的结束位置
+        if (wordStartIdx >= 0 && wordPos >= accumulatedLength + normalizedFirstPart.length) {
+          wordEndIdx = i;
+          break;
+        }
+      }
+      
+      if (wordStartIdx >= 0 && wordEndIdx >= 0) {
+        // 找到了匹配的 words
+        pieceStart = words[wordStartIdx].start;
+        pieceEnd = words[wordEndIdx].end;
+        isEstimated = false;
+      } else {
+        // 匹配不到 words，使用 fallback
+        if (pieces.length > 0) {
+          pieceStart = pieces[pieces.length - 1].end;
+        } else {
+          pieceStart = currentStart;
+        }
+        const estimatedPieces = Math.ceil(textLength / TARGET);
+        pieceEnd = pieceStart + (segEnd - segStart) / estimatedPieces;
+        isEstimated = true;
+      }
+    }
+    
+    // 安全钳制
+    pieceStart = Math.max(segStart, pieceStart);
+    pieceEnd = Math.min(segEnd, Math.max(pieceStart + 0.05, pieceEnd));
+    
+    pieces.push({
+      text: firstPart,
+      start: pieceStart,
+      end: pieceEnd,
+      isEstimated: isEstimated,
+    });
+    
+    remainingText = secondPart;
+    currentStart = pieceEnd;
+  }
+  
+  // 添加最后一段
+  if (remainingText.trim().length > 0) {
+    let pieceStart = currentStart;
+    let pieceEnd = segEnd;
+    let isEstimated = false;
+    
+    const normalizedLastPart = remainingText.replace(/[。！？\n.!?;:\s]+/g, '');
+    if (normalizedLastPart.length > 0) {
+      // 计算累计字符长度
+      let accumulatedLength = 0;
+      for (let i = 0; i < pieces.length; i++) {
+        const prevText = pieces[i].text.replace(/[。！？\n.!?;:\s]+/g, '');
+        accumulatedLength += prevText.length;
+      }
+      
+      // 找到匹配的 words
+      let wordStartIdx = -1;
+      let wordEndIdx = -1;
+      let wordPos = 0;
+      
+      for (let i = 0; i < words.length; i++) {
+        const wordText = words[i].word.replace(/\s+/g, '');
+        wordPos += wordText.length;
+        
+        if (wordStartIdx === -1 && wordPos > accumulatedLength) {
+          wordStartIdx = i;
+        }
+        
+        if (wordStartIdx >= 0 && wordPos >= accumulatedLength + normalizedLastPart.length) {
+          wordEndIdx = i;
+          break;
+        }
+      }
+      
+      if (wordStartIdx >= 0 && wordEndIdx >= 0) {
+        pieceStart = words[wordStartIdx].start;
+        pieceEnd = words[wordEndIdx].end;
+        isEstimated = false;
+      } else {
+        // fallback
+        pieceStart = pieces.length > 0 ? pieces[pieces.length - 1].end : currentStart;
+        pieceEnd = segEnd;
+        isEstimated = true;
+      }
+    }
+    
+    // 安全钳制
+    pieceStart = Math.max(segStart, pieceStart);
+    pieceEnd = Math.min(segEnd, Math.max(pieceStart + 0.05, pieceEnd));
+    
+    pieces.push({
+      text: remainingText,
+      start: pieceStart,
+      end: pieceEnd,
+      isEstimated: isEstimated,
+    });
+  }
+  
+  return pieces;
+}
+
+/**
  * 语义分段：使用 ChatGPT API 将文本按语义自然分段
  * @param text 需要分段的文本
  * @param sourceLang 源语言
@@ -301,6 +656,9 @@ async function analyzeAudioWithChatGPT(audioFile: File, sourceLang: 'ko' | 'zh')
   formData.append('model', 'whisper-1');
   formData.append('language', sourceLang === 'ko' ? 'ko' : 'zh');
   formData.append('response_format', 'verbose_json'); // ⭐ 获取详细的时间戳信息
+  // ⭐ 请求 word-level 和 segment-level 时间戳
+  formData.append('timestamp_granularities[]', 'word');
+  formData.append('timestamp_granularities[]', 'segment');
 
   const transcriptionResponse = await fetch(`${apiUrl}/audio/transcriptions`, {
     method: 'POST',
@@ -923,6 +1281,9 @@ export async function callChatGPTApiWithAudioAndTranscription(
     formData.append('language', 'zh');
   }
   formData.append('response_format', 'verbose_json'); // ⭐ 获取详细的时间戳信息
+  // ⭐ 请求 word-level 和 segment-level 时间戳
+  formData.append('timestamp_granularities[]', 'word');
+  formData.append('timestamp_granularities[]', 'segment');
 
   const transcriptionResponse = await fetch(`${apiUrl}/audio/transcriptions`, {
     method: 'POST',
@@ -1021,25 +1382,46 @@ export async function callChatGPTApiWithAudioAndTranscription(
   // ⭐ 越界时间过滤：在生成 baseLines 之前
   const audioDuration = transcriptionData.duration || 0;
   const originalSegmentsCount = transcriptionData.segments.length;
-  const filteredSegments = transcriptionData.segments.filter((seg: any) => {
-    const startSec = seg.start || 0;
-    const endSec = seg.end || 0;
-    const isValid = startSec >= 0 && 
-                    endSec > startSec && 
-                    endSec <= audioDuration;
-    
-    if (!isValid) {
-      console.warn(
-        `[Segment Filter] 删除越界 segment: start=${startSec}, end=${endSec}, duration=${audioDuration}`
-      );
-    }
-    
-    return isValid;
-  });
   
-  console.log(
-    `[Segment Filter] 过滤前=${originalSegmentsCount} 过滤后=${filteredSegments.length}`
-  );
+  // ⭐ 检查 duration 是否可信
+  const lastSegment = transcriptionData.segments[transcriptionData.segments.length - 1];
+  const lastEnd = lastSegment?.end || 0;
+  const isDurationReliable = audioDuration > 0 && audioDuration >= (lastEnd - 0.05);
+  
+  let filteredSegments: any[];
+  if (!isDurationReliable) {
+    // duration 不可信，跳过过滤
+    console.warn(`⚠️ [Segment Filter] duration 不可信，跳过过滤: duration=${audioDuration}, lastEnd=${lastEnd}`);
+    filteredSegments = transcriptionData.segments;
+  } else {
+    // duration 可信，执行过滤
+    filteredSegments = transcriptionData.segments.filter((seg: any) => {
+      const startSec = seg.start || 0;
+      const endSec = seg.end || 0;
+      const isValid = startSec >= 0 && 
+                      endSec > startSec && 
+                      endSec <= audioDuration;
+      
+      if (!isValid) {
+        console.warn(
+          `[Segment Filter] 删除越界 segment: start=${startSec}, end=${endSec}, duration=${audioDuration}`
+        );
+      }
+      
+      return isValid;
+    });
+    
+    console.log(
+      `[Segment Filter] 过滤前=${originalSegmentsCount} 过滤后=${filteredSegments.length}`
+    );
+  }
+
+  // ⭐ 增加统一日志用于对比中韩
+  console.log('[ASR Shape]', {
+    segments: transcriptionData.segments?.length,
+    topWords: transcriptionData.words?.length,
+    seg0Words: transcriptionData.segments?.[0]?.words?.length
+  });
 
   // ⭐ 单段处理：如果只有一个 segment，尝试分段
   let finalSegments = filteredSegments;
@@ -1050,59 +1432,84 @@ export async function callChatGPTApiWithAudioAndTranscription(
     const segmentEnd = singleSegment.end || 0;
     const segmentDuration = segmentEnd - segmentStart;
     
+    // ⭐ 统一获取 words：优先从 segments[0].words 获取，如果没有再从 transcriptionData.words 获取
+    const rawWords = transcriptionData.segments?.[0]?.words ?? transcriptionData.words;
+    const hasWords = rawWords && Array.isArray(rawWords) && rawWords.length > 0;
+    
     console.log('⚠️ [Single Segment] 检测到只有一个 segment，尝试分段...', {
       text: segmentText.substring(0, 50) + '...',
       start: segmentStart,
       end: segmentEnd,
       duration: segmentDuration,
-      hasWords: transcriptionData.words && transcriptionData.words.length > 0,
+      hasWords: hasWords,
+      wordsSource: transcriptionData.segments?.[0]?.words ? 'segments[0].words' : 'transcriptionData.words',
     });
     
-    // 策略1：按标点符号分段（保留标点符号）
-    const punctuationRegex = /([。！？\n.!?;:]+)/;
-    const parts = segmentText.split(punctuationRegex);
-    const sentences: string[] = [];
-    let currentSentence = '';
-    
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (punctuationRegex.test(part)) {
-        // 这是标点符号
-        currentSentence += part;
+    // ⭐ 如果没有 word-level timestamps，跳过分段，直接使用原始单个 segment
+    if (!hasWords) {
+      console.warn('⚠️ [Single Segment] 没有 word-level timestamps，跳过分段，使用原始单个 segment');
+      finalSegments = [{
+        text: segmentText,
+        start: segmentStart,
+        end: segmentEnd,
+      }];
+    } else {
+      // 有 words，尝试分段并使用 word-level timestamps 分配时间戳
+      
+      // 将 words 按顺序排列（使用 rawWords 作为数据源）
+      const words = rawWords
+        .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
+        .map((w: any) => ({
+          word: w.word || w.text || '',
+          start: w.start || w.start_time || 0,
+          end: w.end || w.end_time || 0,
+        }))
+        .sort((a: any, b: any) => a.start - b.start);
+      
+      if (words.length > 0) {
+        // 策略1：按标点符号分段（保留标点符号）
+        const punctuationRegex = /([。！？\n.!?;:]+)/;
+        const parts = segmentText.split(punctuationRegex);
+        const sentences: string[] = [];
+        let currentSentence = '';
+        
+        for (let i = 0; i < parts.length; i++) {
+          const part = parts[i];
+          if (punctuationRegex.test(part)) {
+            // 这是标点符号
+            currentSentence += part;
+            if (currentSentence.trim()) {
+              sentences.push(currentSentence.trim());
+              currentSentence = '';
+            }
+          } else {
+            // 这是文本
+            currentSentence += part;
+          }
+        }
+        // 添加最后一段（如果有）
         if (currentSentence.trim()) {
           sentences.push(currentSentence.trim());
-          currentSentence = '';
         }
-      } else {
-        // 这是文本
-        currentSentence += part;
-      }
-    }
-    // 添加最后一段（如果有）
-    if (currentSentence.trim()) {
-      sentences.push(currentSentence.trim());
-    }
-    
-    const punctuationSplit = sentences.filter(s => s.trim().length > 0);
-    
-    if (punctuationSplit.length > 1) {
-      console.log('✅ [Single Segment] 标点分段成功，分为', punctuationSplit.length, '段');
-      
-      // ⭐ 使用 word-level timestamps 分配时间戳（如果可用）
-      if (transcriptionData.words && Array.isArray(transcriptionData.words) && transcriptionData.words.length > 0) {
-        console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
         
-        // 将 words 按顺序排列
-        const words = transcriptionData.words
-          .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
-          .map((w: any) => ({
-            word: w.word || w.text || '',
-            start: w.start || w.start_time || 0,
-            end: w.end || w.end_time || 0,
-          }))
-          .sort((a: any, b: any) => a.start - b.start);
+        let punctuationSplit = sentences.filter(s => s.trim().length > 0);
         
-        if (words.length > 0) {
+        // ⭐ 长句二次切分：当某段长度 > 22 时，在 12~22 字之间选择最自然断点切开
+        punctuationSplit = punctuationSplit.flatMap((segment) => {
+          const trimmed = segment.trim();
+          if (trimmed.length > 22) {
+            const breakIndex = chooseBestBreakIndex(trimmed, 12, 22);
+            const firstPart = trimmed.substring(0, breakIndex);
+            const secondPart = trimmed.substring(breakIndex);
+            console.log(`✂️ [长句切分] 分段长度 ${trimmed.length} > 22，在位置 ${breakIndex} 切分: "${firstPart}" | "${secondPart}"`);
+            return [firstPart, secondPart].filter(s => s.trim().length > 0);
+          }
+          return [segment];
+        });
+        
+        if (punctuationSplit.length > 1) {
+          console.log('✅ [Single Segment] 标点分段成功，分为', punctuationSplit.length, '段');
+          console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
           // 为每个分段找到对应的 words
           // 构建完整的 words 文本（去除空格和标点），用于匹配
           const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
@@ -1118,6 +1525,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
                 text: text.trim(),
                 start: segmentStart,
                 end: segmentEnd,
+                isEstimated: false,
               };
             }
             
@@ -1166,57 +1574,88 @@ export async function callChatGPTApiWithAudioAndTranscription(
                 text: text.trim(),
                 start: startTime,
                 end: endTime,
+                isEstimated: false,
               };
             } else {
-              // 如果找不到匹配，使用原始时间戳（共享）
-              console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，使用原始时间戳`);
+              // 如果找不到匹配，使用 fallback 时间戳（稍后处理）
+              console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，将使用 fallback 时间戳`);
               return {
                 text: text.trim(),
-                start: segmentStart,
-                end: segmentEnd,
+                start: 0, // 占位符，稍后计算
+                end: 0,   // 占位符，稍后计算
+                isEstimated: true,
+                _needsFallback: true,
+                _index: index,
               };
             }
           });
-        } else {
-          // words 为空，使用原始时间戳（共享）
-          console.warn('⚠️ [Single Segment] words 数组为空，使用原始时间戳（共享）');
-          finalSegments = punctuationSplit.map((text) => ({
-            text: text.trim(),
-            start: segmentStart,
-            end: segmentEnd,
-          }));
-        }
-      } else {
-        // 没有 words，使用原始时间戳（共享）
-        console.warn('⚠️ [Single Segment] 没有 word-level timestamps，使用原始时间戳（共享）');
-        finalSegments = punctuationSplit.map((text) => ({
-          text: text.trim(),
-          start: segmentStart,
-          end: segmentEnd,
-        }));
-      }
-    } else {
-      // 策略2：语义分段（调用 ChatGPT API）
-      console.log('⚠️ [Single Segment] 标点分段失败，尝试语义分段...');
-      try {
-        const semanticSegments = await segmentTextBySemantics(segmentText, sourceLang);
-        if (semanticSegments.length > 1) {
-          console.log('✅ [Single Segment] 语义分段成功，分为', semanticSegments.length, '段');
           
-          // ⭐ 使用 word-level timestamps 分配时间戳（如果可用）
-          if (transcriptionData.words && Array.isArray(transcriptionData.words) && transcriptionData.words.length > 0) {
-            console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
+          // ⭐ 处理 fallback 时间戳：确保时间单调递增
+          const totalSegments = punctuationSplit.length;
+          // 先处理所有分段，按顺序计算时间戳
+          for (let index = 0; index < finalSegments.length; index++) {
+            const seg = finalSegments[index];
+            if (seg._needsFallback) {
+              // 计算 fallback 时间戳
+              let start: number;
+              if (index > 0) {
+                // 使用前一个分段的 end（此时前一个分段已经处理过）
+                start = finalSegments[index - 1].end;
+              } else {
+                start = segmentStart;
+              }
+              
+              let end: number;
+              if (index === totalSegments - 1) {
+                // 最后一个分段，使用 segmentEnd
+                end = segmentEnd;
+              } else {
+                // 平均分配剩余时间
+                end = start + (segmentEnd - segmentStart) / totalSegments;
+              }
+              
+              // ⭐ 安全钳制
+              start = Math.max(segmentStart, start);
+              end = Math.min(segmentEnd, Math.max(start + 0.05, end));
+              
+              console.log(`⚠️ [Single Segment] 分段[${index}] 使用 fallback 时间戳: ${start}-${end}`);
+              
+              // 更新分段
+              finalSegments[index] = {
+                text: seg.text,
+                start: start,
+                end: end,
+                isEstimated: true,
+              };
+            }
+          }
+          
+          // ⭐ 确保 finalSegments.length === punctuationSplit.length
+          if (finalSegments.length !== punctuationSplit.length) {
+            console.error(`❌ [Single Segment] finalSegments.length (${finalSegments.length}) !== punctuationSplit.length (${punctuationSplit.length})`);
+          }
+        } else {
+          // 标点分段失败，尝试语义分段
+          console.log('⚠️ [Single Segment] 标点分段失败，尝试语义分段...');
+          try {
+            let semanticSegments = await segmentTextBySemantics(segmentText, sourceLang);
             
-            const words = transcriptionData.words
-              .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
-              .map((w: any) => ({
-                word: w.word || w.text || '',
-                start: w.start || w.start_time || 0,
-                end: w.end || w.end_time || 0,
-              }))
-              .sort((a: any, b: any) => a.start - b.start);
+            // ⭐ 长句二次切分：当某段长度 > 22 时，在 12~22 字之间选择最自然断点切开
+            semanticSegments = semanticSegments.flatMap((segment) => {
+              const trimmed = segment.trim();
+              if (trimmed.length > 22) {
+                const breakIndex = chooseBestBreakIndex(trimmed, 12, 22);
+                const firstPart = trimmed.substring(0, breakIndex);
+                const secondPart = trimmed.substring(breakIndex);
+                console.log(`✂️ [长句切分] 分段长度 ${trimmed.length} > 22，在位置 ${breakIndex} 切分: "${firstPart}" | "${secondPart}"`);
+                return [firstPart, secondPart].filter(s => s.trim().length > 0);
+              }
+              return [segment];
+            });
             
-            if (words.length > 0) {
+            if (semanticSegments.length > 1) {
+              console.log('✅ [Single Segment] 语义分段成功，分为', semanticSegments.length, '段');
+              console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
               // 为每个分段找到对应的 words
               // 构建完整的 words 文本（去除空格和标点），用于匹配
               const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
@@ -1279,44 +1718,149 @@ export async function callChatGPTApiWithAudioAndTranscription(
                     text: text.trim(),
                     start: startTime,
                     end: endTime,
+                    isEstimated: false,
                   };
                 } else {
-                  // 如果找不到匹配，使用原始时间戳（共享）
-                  console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，使用原始时间戳`);
+                  // 如果找不到匹配，使用 fallback 时间戳（稍后处理）
+                  console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，将使用 fallback 时间戳`);
                   return {
                     text: text.trim(),
-                    start: segmentStart,
-                    end: segmentEnd,
+                    start: 0, // 占位符，稍后计算
+                    end: 0,   // 占位符，稍后计算
+                    isEstimated: true,
+                    _needsFallback: true,
+                    _index: index,
                   };
                 }
               });
+              
+              // ⭐ 处理 fallback 时间戳：确保时间单调递增
+              const totalSegments = semanticSegments.length;
+              // 先处理所有分段，按顺序计算时间戳
+              for (let index = 0; index < finalSegments.length; index++) {
+                const seg = finalSegments[index];
+                if (seg._needsFallback) {
+                  // 计算 fallback 时间戳
+                  let start: number;
+                  if (index > 0) {
+                    // 使用前一个分段的 end（此时前一个分段已经处理过）
+                    start = finalSegments[index - 1].end;
+                  } else {
+                    start = segmentStart;
+                  }
+                  
+                  let end: number;
+                  if (index === totalSegments - 1) {
+                    // 最后一个分段，使用 segmentEnd
+                    end = segmentEnd;
+                  } else {
+                    // 平均分配剩余时间
+                    end = start + (segmentEnd - segmentStart) / totalSegments;
+                  }
+                  
+                  // ⭐ 安全钳制
+                  start = Math.max(segmentStart, start);
+                  end = Math.min(segmentEnd, Math.max(start + 0.05, end));
+                  
+                  console.log(`⚠️ [Single Segment] 分段[${index}] 使用 fallback 时间戳: ${start}-${end}`);
+                  
+                  // 更新分段
+                  finalSegments[index] = {
+                    text: seg.text,
+                    start: start,
+                    end: end,
+                    isEstimated: true,
+                  };
+                }
+              }
+              
+              // ⭐ 确保 finalSegments.length === semanticSegments.length
+              if (finalSegments.length !== semanticSegments.length) {
+                console.error(`❌ [Single Segment] finalSegments.length (${finalSegments.length}) !== semanticSegments.length (${semanticSegments.length})`);
+              }
             } else {
-              finalSegments = semanticSegments.map((text) => ({
-                text: text.trim(),
+              // 语义分段失败（length <= 1），使用原始单个 segment
+              console.log('⚠️ [Single Segment] 语义分段也失败，使用原始单个 segment');
+              finalSegments = [{
+                text: segmentText,
                 start: segmentStart,
                 end: segmentEnd,
-              }));
+              }];
             }
-          } else {
-            // 没有 words，使用原始时间戳（共享）
-            console.warn('⚠️ [Single Segment] 没有 word-level timestamps，使用原始时间戳（共享）');
-            finalSegments = semanticSegments.map((text) => ({
-              text: text.trim(),
+          } catch (error) {
+            console.error('❌ [Single Segment] 语义分段失败:', error);
+            console.log('⚠️ [Single Segment] 使用原始单个 segment');
+            finalSegments = [{
+              text: segmentText,
               start: segmentStart,
               end: segmentEnd,
-            }));
+            }];
           }
-        } else {
-          console.log('⚠️ [Single Segment] 语义分段也失败，使用原始单个 segment');
         }
-      } catch (error) {
-        console.error('❌ [Single Segment] 语义分段失败:', error);
-        console.log('⚠️ [Single Segment] 使用原始单个 segment');
+      } else {
+        // words 为空，跳过分段，使用原始单个 segment
+        console.warn('⚠️ [Single Segment] words 数组为空，跳过分段，使用原始单个 segment');
+        finalSegments = [{
+          text: segmentText,
+          start: segmentStart,
+          end: segmentEnd,
+        }];
       }
     }
   }
+  
+  // ⭐ 确保 finalSegments 至少有一个元素
+  if (finalSegments.length === 0) {
+    console.error('❌ [Single Segment] finalSegments 为空，使用原始 segment');
+    finalSegments = filteredSegments.length > 0 ? filteredSegments : [{
+      text: '',
+      start: 0,
+      end: 0,
+    }];
+  }
 
-  const baseLines: OpalLine[] = finalSegments.map((seg: any, i: number) => ({
+  // ⭐ 二次细分：对所有 finalSegments 进行细分，强制每个输出小段中文长度 ≤ 15 字
+  const rawWords = transcriptionData.segments?.[0]?.words ?? transcriptionData.words;
+  const hasWords = rawWords && Array.isArray(rawWords) && rawWords.length > 0;
+  
+  let refinedSegments: Array<{ text: string; start: number; end: number; isEstimated?: boolean }> = [];
+  
+  if (hasWords) {
+    // 准备 words 数组
+    const words = rawWords
+      .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
+      .map((w: any) => ({
+        word: w.word || w.text || '',
+        start: w.start || w.start_time || 0,
+        end: w.end || w.end_time || 0,
+      }))
+      .sort((a: any, b: any) => a.start - b.start);
+    
+    // 对每个 finalSegment 进行细分
+    for (const seg of finalSegments) {
+      const segStart = seg.start || 0;
+      const segEnd = seg.end || 0;
+      
+      // 获取属于该 seg 时间范围内的 words
+      const segWords = words.filter((w: any) => w.start >= segStart && w.end <= segEnd);
+      
+      const refined = refineSegment(seg, segWords.length > 0 ? segWords : words, segStart, segEnd);
+      refinedSegments.push(...refined);
+    }
+    
+    console.log(`✂️ [二次细分] 原始 ${finalSegments.length} 个 segments，细分后 ${refinedSegments.length} 个 segments`);
+  } else {
+    // 没有 words，不要二次细分，直接用原 finalSegments
+    refinedSegments = finalSegments.map((seg: any) => ({
+      text: seg.text?.trim() || '',
+      start: seg.start || 0,
+      end: seg.end || 0,
+      isEstimated: false,
+    }));
+    console.log('⚠️ [二次细分] 没有 word-level timestamps，跳过细分，使用原始 segments');
+  }
+
+  const baseLines: OpalLine[] = refinedSegments.map((seg: any, i: number) => ({
     lineNo: i + 1,
     lineId: `seg_${i}`,
     displayLine: seg.text?.trim() || '',
@@ -1807,6 +2351,9 @@ export async function transcribeAudio(audioBlob: Blob): Promise<string> {
   formData.append('model', 'whisper-1');
   formData.append('language', 'zh'); // 跟读是中文
   formData.append('response_format', 'verbose_json'); // ⭐ 获取详细的时间戳信息
+  // ⭐ 请求 word-level 和 segment-level 时间戳
+  formData.append('timestamp_granularities[]', 'word');
+  formData.append('timestamp_granularities[]', 'segment');
 
   const response = await fetch(`${apiUrl}/audio/transcriptions`, {
     method: 'POST',

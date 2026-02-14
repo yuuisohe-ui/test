@@ -1892,11 +1892,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     }, [allPatterns, patternSearch]);
 
     if (linesAll.length === 0) {
-      return (
-        <div className="bg-white border rounded-2xl p-6 text-gray-600 text-center">
-          暂无数据，请先进行分析。
-        </div>
-      );
+      return null;
     }
 
     return (
