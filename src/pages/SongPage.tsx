@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 
 /**
  * 将语言代码统一映射为内部格式（与 chatgptApi.ts 中的 normalizeWhisperLanguage 保持一致）
@@ -28,6 +28,7 @@ import { SentenceView } from "../components/SentenceView";
 import { AnalysisTable } from "../components/AnalysisTable";
 import { TTSButton } from "../components/TTSButton";
 import { SingAlongButton } from "../components/SingAlongButton";
+import { AudioPlayer } from "../components/AudioPlayer";
 import { SentenceData } from "../types";
 import { SongPayload } from "../data/opalMock";
 import { callOpalApiWithAudio, callOpalApiWithText } from "../services/opalApi";
@@ -448,7 +449,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [languageMode, setLanguageMode] = useState<'auto' | 'ko' | 'zh'>('auto');
+  const [languageMode, setLanguageMode] = useState<'ko' | 'zh' | null>(null);
+  const [showLanguageTip, setShowLanguageTip] = useState(false);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   
   // initialLyrics가 변경되면 rawText 업데이트
@@ -641,7 +643,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   // 星标状态
   const [starMap, setStarMap] = useState<StarMap>({});
   const [userLevel, setUserLevel] = useState<"初级" | "中级" | "高级" | null>(null);
-  const [studyMode, setStudyMode] = useState<"整段学习" | "分段学习" | "分句学习">("分句学习");
+  const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
   const [showLevelWarning, setShowLevelWarning] = useState(false);
 
   useEffect(() => {
@@ -795,6 +797,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     } else {
       setAudioHint(`✅ 文件 "${f.name}" 已成功选择！请点击"开始转写 / 分析"按钮开始今天的学习吧！`);
     }
+    // ⭐ 上传音频文件后，如果未选择语言，显示提示
+    if (!languageMode) {
+      setShowLanguageTip(true);
+    }
   }
 
   // 拖拽事件处理
@@ -939,6 +945,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           // 음성 전사 단계 (20-50%)
           setLoadingMessage("음성 파일을 텍스트로 변환 중... (30%)");
           setLoadingProgress(30);
+          
+          // 检查语言是否已选择
+          if (!languageMode || (languageMode !== 'ko' && languageMode !== 'zh')) {
+            alert('请先选择音频语言（中文或韩文）');
+            setIsLoading(false);
+            setLoadingProgress(0);
+            setLoadingMessage("");
+            return;
+          }
           
           // 使用优化后的函数，只调用一次 Whisper API，同时获取转写文本和分析结果
           const { result: apiResult, transcribedText: transcribed, detectedLang: whisperDetectedLang } = 
@@ -1315,6 +1330,1102 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     );
   }
 
+  // 整段学习视图组件
+  function WholeParagraphView({
+    linesAll,
+    audioFile,
+    audioUrl,
+    opalPayload,
+    rawText,
+    transcribedText,
+    translationCache,
+    originalText,
+    userLevel,
+  }: {
+    linesAll: any[];
+    audioFile: File | null;
+    audioUrl?: string;
+    opalPayload: SongPayload | null;
+    rawText: string;
+    transcribedText: string;
+    translationCache: Record<string, string>;
+    originalText: string;
+    userLevel: "初级" | "中级" | "高级" | null;
+  }) {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const [currentPlayingLineNo, setCurrentPlayingLineNo] = useState<number | null>(null);
+    const [isPlaying, setIsPlaying] = useState(false);
+    const [audioDuration, setAudioDuration] = useState(0);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [isDragging, setIsDragging] = useState(false);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+    const blobUrlRef = useRef<string | null>(null);
+    const lineRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+    const [vocabSearch, setVocabSearch] = useState("");
+    const [patternSearch, setPatternSearch] = useState("");
+    const [showVocabSummary, setShowVocabSummary] = useState(true);
+    const [showPatternSummary, setShowPatternSummary] = useState(true);
+    // 词汇展开状态：控制每个组的展开/收起
+    const [vocabGroupExpanded, setVocabGroupExpanded] = useState({
+      current: true,    // 当前重点默认展开
+      advanced: false,  // 提升词默认收起
+      basic: false     // 基础词默认收起
+    });
+
+    // 时间格式化函数：将秒数转换为 "分:秒" 格式
+    const formatTime = (seconds: number): string => {
+      if (isNaN(seconds) || !isFinite(seconds)) return '0:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // 根据时间找到对应的歌词行
+    const findLineByTime = (time: number): number | null => {
+      const line = linesAll.find((line: any) => {
+        const startSec = line?.startSec ?? 0;
+        const endSec = line?.endSec ?? 0;
+        return time >= startSec && time < endSec;
+      });
+      return line ? Number(line?.lineNo ?? 0) : null;
+    };
+
+    // 获取句子的拼音（从 tokens 或 chunks 中提取）
+    const getPinyinForSentence = (line: any): string => {
+      const data = opalLineToSentenceData(line);
+      // 优先从 tokens 中提取拼音
+      if (data.tokens && data.tokens.length > 0) {
+        const pinyinArray = data.tokens
+          .map((token: any) => token.pinyin || '')
+          .filter((p: string) => p.trim().length > 0);
+        if (pinyinArray.length > 0) {
+          return pinyinArray.join(' ');
+        }
+      }
+      // 如果 tokens 没有拼音，从 chunks 中提取
+      if (data.chunks && data.chunks.length > 0) {
+        const pinyinArray = data.chunks
+          .map((chunk: any) => chunk.pinyin || '')
+          .filter((p: string) => p.trim().length > 0);
+        if (pinyinArray.length > 0) {
+          return pinyinArray.join(' ');
+        }
+      }
+      return '';
+    };
+
+    // 初始化音频
+    useEffect(() => {
+      if (!audioFile && !audioUrl) return;
+
+      const audio = new Audio();
+      let blobUrl: string | null = null;
+      
+      if (audioFile) {
+        blobUrl = URL.createObjectURL(audioFile);
+        audio.src = blobUrl;
+        blobUrlRef.current = blobUrl;
+      } else if (audioUrl) {
+        audio.src = audioUrl;
+      }
+
+      audioRef.current = audio;
+
+      // 播放状态同步
+      const handlePlay = () => {
+        setIsPlaying(true);
+      };
+      
+      const handlePause = () => {
+        setIsPlaying(false);
+      };
+
+      audio.addEventListener('loadedmetadata', () => {
+        setAudioDuration(audio.duration);
+      });
+
+      audio.addEventListener('play', handlePlay);
+      audio.addEventListener('pause', handlePause);
+
+      audio.addEventListener('timeupdate', () => {
+        // 更新当前播放时间（只有在不拖动时才更新，避免拖动时闪烁）
+        if (!isDragging) {
+          setCurrentTime(audio.currentTime);
+        }
+
+        // 找到当前播放时间对应的句子
+        const currentLine = linesAll.find((line: any) => {
+          const startSec = line?.startSec ?? 0;
+          const endSec = line?.endSec ?? 0;
+          return audio.currentTime >= startSec && audio.currentTime < endSec;
+        });
+
+        if (currentLine) {
+          const lineNo = Number(currentLine?.lineNo ?? 0);
+          if (lineNo !== currentPlayingLineNo) {
+            setCurrentPlayingLineNo(lineNo);
+            // 自动滚动到当前句
+            scrollToCurrentLine(lineNo);
+          }
+        } else {
+          // 如果找不到匹配的行，可能是播放到最后了
+          if (audio.currentTime >= audio.duration - 0.1) {
+            setCurrentPlayingLineNo(null);
+          }
+        }
+      });
+
+      audio.addEventListener('ended', () => {
+        setIsPlaying(false);
+        setCurrentPlayingLineNo(null);
+        setCurrentTime(0);
+      });
+
+      // 错误处理
+      audio.addEventListener('error', (e) => {
+        console.error('音频播放错误:', e);
+        setIsPlaying(false);
+      });
+
+      return () => {
+        audio.pause();
+        audio.removeEventListener('play', handlePlay);
+        audio.removeEventListener('pause', handlePause);
+        audio.src = '';
+        // 清理 blob URL
+        if (blobUrlRef.current) {
+          URL.revokeObjectURL(blobUrlRef.current);
+          blobUrlRef.current = null;
+        }
+      };
+    }, [audioFile, audioUrl, linesAll, isDragging]);
+
+    // 自动滚动到当前句（相对于卡片容器，不是整个页面）
+    const scrollToCurrentLine = (lineNo: number) => {
+      const lineElement = lineRefs.current[lineNo];
+      const container = scrollContainerRef.current;
+      
+      if (!lineElement || !container) return;
+      
+      const totalLines = linesAll.length;
+      const isFirstLine = lineNo === 1;
+      const isLastLine = lineNo === totalLines;
+      
+      // 第一句：滚动到顶部
+      if (isFirstLine) {
+        container.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        return;
+      }
+      
+      // 最后一句：滚动到底部
+      if (isLastLine) {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth'
+        });
+        return;
+      }
+      
+      // 其他句子：保持在卡片容器中间
+      const containerRect = container.getBoundingClientRect();
+      const lineRect = lineElement.getBoundingClientRect();
+      
+      // 计算目标滚动位置：让句子在容器中间
+      const containerCenter = containerRect.height / 2;
+      const lineOffset = lineRect.top - containerRect.top;
+      const currentScroll = container.scrollTop;
+      
+      // 目标位置：当前滚动位置 + 句子相对于容器的偏移 - 容器中心 + 句子高度的一半
+      const targetScroll = currentScroll + lineOffset - containerCenter + (lineRect.height / 2);
+      
+      container.scrollTo({
+        top: Math.max(0, targetScroll),
+        behavior: 'smooth'
+      });
+    };
+
+    // 播放/暂停控制
+    const togglePlay = async () => {
+      if (!audioRef.current) return;
+      
+      try {
+        if (isPlaying) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          await audioRef.current.play();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error('播放失败:', error);
+        setIsPlaying(false);
+      }
+    };
+
+    // 处理进度条拖动
+    const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!audioRef.current) return;
+      
+      const newTime = parseFloat(e.target.value);
+      setCurrentTime(newTime);
+      
+      // 找到对应时间的歌词行
+      const lineNo = findLineByTime(newTime);
+      if (lineNo) {
+        setCurrentPlayingLineNo(lineNo);
+        scrollToCurrentLine(lineNo);
+      }
+    };
+
+    // 开始拖动
+    const handleProgressMouseDown = () => {
+      setIsDragging(true);
+    };
+
+    // 结束拖动，跳转到新位置
+    const handleProgressMouseUp = (e: React.MouseEvent<HTMLInputElement>) => {
+      if (!audioRef.current) return;
+      
+      const newTime = parseFloat((e.target as HTMLInputElement).value);
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      setIsDragging(false);
+      
+      // 找到对应时间的歌词行
+      const lineNo = findLineByTime(newTime);
+      if (lineNo) {
+        setCurrentPlayingLineNo(lineNo);
+        scrollToCurrentLine(lineNo);
+      }
+    };
+
+    // 处理进度条点击（点击进度条任意位置跳转）
+    const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!audioRef.current || !audioDuration) return;
+      
+      const progressBar = e.currentTarget;
+      const rect = progressBar.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const percentage = clickX / rect.width;
+      const newTime = Math.max(0, Math.min(audioDuration, percentage * audioDuration));
+      
+      audioRef.current.currentTime = newTime;
+      setCurrentTime(newTime);
+      
+      // 找到对应时间的歌词行
+      const lineNo = findLineByTime(newTime);
+      if (lineNo) {
+        setCurrentPlayingLineNo(lineNo);
+        scrollToCurrentLine(lineNo);
+      }
+    };
+
+    // 处理句子点击：跳转到该句子的起始位置并开始播放（只在点击空白处时触发）
+    const handleLineClick = (e: React.MouseEvent<HTMLElement>, lineNo: number) => {
+      // 检查点击的目标元素，如果是词卡相关元素，则不触发音频跳转
+      const target = e.target as HTMLElement;
+      if (target && (
+        target.closest('[data-word]') || // 词卡元素
+        target.closest('[data-word-tooltip]') || // 词卡工具提示
+        target.hasAttribute('data-word') || // 直接点击词卡
+        target.closest('.word-tooltip') // 词卡容器（如果有这个class）
+      )) {
+        // 点击的是词卡，不触发音频跳转
+        return;
+      }
+      
+      if (!audioRef.current) return;
+      
+      const line = linesAll.find((l: any) => Number(l?.lineNo ?? 0) === lineNo);
+      if (!line) return;
+      
+      const startSec = line?.startSec ?? 0;
+      if (startSec >= 0 && startSec < audioDuration) {
+        audioRef.current.currentTime = startSec;
+        setCurrentTime(startSec);
+        setCurrentPlayingLineNo(lineNo);
+        scrollToCurrentLine(lineNo);
+        
+        // 开始播放
+        audioRef.current.play().catch((error) => {
+          console.error('播放失败:', error);
+        });
+        setIsPlaying(true);
+      }
+    };
+
+    // 汇总所有词汇（去重）
+    const allVocabulary = useMemo(() => {
+      const vocabMap = new Map<string, any>();
+      
+      linesAll.forEach((line: any) => {
+        const data = opalLineToSentenceData(line);
+        // 从 tokens 中提取词汇
+        if (data.tokens && data.tokens.length > 0) {
+          data.tokens.forEach((token: any) => {
+            const word = token.text?.trim();
+            if (word && !vocabMap.has(word)) {
+              vocabMap.set(word, {
+                word: word,
+                pinyin: token.pinyin || "",
+                korean: token.glossKr || "",
+                example: token.example || "",
+                hskLevel: token.hskLevel || 1,
+              });
+            }
+          });
+        }
+        // 从 chunks 中提取词汇
+        if (data.chunks && data.chunks.length > 0) {
+          data.chunks.forEach((chunk: any) => {
+            const word = chunk.text?.trim();
+            if (word && !vocabMap.has(word)) {
+              vocabMap.set(word, {
+                word: word,
+                pinyin: chunk.pinyin || "",
+                korean: chunk.explanation || "",
+                example: "",
+                hskLevel: chunk.hskLevel || 1,
+              });
+            }
+          });
+        }
+      });
+      
+      return Array.from(vocabMap.values());
+    }, [linesAll]);
+
+    // 按 HSK 级别分组词汇
+    const vocabularyByHSK = useMemo(() => {
+      const grouped: Record<number, any[]> = {};
+      allVocabulary.forEach(vocab => {
+        const level = vocab.hskLevel || 1;
+        if (!grouped[level]) grouped[level] = [];
+        grouped[level].push(vocab);
+      });
+      return grouped;
+    }, [allVocabulary]);
+
+    // 根据用户等级将词汇分为三组：当前重点、提升词、基础词
+    const vocabularyGroups = useMemo(() => {
+      if (!userLevel) {
+        // 如果没有选择等级，所有词汇都归为"当前重点"
+        return {
+          current: allVocabulary,
+          advanced: [],
+          basic: []
+        };
+      }
+
+      // 定义等级对应的HSK级别范围
+      const levelRanges: Record<string, { current: number[], advanced: number[], basic: number[] }> = {
+        "初级": {
+          current: [1, 2],      // HSK 1-2
+          advanced: [3, 4],     // HSK 3-4
+          basic: []             // 无基础词
+        },
+        "中级": {
+          current: [3, 4],      // HSK 3-4
+          advanced: [5, 6],     // HSK 5-6
+          basic: [1, 2]         // HSK 1-2
+        },
+        "高级": {
+          current: [5, 6],      // HSK 5-6
+          advanced: [],         // 无提升词
+          basic: [1, 2, 3, 4]   // HSK 1-4
+        }
+      };
+
+      const ranges = levelRanges[userLevel];
+      if (!ranges) {
+        return {
+          current: allVocabulary,
+          advanced: [],
+          basic: []
+        };
+      }
+
+      const currentVocab: any[] = [];
+      const advancedVocab: any[] = [];
+      const basicVocab: any[] = [];
+
+      allVocabulary.forEach(vocab => {
+        const hskLevel = vocab.hskLevel || 1;
+        
+        // 当前重点
+        if (ranges.current.includes(hskLevel)) {
+          currentVocab.push(vocab);
+        }
+        // 提升词
+        else if (Array.isArray(ranges.advanced) && ranges.advanced.length > 0 && ranges.advanced.includes(hskLevel)) {
+          advancedVocab.push(vocab);
+        }
+        // 基础词
+        else if (Array.isArray(ranges.basic) && ranges.basic.length > 0) {
+          if (ranges.basic.includes(hskLevel)) {
+            basicVocab.push(vocab);
+          }
+        }
+      });
+
+      return {
+        current: currentVocab,
+        advanced: advancedVocab,
+        basic: basicVocab
+      };
+    }, [allVocabulary, userLevel]);
+
+    // 处理词汇组展开/收起按钮点击
+    const handleVocabGroupToggle = (group: 'current' | 'advanced' | 'basic') => {
+      setVocabGroupExpanded(prev => ({
+        ...prev,
+        [group]: !prev[group]
+      }));
+    };
+
+    // 汇总所有句型（去重）
+    const allPatterns = useMemo(() => {
+      const patternMap = new Map<string, any>();
+      
+      linesAll.forEach((line: any) => {
+        const data = opalLineToSentenceData(line);
+        if (data.chunks && data.chunks.length > 0) {
+          data.chunks.forEach((chunk: any) => {
+            const pattern = chunk.text?.trim();
+            if (pattern && !patternMap.has(pattern)) {
+              patternMap.set(pattern, {
+                pattern: pattern,
+                korean: chunk.explanation || "",
+                chineseExample: "",
+                koreanExample: "",
+                hskLevel: chunk.hskLevel || 1,
+              });
+            }
+          });
+        }
+      });
+      
+      return Array.from(patternMap.values());
+    }, [linesAll]);
+
+    // 按 HSK 级别分组句型
+    const patternsByHSK = useMemo(() => {
+      const grouped: Record<number, any[]> = {};
+      allPatterns.forEach(pattern => {
+        const level = pattern.hskLevel || 1;
+        if (!grouped[level]) grouped[level] = [];
+        grouped[level].push(pattern);
+      });
+      return grouped;
+    }, [allPatterns]);
+
+    // 合并所有句子的拼音和声调
+    const mergedPinyin = useMemo(() => {
+      const allPinyin: string[] = [];
+      linesAll.forEach((line: any) => {
+        const data = opalLineToSentenceData(line);
+        if (data.chunks && data.chunks.length > 0) {
+          data.chunks.forEach((chunk: any) => {
+            if (chunk.pinyin) {
+              allPinyin.push(chunk.pinyin);
+            }
+          });
+        }
+      });
+      return allPinyin.join(' ');
+    }, [linesAll]);
+
+    const mergedTones = useMemo(() => {
+      const allTones: string[] = [];
+      linesAll.forEach((line: any) => {
+        const data = opalLineToSentenceData(line);
+        if (data.chunks && data.chunks.length > 0) {
+          data.chunks.forEach((chunk: any) => {
+            if (chunk.tones) {
+              allTones.push(chunk.tones);
+            }
+          });
+        }
+      });
+      return allTones.join('-');
+    }, [linesAll]);
+
+    // 计算整体 HSK 级别（取最高）
+    const overallHSKLevel = useMemo(() => {
+      let maxLevel = 1;
+      linesAll.forEach((line: any) => {
+        const data = opalLineToSentenceData(line);
+        if (data.chunks && data.chunks.length > 0) {
+          data.chunks.forEach((chunk: any) => {
+            if (chunk.hskLevel && chunk.hskLevel > maxLevel) {
+              maxLevel = chunk.hskLevel;
+            }
+          });
+        }
+      });
+      return maxLevel;
+    }, [linesAll]);
+
+    // 过滤词汇（根据搜索）
+    const filteredVocabulary = useMemo(() => {
+      if (!vocabSearch.trim()) return allVocabulary;
+      const searchLower = vocabSearch.toLowerCase();
+      return allVocabulary.filter(vocab => 
+        vocab.word.toLowerCase().includes(searchLower) ||
+        vocab.pinyin.toLowerCase().includes(searchLower) ||
+        vocab.korean.toLowerCase().includes(searchLower)
+      );
+    }, [allVocabulary, vocabSearch]);
+
+    // 过滤句型（根据搜索）
+    const filteredPatterns = useMemo(() => {
+      if (!patternSearch.trim()) return allPatterns;
+      const searchLower = patternSearch.toLowerCase();
+      return allPatterns.filter(pattern => 
+        pattern.pattern.toLowerCase().includes(searchLower) ||
+        pattern.korean.toLowerCase().includes(searchLower)
+      );
+    }, [allPatterns, patternSearch]);
+
+    if (linesAll.length === 0) {
+      return (
+        <div className="bg-white border rounded-2xl p-6 text-gray-600 text-center">
+          暂无数据，请先进行分析。
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-6">
+        {/* 大卡片容器 */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+          {/* 头部 */}
+          <div 
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 cursor-pointer"
+            onClick={() => setIsExpanded(!isExpanded)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📖</span>
+                <div>
+                  <h3 className="text-lg font-semibold">整段歌词</h3>
+                  <p className="text-sm text-blue-100">共 {linesAll.length} 句</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                {(audioFile || audioUrl) && (
+                  <>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        togglePlay();
+                      }}
+                      className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      {isPlaying ? (
+                        <>
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          <span>暂停</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
+                          </svg>
+                          <span>播放整段</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    {/* 时间显示 */}
+                    {audioDuration > 0 && (
+                      <div className="text-sm font-mono text-white/90">
+                        {formatTime(currentTime)} / {formatTime(audioDuration)}
+                      </div>
+                    )}
+                  </>
+                )}
+                <svg 
+                  className={`w-6 h-6 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+            </div>
+            
+            {/* 进度条 */}
+            {(audioFile || audioUrl) && audioDuration > 0 && (
+              <div 
+                className="mt-3 px-2 relative"
+                onClick={(e) => {
+                  e.stopPropagation(); // 阻止点击进度条时折叠卡片
+                  handleProgressClick(e);
+                }}
+              >
+                <input
+                  type="range"
+                  min="0"
+                  max={audioDuration || 0}
+                  step="0.1"
+                  value={currentTime}
+                  onChange={handleProgressChange}
+                  onMouseDown={handleProgressMouseDown}
+                  onMouseUp={handleProgressMouseUp}
+                  className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer relative z-10"
+                  style={{
+                    background: `linear-gradient(to right, white 0%, white ${(currentTime / audioDuration) * 100}%, rgba(255,255,255,0.3) ${(currentTime / audioDuration) * 100}%, rgba(255,255,255,0.3) 100%)`
+                  }}
+                />
+                <style>{`
+                  input[type="range"]::-webkit-slider-thumb {
+                    appearance: none;
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: white;
+                    cursor: pointer;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                  }
+                  input[type="range"]::-moz-range-thumb {
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background: white;
+                    cursor: pointer;
+                    border: none;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                  }
+                `}</style>
+              </div>
+            )}
+          </div>
+
+          {/* 歌词滚动区域 */}
+          {isExpanded && (
+            <div 
+              ref={scrollContainerRef}
+              className="max-h-[600px] overflow-y-auto p-6 space-y-2"
+              style={{
+                scrollbarWidth: 'thin',
+                scrollbarColor: '#cbd5e0 #f7fafc',
+              }}
+            >
+              {linesAll.map((line: any, index: number) => {
+                const lineNo = Number(line?.lineNo ?? index + 1);
+                const isCurrentLine = currentPlayingLineNo === lineNo;
+                const data = opalLineToSentenceData(line);
+                const displayLine = String(line?.displayLine ?? "");
+                const zhSentence = String(line?.zhSentence ?? data.sentence ?? "");
+                const pinyin = getPinyinForSentence(line);
+
+                return (
+                  <div
+                    key={`whole-para-${lineNo}`}
+                    ref={(el) => {
+                      lineRefs.current[lineNo] = el;
+                    }}
+                    onClick={(e) => handleLineClick(e, lineNo)}
+                    className={`p-3 rounded-xl border-2 transition-all duration-300 ${
+                      isCurrentLine
+                        ? 'bg-blue-100 border-blue-400 scale-[1.02] shadow-md'
+                        : 'bg-gray-50 border-gray-200 hover:border-gray-300'
+                    }`}
+                    style={{ cursor: 'default' }}
+                  >
+                    <div className="flex items-start gap-3">
+                      <span 
+                        className="text-sm font-semibold text-gray-500 min-w-[40px] flex-shrink-0 cursor-pointer hover:text-gray-700 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLineClick(e, lineNo);
+                        }}
+                      >
+                        {formatLineNo(lineNo)}
+                      </span>
+                      <div className="flex-1 space-y-1">
+                        {/* 韩文 */}
+                        <div className="text-base text-gray-700 leading-relaxed">
+                          {displayLine}
+                        </div>
+                        {/* 中文+拼音：按语义分段对齐 */}
+                        <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed">
+                          {(() => {
+                            // 优先使用 chunkSegments（语义分段）
+                            const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
+                            
+                            if (chunkSegments.length > 0) {
+                              // 按语义分段显示
+                              return chunkSegments.map((seg: any, segIdx: number) => {
+                                const chunkZh = seg.chunkZh || '';
+                                const segPinyin = seg.pinyin || '';
+                                
+                                // 将 chunkZh 按字符拆分（只保留中文字符）
+                                const zhChars = chunkZh.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c));
+                                // 将拼音按空格拆分
+                                const pinyinWords = segPinyin.split(/\s+/).filter((p: string) => p.trim());
+                                
+                                // 如果字符数和拼音数一致，逐字对齐
+                                if (zhChars.length === pinyinWords.length && zhChars.length > 0) {
+                                  return (
+                                    <div key={`seg-${lineNo}-${segIdx}`} className="inline-flex flex-wrap items-end gap-x-1">
+                                      {zhChars.map((char: string, charIdx: number) => (
+                                        <div
+                                          key={`char-${lineNo}-${segIdx}-${charIdx}`}
+                                          className="inline-flex flex-col items-center justify-end"
+                                        >
+                                          {/* 拼音 */}
+                                          {pinyinWords[charIdx] && (
+                                            <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
+                                              {pinyinWords[charIdx]}
+                                            </span>
+                                          )}
+                                          {/* 中文 */}
+                                          <span className="text-xl font-medium text-gray-900">
+                                            {char}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                } else {
+                                  // 如果不一致，显示整个分段（拼音在上，汉字在下）
+                                  return (
+                                    <div key={`seg-${lineNo}-${segIdx}`} className="inline-flex flex-col items-center justify-end mx-1">
+                                      {/* 拼音 */}
+                                      {segPinyin && (
+                                        <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
+                                          {segPinyin}
+                                        </span>
+                                      )}
+                                      {/* 中文 */}
+                                      <span className="text-xl font-medium text-gray-900">
+                                        {chunkZh}
+                                      </span>
+                                    </div>
+                                  );
+                                }
+                              });
+                            }
+                            
+                            // 如果没有 chunkSegments，回退到 tokens
+                            if (data.tokens && data.tokens.length > 0) {
+                              return data.tokens.map((token: any, tokenIdx: number) => {
+                                const tokenText = token.text || '';
+                                const tokenPinyin = token.pinyin || '';
+                                
+                                if (!tokenText.trim()) return null;
+                                
+                                return (
+                                  <div
+                                    key={`token-${lineNo}-${tokenIdx}`}
+                                    className="inline-flex flex-col items-center justify-end"
+                                  >
+                                    {tokenPinyin && (
+                                      <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
+                                        {tokenPinyin}
+                                      </span>
+                                    )}
+                                    <span className="text-xl font-medium text-gray-900">
+                                      {tokenText}
+                                    </span>
+                                  </div>
+                                );
+                              });
+                            }
+                            
+                            // 最后回退到原来的显示方式
+                            return (
+                              <>
+                                {pinyin && (
+                                  <div className="text-sm text-gray-500 leading-relaxed w-full">
+                                    {pinyin}
+                                  </div>
+                                )}
+                                <div className="text-xl font-medium text-gray-900 leading-relaxed w-full">
+                                  <SentenceView
+                                    sentence={zhSentence}
+                                    tokens={data.tokens}
+                                  />
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* 整段学习分析表 */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">整段学习分析表</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">难度等级</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">整句拼音</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">整句声调结构</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">音频</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-gray-100">
+                  <td className="px-4 py-4">
+                    <div className="flex gap-1">
+                      {Array.from({ length: 6 }).map((_, i) => (
+                        <div
+                          key={i}
+                          className={`w-3 h-3 rounded-full ${
+                            i < overallHSKLevel ? 'bg-green-500' : 'bg-gray-200'
+                          }`}
+                        />
+                      ))}
+                      <span className="ml-2 text-sm text-gray-600">HSK {overallHSKLevel}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-4 text-base text-gray-700 min-w-[300px] text-center">
+                    {mergedPinyin || '—'}
+                  </td>
+                  <td className="px-4 py-4">
+                    {mergedTones ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700">
+                        {mergedTones}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
+                      {(audioFile || audioUrl) && (
+                        <AudioPlayer
+                          audioFile={audioFile || null}
+                          audioUrl={audioUrl}
+                          startSec={0}
+                          endSec={audioDuration}
+                        />
+                      )}
+                      <TTSButton text={linesAll.map((l: any) => l?.zhSentence || "").join(" ")} />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* 重点词汇汇总 */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 cursor-pointer"
+            onClick={() => setShowVocabSummary(!showVocabSummary)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📚</span>
+                <h3 className="text-lg font-semibold">重点词汇</h3>
+                <span className="text-sm text-purple-100">({allVocabulary.length} 个)</span>
+              </div>
+              <svg 
+                className={`w-6 h-6 transition-transform ${showVocabSummary ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          {showVocabSummary && (
+            <div className="p-6">
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={vocabSearch}
+                  onChange={(e) => setVocabSearch(e.target.value)}
+                  placeholder="搜索词汇..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div className="space-y-4">
+                {/* 当前重点 */}
+                {vocabularyGroups.current.length > 0 && (
+                  <div className="border-l-4 border-purple-400 pl-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-700">当前重点 ({vocabularyGroups.current.length})</h4>
+                      <button
+                        onClick={() => handleVocabGroupToggle('current')}
+                        className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
+                      >
+                        {vocabGroupExpanded.current ? '收起' : '展开'}
+                      </button>
+                    </div>
+                    {vocabGroupExpanded.current && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {vocabularyGroups.current
+                          .filter(v => !vocabSearch.trim() || 
+                            v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                          )
+                          .map((vocab, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                              <div className="font-medium text-gray-800">{vocab.word}</div>
+                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
+                              <div className="text-sm text-gray-500">{vocab.korean}</div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 提升词 */}
+                {vocabularyGroups.advanced.length > 0 && (
+                  <div className="border-l-4 border-blue-400 pl-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-700">提升词 ({vocabularyGroups.advanced.length})</h4>
+                      <button
+                        onClick={() => handleVocabGroupToggle('advanced')}
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                      >
+                        {vocabGroupExpanded.advanced ? '收起' : '展开'}
+                      </button>
+                    </div>
+                    {vocabGroupExpanded.advanced && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {vocabularyGroups.advanced
+                          .filter(v => !vocabSearch.trim() || 
+                            v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                          )
+                          .map((vocab, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                              <div className="font-medium text-gray-800">{vocab.word}</div>
+                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
+                              <div className="text-sm text-gray-500">{vocab.korean}</div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* 基础词 */}
+                {vocabularyGroups.basic.length > 0 && (
+                  <div className="border-l-4 border-green-400 pl-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold text-gray-700">基础词 ({vocabularyGroups.basic.length})</h4>
+                      <button
+                        onClick={() => handleVocabGroupToggle('basic')}
+                        className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
+                      >
+                        {vocabGroupExpanded.basic ? '收起' : '展开'}
+                      </button>
+                    </div>
+                    {vocabGroupExpanded.basic && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        {vocabularyGroups.basic
+                          .filter(v => !vocabSearch.trim() || 
+                            v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
+                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                          )
+                          .map((vocab, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                              <div className="font-medium text-gray-800">{vocab.word}</div>
+                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
+                              <div className="text-sm text-gray-500">{vocab.korean}</div>
+                            </div>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 重点句型汇总 */}
+        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
+          <div 
+            className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-4 cursor-pointer"
+            onClick={() => setShowPatternSummary(!showPatternSummary)}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">📝</span>
+                <h3 className="text-lg font-semibold">重点句型汇总</h3>
+                <span className="text-sm text-green-100">({allPatterns.length} 个)</span>
+              </div>
+              <svg 
+                className={`w-6 h-6 transition-transform ${showPatternSummary ? 'rotate-180' : ''}`}
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
+          {showPatternSummary && (
+            <div className="p-6">
+              <div className="mb-4">
+                <input
+                  type="text"
+                  value={patternSearch}
+                  onChange={(e) => setPatternSearch(e.target.value)}
+                  placeholder="搜索句型..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+              <div className="space-y-4">
+                {Object.keys(patternsByHSK)
+                  .sort((a, b) => Number(b) - Number(a))
+                  .map((level) => {
+                    const patternList = patternsByHSK[Number(level)].filter(p => 
+                      filteredPatterns.includes(p)
+                    );
+                    if (patternList.length === 0) return null;
+                    
+                    return (
+                      <div key={level} className="border-l-4 border-green-400 pl-4">
+                        <h4 className="font-semibold text-gray-700 mb-2">HSK {level}</h4>
+                        <div className="space-y-3">
+                          {patternList.map((pattern, idx) => (
+                            <div key={idx} className="p-3 bg-gray-50 rounded-lg">
+                              <div className="font-medium text-gray-800 mb-1">{pattern.pattern}</div>
+                              <div className="text-sm text-gray-600">{pattern.korean}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // 每句卡片内部：复用现有组件
   function SentenceCard({ item, starred }: { item: any; starred: boolean }) {
     // ⭐ 检查是否为重复句
@@ -1405,10 +2516,9 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       ? opalLineToSentenceData({ ...item, zhSentence: zhSentence || item?.zhSentence || "" })
       : makeFallbackSentenceData(zhSentence);
 
-    // 判断输入语言（通过langDisplay或检查原始文本）
-    const isChineseInput = opalPayload?.langDisplay === 'zh' || 
-                          (originalText && /[\u4e00-\u9fff]/.test(originalText)) ||
-                          (transcribedText && /[\u4e00-\u9fff]/.test(transcribedText));
+    // ⭐ 基于 languageMode 判断：如果是中文，使用原句；如果是韩文，使用翻译
+    // 优先使用 opalPayload?.langDisplay，如果没有则使用 languageMode
+    const currentLanguageMode = opalPayload?.langDisplay || languageMode;
     
     // 确保 zhSentence 是中文（如果被错误地设置为韩文，需要修正）
     // 优先使用修正后的 zhSentence，如果为空则使用 data.sentence
@@ -1434,10 +2544,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       }
     }
     
-    // 对于中文输入，优先使用原始文本或转写文本
+    // ⭐ 基于 languageMode 判断：如果是中文，使用原句；如果是韩文，使用翻译
     let finalZhSentence = correctedZhSentence;
-    if (isChineseInput) {
-      // 优先使用转写文本（音频输入）
+    if (currentLanguageMode === 'zh') {
+      // 中文输入：直接使用转写文本或原始文本（原句）
       if (transcribedText) {
         const transcribedLines = transcribedText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
         if (lineNo > 0 && lineNo <= transcribedLines.length) {
@@ -1449,9 +2559,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             finalZhSentence = transcribedLines[index];
           }
         }
-      }
-      // 如果没有转写文本，使用原始文本（文本输入）
-      else if (originalText) {
+      } else if (originalText) {
         const originalLines = originalText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
         if (lineNo > 0 && lineNo <= originalLines.length) {
           finalZhSentence = originalLines[lineNo - 1];
@@ -1463,11 +2571,17 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           }
         }
       }
+      // 如果转写文本和原始文本都没有，优先使用 displayLine（来自 Whisper 转写）
+      if (!finalZhSentence || finalZhSentence.trim() === "") {
+        if (displayLine && checkIsChinese2(displayLine)) {
+          finalZhSentence = displayLine;
+        }
+      }
+    } else {
+      // 韩文输入：使用 API 返回的 zhSentence（翻译结果）
+      // finalZhSentence 已经是 correctedZhSentence，即 API 返回的中文翻译
     }
-    // 对于韩文输入（音频或文本），直接使用 API 返回的 zhSentence（中文翻译）
-    // 不要使用转写文本（韩文）作为中文整句展示
-    // finalZhSentence 已经是 correctedZhSentence，即 API 返回的正确的中文翻译
-    // 如果 correctedZhSentence 为空，使用 data.sentence 作为后备
+    // 最后的后备逻辑
     if (!finalZhSentence || finalZhSentence.trim() === "" || checkIsKorean2(finalZhSentence)) {
       finalZhSentence = data.sentence || "";
     }
@@ -1962,28 +3076,77 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   const showEmpty = linesAll.length === 0;
 
-  // 猫咪助手状态
-  const [showCatHelper, setShowCatHelper] = useState(false);
-  const [showCatDialog, setShowCatDialog] = useState(false);
-  const [catDialogInput, setCatDialogInput] = useState("");
+  // 女老师助手状态
+  const [showTeacherHelper, setShowTeacherHelper] = useState(false);
+  const [showTeacherDialog, setShowTeacherDialog] = useState(false);
+  const [teacherDialogInput, setTeacherDialogInput] = useState("");
+  const [teacherPosition, setTeacherPosition] = useState({ x: 16, y: typeof window !== 'undefined' ? window.innerHeight - 80 : 600 });
+  const [isTeacherDragging, setIsTeacherDragging] = useState(false);
+  const [teacherDragOffset, setTeacherDragOffset] = useState({ x: 0, y: 0 });
+  const teacherRef = useRef<HTMLDivElement>(null);
+
+  // 拖动处理
+  const handleTeacherMouseDown = (e: React.MouseEvent) => {
+    if (!teacherRef.current) return;
+    const rect = teacherRef.current.getBoundingClientRect();
+    setTeacherDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    setIsTeacherDragging(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isTeacherDragging) return;
+      setTeacherPosition({
+        x: e.clientX - teacherDragOffset.x,
+        y: e.clientY - teacherDragOffset.y,
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsTeacherDragging(false);
+    };
+
+    if (isTeacherDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isTeacherDragging, teacherDragOffset]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* 猫咪助手 - 左侧浮动 */}
-      <div className="fixed left-4 bottom-4 z-40">
-        {!showCatDialog ? (
+      {/* 女老师助手 - 可拖动 */}
+      <div
+        ref={teacherRef}
+        className="fixed z-40"
+        style={{
+          left: `${teacherPosition.x}px`,
+          top: `${teacherPosition.y}px`,
+          cursor: isTeacherDragging ? 'grabbing' : 'grab',
+        }}
+      >
+        {!showTeacherDialog ? (
           <div className="relative">
             <button
-              onClick={() => setShowCatDialog(true)}
-              onMouseEnter={() => setShowCatHelper(true)}
-              onMouseLeave={() => setShowCatHelper(false)}
-              className="w-16 h-16 rounded-full bg-gradient-to-br from-orange-200 to-orange-300 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-3xl hover:scale-110"
+              onClick={() => setShowTeacherDialog(true)}
+              onMouseEnter={() => setShowTeacherHelper(true)}
+              onMouseLeave={() => setShowTeacherHelper(false)}
+              onMouseDown={handleTeacherMouseDown}
+              className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-200 to-pink-300 shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center text-3xl hover:scale-110 select-none"
               aria-label="帮助助手"
+              style={{ userSelect: 'none' }}
             >
-              🐱
+              👩‍🎓
             </button>
-            {showCatHelper && (
-              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg px-3 py-2 border border-gray-200 whitespace-nowrap">
+            {showTeacherHelper && (
+              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 bg-white rounded-lg shadow-lg px-3 py-2 border border-gray-200 whitespace-nowrap z-50">
                 <div className="text-sm text-gray-700">卡住了吗？我来帮你🌱</div>
                 {/* 小箭头 */}
                 <div className="absolute right-full top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-white border-b-8 border-b-transparent"></div>
@@ -1991,17 +3154,17 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             )}
           </div>
         ) : (
-          <div className="w-80 bg-white rounded-lg shadow-xl border-2 border-orange-300 p-4">
+          <div className="w-80 bg-white rounded-lg shadow-xl border-2 border-pink-300 p-4">
             {/* 对话框头部 */}
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">🐱</span>
+                <span className="text-2xl">👩‍🎓</span>
                 <h4 className="text-sm font-semibold text-gray-800">学习助手</h4>
               </div>
               <button
                 onClick={() => {
-                  setShowCatDialog(false);
-                  setCatDialogInput("");
+                  setShowTeacherDialog(false);
+                  setTeacherDialogInput("");
                 }}
                 className="text-gray-400 hover:text-gray-600 transition-colors"
               >
@@ -2022,26 +3185,26 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="flex gap-2">
               <input
                 type="text"
-                value={catDialogInput}
-                onChange={(e) => setCatDialogInput(e.target.value)}
+                value={teacherDialogInput}
+                onChange={(e) => setTeacherDialogInput(e.target.value)}
                 placeholder="输入你的问题..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-pink-500"
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter' && catDialogInput.trim()) {
+                  if (e.key === 'Enter' && teacherDialogInput.trim()) {
                     // 暂时不处理，后续接入AI
-                    setCatDialogInput("");
+                    setTeacherDialogInput("");
                   }
                 }}
               />
               <button
                 onClick={() => {
-                  if (catDialogInput.trim()) {
+                  if (teacherDialogInput.trim()) {
                     // 暂时不处理，后续接入AI
-                    setCatDialogInput("");
+                    setTeacherDialogInput("");
                   }
                 }}
-                disabled={!catDialogInput.trim()}
-                className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                disabled={!teacherDialogInput.trim()}
+                className="px-4 py-2 bg-pink-500 text-white rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 发送
               </button>
@@ -2051,14 +3214,14 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       </div>
 
       {/* 点击外部关闭对话框 */}
-      {showCatDialog && (
+      {showTeacherDialog && (
         <div
           className="fixed inset-0 z-30"
           onClick={(e) => {
             // 如果点击的是对话框外部，关闭对话框
             if (e.target === e.currentTarget) {
-              setShowCatDialog(false);
-              setCatDialogInput("");
+              setShowTeacherDialog(false);
+              setTeacherDialogInput("");
             }
           }}
         />
@@ -2139,43 +3302,48 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   />
                 </label>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 relative">
                   <label className="text-sm text-gray-700">语言：</label>
                   <select
-                    value={languageMode}
-                    onChange={(e) => setLanguageMode(e.target.value as 'auto' | 'ko' | 'zh')}
+                    value={languageMode || ''}
+                    onChange={(e) => {
+                      const newMode = e.target.value as 'ko' | 'zh' | '';
+                      if (newMode === 'ko' || newMode === 'zh') {
+                        setLanguageMode(newMode);
+                        // ⭐ 选择语言后立即隐藏提示
+                        setShowLanguageTip(false);
+                      } else {
+                        setLanguageMode(null);
+                        // 如果取消选择且已上传音频文件，重新显示提示
+                        if (audioFile) {
+                          setShowLanguageTip(true);
+                        }
+                      }
+                    }}
                     className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   >
-                    <option value="auto">自动</option>
-                    <option value="ko">韩文</option>
+                    <option value="">请选择语言</option>
                     <option value="zh">中文</option>
+                    <option value="ko">韩文</option>
                   </select>
-                </div>
-
-                {/* 显示检测结果和冲突提示 */}
-                {detectedLanguage && (() => {
-                  // ⭐ 使用映射函数确保格式统一（双重保险，即使 API 返回格式不一致也能正确处理）
-                  const normalizedDetectedLang = normalizeLanguage(detectedLanguage) || detectedLanguage;
                   
-                  return (
-                    <div className="text-xs text-gray-600">
-                      {languageMode === 'auto' ? (
-                        // 自动模式：只显示检测语言
-                        <span>检测语言：{normalizedDetectedLang === 'ko' ? '韩文' : '中文'}</span>
-                      ) : (
-                        // 手动选择模式：显示检测语言，如果不一致则显示冲突提示
-                        <>
-                          <span>检测语言：{normalizedDetectedLang === 'ko' ? '韩文' : '中文'}</span>
-                          {normalizedDetectedLang !== languageMode && (
-                            <span className="ml-2 text-orange-600">
-                              （检测为 {normalizedDetectedLang === 'ko' ? '韩文' : '中文'}，仍按你选择的 {languageMode === 'ko' ? '韩文' : '中文'} 处理）
-                            </span>
-                          )}
-                        </>
-                      )}
+                  {/* 提示气泡 */}
+                  {showLanguageTip && !languageMode && audioFile && (
+                    <div className="absolute top-full left-0 mt-2 z-50 animate-bounce">
+                      <div className="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap relative">
+                        <div className="flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                          <span>请选择和音频内容一致的语言哦</span>
+                        </div>
+                        {/* 气泡箭头 */}
+                        <div className="absolute -top-1 left-4 w-2 h-2 bg-blue-500 rotate-45"></div>
+                      </div>
                     </div>
-                  );
-                })()}
+                  )}
+                </div>
 
                 <div className="flex flex-col items-center gap-3">
                   <button
@@ -2336,16 +3504,6 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     📖 整段学习
                   </button>
                   <button
-                    onClick={() => setStudyMode("分段学习")}
-                    className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                      studyMode === "分段学习"
-                        ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-                        : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
-                    }`}
-                  >
-                    📑 分段学习
-                  </button>
-                  <button
                     onClick={() => setStudyMode("分句学习")}
                     className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
                       studyMode === "分句学习"
@@ -2480,43 +3638,59 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         </div>
       </div>
 
-      {/* 内容区：本页 10 句全部展开 */}
+      {/* 内容区：根据学习模式显示 */}
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        {!showEmpty && pageItems.length === 0 ? (
-          <div className="bg-white border rounded-2xl p-6 text-gray-600">
-            没有匹配结果。{reviewMode === "sentence" ? "请调整搜索词或取消句子复习模式。" : reviewMode === "word" ? "请调整搜索词或取消单词复习模式。" : "请调整搜索词。"}
-          </div>
-        ) : null}
-
-        {pageItems.map((it: any) => (
-          <SentenceCard
-            key={(it.lineNo + "-" + (((it.item && it.item.zhSentence) || "")))}
-            item={it.item}
-            starred={!!it.starred}
+        {studyMode === "整段学习" ? (
+          <WholeParagraphView
+            linesAll={linesAll}
+            audioFile={audioFile}
+            audioUrl={opalPayload?.audioUrl}
+            opalPayload={opalPayload}
+            rawText={rawText}
+            transcribedText={transcribedText}
+            translationCache={translationCache}
+            originalText={originalText}
+            userLevel={userLevel}
           />
-        ))}
+        ) : (
+          <>
+            {!showEmpty && pageItems.length === 0 ? (
+              <div className="bg-white border rounded-2xl p-6 text-gray-600">
+                没有匹配结果。{reviewMode === "sentence" ? "请调整搜索词或取消句子复习模式。" : reviewMode === "word" ? "请调整搜索词或取消单词复习模式。" : "请调整搜索词。"}
+              </div>
+            ) : null}
 
-        {/* 分页 */}
-        {!showEmpty && (
-          <div className="flex items-center justify-between pt-4">
-            <button
-              className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
-              disabled={currentPage <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-            >
-              上一页
-            </button>
-            <div className="text-sm text-gray-600">
-              第 {currentPage} / {totalPages} 页
-            </div>
-            <button
-              className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
-              disabled={currentPage >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            >
-              下一页
-            </button>
-          </div>
+            {pageItems.map((it: any) => (
+              <SentenceCard
+                key={(it.lineNo + "-" + (((it.item && it.item.zhSentence) || "")))}
+                item={it.item}
+                starred={!!it.starred}
+              />
+            ))}
+
+            {/* 分页 */}
+            {!showEmpty && (
+              <div className="flex items-center justify-between pt-4">
+                <button
+                  className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  上一页
+                </button>
+                <div className="text-sm text-gray-600">
+                  第 {currentPage} / {totalPages} 页
+                </div>
+                <button
+                  className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  下一页
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
       

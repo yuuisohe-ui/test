@@ -27,6 +27,93 @@ function normalizeWhisperLanguage(lang: string | null | undefined): 'ko' | 'zh' 
   return null;
 }
 
+/**
+ * 语义分段：使用 ChatGPT API 将文本按语义自然分段
+ * @param text 需要分段的文本
+ * @param sourceLang 源语言
+ * @returns 分段后的文本数组
+ */
+async function segmentTextBySemantics(
+  text: string,
+  sourceLang: 'ko' | 'zh'
+): Promise<string[]> {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || OPENAI_API_KEY;
+  const apiUrl = import.meta.env.VITE_OPENAI_API_URL || OPENAI_API_URL;
+
+  const prompt = `你是一个文本分段助手。请将以下文本按照语义自然分段，每段应该是一个完整的语义单位（如一个完整的句子或短语）。
+
+要求：
+1. 按照语义自然分段，不要随意分割
+2. 每段应该是一个完整的语义单位
+3. 返回一个 JSON 数组，每个元素是一个分段后的文本
+4. 保持原文的标点符号和格式
+
+文本：
+${text}
+
+请返回 JSON 格式：
+{
+  "segments": ["分段1", "分段2", "分段3"]
+}`;
+
+  try {
+    const response = await fetch(`${apiUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        temperature: 0.3,
+        response_format: { type: 'json_object' },
+        max_tokens: 2000,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`语义分段 API 调用失败: ${response.status}`);
+    }
+
+    const data = await response.json();
+    let content = data.choices[0]?.message?.content;
+    
+    if (!content) {
+      throw new Error('语义分段 API 返回内容为空');
+    }
+
+    // 解析 JSON（可能需要去除 markdown 代码块）
+    try {
+      // 尝试去除 markdown 代码块
+      const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
+      if (jsonMatch) {
+        content = jsonMatch[1];
+      }
+      
+      const parsed = JSON.parse(content);
+      const segments = parsed.segments || [];
+      
+      if (!Array.isArray(segments) || segments.length === 0) {
+        throw new Error('语义分段返回格式错误');
+      }
+      
+      return segments.filter((s: string) => s && s.trim().length > 0);
+    } catch (parseError) {
+      console.error('语义分段 JSON 解析失败:', parseError);
+      throw new Error('语义分段返回数据格式错误');
+    }
+  } catch (error) {
+    console.error('语义分段失败:', error);
+    throw error;
+  }
+}
+
 // ChatGPT / OpenAI API 설정
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 const OPENAI_API_URL = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
@@ -817,7 +904,7 @@ export async function callChatGPTApiWithText(text: string, sourceLang: 'ko' | 'z
  */
 export async function callChatGPTApiWithAudioAndTranscription(
   audioFile: File,
-  languageMode: 'auto' | 'ko' | 'zh' = 'auto',
+  languageMode: 'ko' | 'zh',
   requestId?: number
 ): Promise<{ result: SongPayload; transcribedText: string; detectedLang?: string }> {
   console.log(`🆔 [Whisper Request] requestId: ${requestId}`);
@@ -835,7 +922,6 @@ export async function callChatGPTApiWithAudioAndTranscription(
   } else if (languageMode === 'zh') {
     formData.append('language', 'zh');
   }
-  // languageMode === 'auto' 时不传 language 参数，让 Whisper 自动检测
   formData.append('response_format', 'verbose_json'); // ⭐ 获取详细的时间戳信息
 
   const transcriptionResponse = await fetch(`${apiUrl}/audio/transcriptions`, {
@@ -924,10 +1010,8 @@ export async function callChatGPTApiWithAudioAndTranscription(
   
   console.log('🎤 [Whisper] 检测到的语言（统一格式）:', detectedLang);
   
-  // ⭐ 确定 sourceLang：如果 languageMode 不是 'auto'，使用 languageMode；否则使用检测到的语言
-  const sourceLang: 'ko' | 'zh' = languageMode !== 'auto' 
-    ? (languageMode === 'ko' ? 'ko' : 'zh')
-    : (detectedLang || 'zh'); // 默认中文如果检测不到
+  // ⭐ 确定 sourceLang：直接使用 languageMode（不再需要 'auto' 判断）
+  const sourceLang: 'ko' | 'zh' = languageMode;
 
   // ⭐ A. 从 Whisper segments 生成 baseLines（source of truth）
   if (!transcriptionData.segments || transcriptionData.segments.length === 0) {
@@ -957,7 +1041,282 @@ export async function callChatGPTApiWithAudioAndTranscription(
     `[Segment Filter] 过滤前=${originalSegmentsCount} 过滤后=${filteredSegments.length}`
   );
 
-  const baseLines: OpalLine[] = filteredSegments.map((seg: any, i: number) => ({
+  // ⭐ 单段处理：如果只有一个 segment，尝试分段
+  let finalSegments = filteredSegments;
+  if (filteredSegments.length === 1) {
+    const singleSegment = filteredSegments[0];
+    const segmentText = singleSegment.text?.trim() || '';
+    const segmentStart = singleSegment.start || 0;
+    const segmentEnd = singleSegment.end || 0;
+    const segmentDuration = segmentEnd - segmentStart;
+    
+    console.log('⚠️ [Single Segment] 检测到只有一个 segment，尝试分段...', {
+      text: segmentText.substring(0, 50) + '...',
+      start: segmentStart,
+      end: segmentEnd,
+      duration: segmentDuration,
+      hasWords: transcriptionData.words && transcriptionData.words.length > 0,
+    });
+    
+    // 策略1：按标点符号分段（保留标点符号）
+    const punctuationRegex = /([。！？\n.!?;:]+)/;
+    const parts = segmentText.split(punctuationRegex);
+    const sentences: string[] = [];
+    let currentSentence = '';
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (punctuationRegex.test(part)) {
+        // 这是标点符号
+        currentSentence += part;
+        if (currentSentence.trim()) {
+          sentences.push(currentSentence.trim());
+          currentSentence = '';
+        }
+      } else {
+        // 这是文本
+        currentSentence += part;
+      }
+    }
+    // 添加最后一段（如果有）
+    if (currentSentence.trim()) {
+      sentences.push(currentSentence.trim());
+    }
+    
+    const punctuationSplit = sentences.filter(s => s.trim().length > 0);
+    
+    if (punctuationSplit.length > 1) {
+      console.log('✅ [Single Segment] 标点分段成功，分为', punctuationSplit.length, '段');
+      
+      // ⭐ 使用 word-level timestamps 分配时间戳（如果可用）
+      if (transcriptionData.words && Array.isArray(transcriptionData.words) && transcriptionData.words.length > 0) {
+        console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
+        
+        // 将 words 按顺序排列
+        const words = transcriptionData.words
+          .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
+          .map((w: any) => ({
+            word: w.word || w.text || '',
+            start: w.start || w.start_time || 0,
+            end: w.end || w.end_time || 0,
+          }))
+          .sort((a: any, b: any) => a.start - b.start);
+        
+        if (words.length > 0) {
+          // 为每个分段找到对应的 words
+          // 构建完整的 words 文本（去除空格和标点），用于匹配
+          const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
+          let currentWordIdx = 0; // 当前已匹配到的 word 索引
+          
+          finalSegments = punctuationSplit.map((text, index) => {
+            // 移除标点和空格，用于匹配
+            const normalizedText = text.replace(/[。！？\n.!?;:\s]+/g, '');
+            
+            if (normalizedText.length === 0) {
+              // 空分段，使用原始时间戳
+              return {
+                text: text.trim(),
+                start: segmentStart,
+                end: segmentEnd,
+              };
+            }
+            
+            // 从当前 word 索引开始，找到匹配的 words
+            // 计算已匹配的文本长度（从 segment 开始到当前分段之前）
+            let accumulatedLength = 0;
+            for (let j = 0; j < index; j++) {
+              const prevText = punctuationSplit[j].replace(/[。！？\n.!?;:\s]+/g, '');
+              accumulatedLength += prevText.length;
+            }
+            
+            let wordStartIdx = -1;
+            let wordEndIdx = -1;
+            let currentMatchedLength = 0;
+            
+            // 从 accumulatedLength 对应的 word 位置开始匹配
+            let wordPos = 0;
+            for (let i = 0; i < words.length; i++) {
+              const wordText = words[i].word.replace(/\s+/g, '');
+              wordPos += wordText.length;
+              
+              // 找到当前分段的起始位置
+              if (wordStartIdx === -1 && wordPos > accumulatedLength) {
+                wordStartIdx = i;
+                currentMatchedLength = wordText.length;
+                if (currentMatchedLength >= normalizedText.length) {
+                  wordEndIdx = i;
+                  break;
+                }
+              } else if (wordStartIdx >= 0) {
+                // 继续匹配
+                currentMatchedLength += wordText.length;
+                if (currentMatchedLength >= normalizedText.length) {
+                  wordEndIdx = i;
+                  break;
+                }
+              }
+            }
+            
+            // 如果找到了匹配的 words，使用它们的时间戳
+            if (wordStartIdx >= 0 && wordEndIdx >= 0) {
+              const startTime = words[wordStartIdx].start;
+              const endTime = words[wordEndIdx].end;
+              console.log(`✅ [Single Segment] 分段[${index}] 使用 words[${wordStartIdx}]-[${wordEndIdx}] 时间戳: ${startTime}-${endTime}`);
+              return {
+                text: text.trim(),
+                start: startTime,
+                end: endTime,
+              };
+            } else {
+              // 如果找不到匹配，使用原始时间戳（共享）
+              console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，使用原始时间戳`);
+              return {
+                text: text.trim(),
+                start: segmentStart,
+                end: segmentEnd,
+              };
+            }
+          });
+        } else {
+          // words 为空，使用原始时间戳（共享）
+          console.warn('⚠️ [Single Segment] words 数组为空，使用原始时间戳（共享）');
+          finalSegments = punctuationSplit.map((text) => ({
+            text: text.trim(),
+            start: segmentStart,
+            end: segmentEnd,
+          }));
+        }
+      } else {
+        // 没有 words，使用原始时间戳（共享）
+        console.warn('⚠️ [Single Segment] 没有 word-level timestamps，使用原始时间戳（共享）');
+        finalSegments = punctuationSplit.map((text) => ({
+          text: text.trim(),
+          start: segmentStart,
+          end: segmentEnd,
+        }));
+      }
+    } else {
+      // 策略2：语义分段（调用 ChatGPT API）
+      console.log('⚠️ [Single Segment] 标点分段失败，尝试语义分段...');
+      try {
+        const semanticSegments = await segmentTextBySemantics(segmentText, sourceLang);
+        if (semanticSegments.length > 1) {
+          console.log('✅ [Single Segment] 语义分段成功，分为', semanticSegments.length, '段');
+          
+          // ⭐ 使用 word-level timestamps 分配时间戳（如果可用）
+          if (transcriptionData.words && Array.isArray(transcriptionData.words) && transcriptionData.words.length > 0) {
+            console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
+            
+            const words = transcriptionData.words
+              .filter((w: any) => w && w.word && (w.start !== undefined || w.start_time !== undefined))
+              .map((w: any) => ({
+                word: w.word || w.text || '',
+                start: w.start || w.start_time || 0,
+                end: w.end || w.end_time || 0,
+              }))
+              .sort((a: any, b: any) => a.start - b.start);
+            
+            if (words.length > 0) {
+              // 为每个分段找到对应的 words
+              // 构建完整的 words 文本（去除空格和标点），用于匹配
+              const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
+              
+              finalSegments = semanticSegments.map((text, index) => {
+                // 移除标点和空格，用于匹配
+                const normalizedText = text.replace(/[。！？\n.!?;:\s]+/g, '');
+                
+                if (normalizedText.length === 0) {
+                  // 空分段，使用原始时间戳
+                  return {
+                    text: text.trim(),
+                    start: segmentStart,
+                    end: segmentEnd,
+                  };
+                }
+                
+                // 从当前 word 索引开始，找到匹配的 words
+                // 计算已匹配的文本长度（从 segment 开始到当前分段之前）
+                let accumulatedLength = 0;
+                for (let j = 0; j < index; j++) {
+                  const prevText = semanticSegments[j].replace(/[。！？\n.!?;:\s]+/g, '');
+                  accumulatedLength += prevText.length;
+                }
+                
+                let wordStartIdx = -1;
+                let wordEndIdx = -1;
+                let currentMatchedLength = 0;
+                
+                // 从 accumulatedLength 对应的 word 位置开始匹配
+                let wordPos = 0;
+                for (let i = 0; i < words.length; i++) {
+                  const wordText = words[i].word.replace(/\s+/g, '');
+                  wordPos += wordText.length;
+                  
+                  // 找到当前分段的起始位置
+                  if (wordStartIdx === -1 && wordPos > accumulatedLength) {
+                    wordStartIdx = i;
+                    currentMatchedLength = wordText.length;
+                    if (currentMatchedLength >= normalizedText.length) {
+                      wordEndIdx = i;
+                      break;
+                    }
+                  } else if (wordStartIdx >= 0) {
+                    // 继续匹配
+                    currentMatchedLength += wordText.length;
+                    if (currentMatchedLength >= normalizedText.length) {
+                      wordEndIdx = i;
+                      break;
+                    }
+                  }
+                }
+                
+                // 如果找到了匹配的 words，使用它们的时间戳
+                if (wordStartIdx >= 0 && wordEndIdx >= 0) {
+                  const startTime = words[wordStartIdx].start;
+                  const endTime = words[wordEndIdx].end;
+                  console.log(`✅ [Single Segment] 分段[${index}] 使用 words[${wordStartIdx}]-[${wordEndIdx}] 时间戳: ${startTime}-${endTime}`);
+                  return {
+                    text: text.trim(),
+                    start: startTime,
+                    end: endTime,
+                  };
+                } else {
+                  // 如果找不到匹配，使用原始时间戳（共享）
+                  console.warn(`⚠️ [Single Segment] 分段[${index}] 无法匹配 words，使用原始时间戳`);
+                  return {
+                    text: text.trim(),
+                    start: segmentStart,
+                    end: segmentEnd,
+                  };
+                }
+              });
+            } else {
+              finalSegments = semanticSegments.map((text) => ({
+                text: text.trim(),
+                start: segmentStart,
+                end: segmentEnd,
+              }));
+            }
+          } else {
+            // 没有 words，使用原始时间戳（共享）
+            console.warn('⚠️ [Single Segment] 没有 word-level timestamps，使用原始时间戳（共享）');
+            finalSegments = semanticSegments.map((text) => ({
+              text: text.trim(),
+              start: segmentStart,
+              end: segmentEnd,
+            }));
+          }
+        } else {
+          console.log('⚠️ [Single Segment] 语义分段也失败，使用原始单个 segment');
+        }
+      } catch (error) {
+        console.error('❌ [Single Segment] 语义分段失败:', error);
+        console.log('⚠️ [Single Segment] 使用原始单个 segment');
+      }
+    }
+  }
+
+  const baseLines: OpalLine[] = finalSegments.map((seg: any, i: number) => ({
     lineNo: i + 1,
     lineId: `seg_${i}`,
     displayLine: seg.text?.trim() || '',
