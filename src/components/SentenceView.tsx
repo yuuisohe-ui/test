@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Token } from '../types';
 import { WordTooltip } from './WordTooltip';
 
@@ -8,13 +8,40 @@ interface SentenceViewProps {
   onWordSelect?: (word: string) => void;
   selectedWord?: string | null;
   item?: any; // 原始行数据，用于获取更多信息
+  globalActiveTokenId?: string | null; // 全局激活的词卡ID
+  onTokenActivate?: (tokenId: string) => void; // 激活词卡的回调
+  tokenIdPrefix?: string; // 用于生成唯一ID的前缀
 }
 
-export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, item }: SentenceViewProps) => {
-  const [activeToken, setActiveToken] = useState<Token | null>(null);
+export const SentenceView = ({ 
+  sentence, 
+  tokens, 
+  onWordSelect, 
+  selectedWord, 
+  item,
+  globalActiveTokenId,
+  onTokenActivate,
+  tokenIdPrefix = 'default'
+}: SentenceViewProps) => {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const tokenRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 计算当前应该显示的 token（基于全局状态）
+  const activeToken = useMemo(() => {
+    if (!globalActiveTokenId || !tokenIdPrefix) return null;
+    // 检查 globalActiveTokenId 是否属于当前 SentenceView
+    if (globalActiveTokenId.startsWith(tokenIdPrefix)) {
+      // 从 ID 中提取 word
+      const word = globalActiveTokenId.replace(`${tokenIdPrefix}-`, '');
+      // 查找对应的 token
+      const token = tokens.find(t => t.text === word);
+      if (token) return token;
+      // 如果找不到，创建一个临时 token
+      return createTempToken(word);
+    }
+    return null;
+  }, [globalActiveTokenId, tokenIdPrefix, tokens]);
 
   // 清除关闭定时器
   const clearCloseTimeout = () => {
@@ -83,6 +110,8 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
   // 渲染单词的辅助函数（统一处理词卡功能）
   const renderWord = (word: string, key: string, isToken: boolean = false, token?: Token) => {
     const wordToken = isToken && token ? token : createTempToken(word);
+    const tokenId = `${tokenIdPrefix}-${word}`;
+    const isActive = globalActiveTokenId === tokenId;
     
     return (
       <span
@@ -103,22 +132,25 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
         onClick={(e) => {
           clearCloseTimeout();
           const rect = e.currentTarget.getBoundingClientRect();
-          setActiveToken(wordToken);
+          // 使用全局状态
+          if (onTokenActivate) {
+            onTokenActivate(tokenId);
+          }
           calculateTooltipPosition(rect);
         }}
         onMouseEnter={(e) => {
           if (window.innerWidth > 768) {
             clearCloseTimeout();
             const rect = e.currentTarget.getBoundingClientRect();
-            setActiveToken(wordToken);
+            // 使用全局状态
+            if (onTokenActivate) {
+              onTokenActivate(tokenId);
+            }
             calculateTooltipPosition(rect);
           }
         }}
         onMouseLeave={(e) => {
-          // 不自动关闭词卡
-          // 只有当鼠标悬停到另一个词上时，才会通过 setActiveToken 替换词卡
-          // 或者点击外部时关闭
-          // PC端和移动端都不自动关闭
+          // 不自动关闭词卡，由全局状态管理
         }}
       >
         {word}
@@ -293,18 +325,20 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
   // 点击外部关闭tooltip（PC端和移动端都生效）
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (activeToken) {
+      if (activeToken && globalActiveTokenId) {
         const target = e.target as HTMLElement;
         // 如果点击的不是词或词卡内的元素，则关闭词卡
         if (target && !target.closest('[data-word-tooltip]') && !target.closest('[data-word]')) {
-          setActiveToken(null);
+          if (onTokenActivate) {
+            onTokenActivate(''); // 清空全局状态
+          }
         }
       }
     };
 
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
-  }, [activeToken]);
+  }, [activeToken, globalActiveTokenId, onTokenActivate]);
 
   // 组件卸载时清理定时器
   useEffect(() => {
@@ -323,7 +357,11 @@ export const SentenceView = ({ sentence, tokens, onWordSelect, selectedWord, ite
         <WordTooltip
           token={activeToken}
           position={tooltipPosition}
-          onClose={() => setActiveToken(null)}
+          onClose={() => {
+            if (onTokenActivate) {
+              onTokenActivate(''); // 清空全局状态
+            }
+          }}
           item={item}
         />
       )}

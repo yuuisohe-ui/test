@@ -443,30 +443,117 @@ interface SongPageProps {
 }
 
 export default function SongPage({ initialLyrics }: SongPageProps = {}) {
+  // ⭐ 状态持久化：从 localStorage 恢复状态
+  const STORAGE_KEY = 'songPage_state';
+  
   // 输入区
-  const [rawText, setRawText] = useState(initialLyrics || "");
+  const [rawText, setRawText] = useState(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.rawText || initialLyrics || "";
+      } catch {
+        return initialLyrics || "";
+      }
+    }
+    return initialLyrics || "";
+  });
   const [audioHint, setAudioHint] = useState<string | null>(null);
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
-  const [languageMode, setLanguageMode] = useState<'ko' | 'zh' | null>(null);
+  const [languageMode, setLanguageMode] = useState<'ko' | 'zh' | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.languageMode || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [showLanguageTip, setShowLanguageTip] = useState(false);
   const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   
-  // initialLyrics가 변경되면 rawText 업데이트
+  // initialLyrics가 변경되면 rawText 업데이트（但只在没有保存状态时）
   useEffect(() => {
-    if (initialLyrics) {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved && initialLyrics) {
       setRawText(initialLyrics);
     }
   }, [initialLyrics]);
+  
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessage, setLoadingMessage] = useState<string>("");
-  const [opalPayload, setOpalPayload] = useState<SongPayload | null>(null);
+  const [opalPayload, setOpalPayload] = useState<SongPayload | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.opalPayload && parsed.opalPayload.status === 'ok') {
+          // 验证 opalPayload 结构
+          return parsed.opalPayload as SongPayload;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [testResult, setTestResult] = useState<string | null>(null);
   // 保存原始输入文本（用于中文输入时直接显示）
-  const [originalText, setOriginalText] = useState<string>("");
+  const [originalText, setOriginalText] = useState<string>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.originalText || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  });
   // 保存原始转写文本（用于音频转文字时直接显示）
-  const [transcribedText, setTranscribedText] = useState<string>("");
+  const [transcribedText, setTranscribedText] = useState<string>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.transcribedText || "";
+      } catch {
+        return "";
+      }
+    }
+    return "";
+  });
+  
+  // ⭐ 状态持久化：保存关键状态到 localStorage
+  useEffect(() => {
+    try {
+      const stateToSave = {
+        rawText,
+        languageMode,
+        originalText,
+        transcribedText,
+        opalPayload: opalPayload ? {
+          status: opalPayload.status,
+          message: opalPayload.message,
+          songId: opalPayload.songId,
+          version: opalPayload.version,
+          audioUrl: opalPayload.audioUrl || null,
+          lines: opalPayload.lines || [],
+        } : null,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('保存状态失败:', error);
+    }
+  }, [rawText, languageMode, originalText, transcribedText, opalPayload]);
   
   // 단어 선택 및 대화 생성
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -478,9 +565,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   // 列表与模式
   const [search, setSearch] = useState("");
-  const [reviewMode, setReviewMode] = useState<"word" | "sentence" | false>(false);
+  const [reviewMode, setReviewMode] = useState<"sentence" | false>(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+  
+  // ⭐ 全局词卡状态管理：确保同一时间只有一个词卡显示
+  const [globalActiveTokenId, setGlobalActiveTokenId] = useState<string | null>(null);
 
 
   // 解析输入 → 句子数组（只有 API 分析结果才显示，粘贴文本时不自动显示）
@@ -671,9 +761,6 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     if (reviewMode === "sentence") {
       // 句子复习：只显示收藏的句子
       afterReview = base.filter((x: any) => x.starred);
-    } else if (reviewMode === "word") {
-      // 单词复习：暂时空着，显示所有句子（后续可以过滤包含收藏单词的句子）
-      afterReview = base;
     }
 
     const afterSearch = q
@@ -697,8 +784,6 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     const title = "中文歌词学习笔记";
     const modeTitle = reviewMode === "sentence" 
       ? "（句子复习模式：本页星标句子）" 
-      : reviewMode === "word"
-      ? "（单词复习模式：本页句子）"
       : "（普通模式：本页句子）";
 
     const blocks = items
@@ -776,8 +861,6 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
     const filename = reviewMode === "sentence" 
       ? `review_sentence_page_${currentPage}.html` 
-      : reviewMode === "word"
-      ? `review_word_page_${currentPage}.html`
       : `page_${currentPage}.html`;
     downloadHtml(filename, html);
   }
@@ -2150,6 +2233,9 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                   <SentenceView
                                     sentence={zhSentence}
                                     tokens={data.tokens}
+                                    globalActiveTokenId={globalActiveTokenId}
+                                    onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
+                                    tokenIdPrefix={`whole-line-${lineNo}`}
                                   />
                                 </div>
                               </>
@@ -2440,6 +2526,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     const [isAnalyzingSentence, setIsAnalyzingSentence] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+    const [practiceRecordingDuration, setPracticeRecordingDuration] = useState(0);
+    const [hasPracticeRecording, setHasPracticeRecording] = useState(false);
+    const [practiceAudioBlob, setPracticeAudioBlob] = useState<Blob | null>(null);
+    const practiceStreamRef = useRef<MediaStream | null>(null);
+    const practiceDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const practiceStartTimeRef = useRef<number>(0);
     const lineNo = Number(item?.lineNo ?? 0);
     
     // displayLine已经在linesAll中处理过了，应该已经是韩文
@@ -2619,6 +2711,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <SingAlongButton 
               text={finalZhSentence}
               userLevel={userLevel}
+              onStartRecording={() => {
+                // 点击跟读按钮时，关闭教学提示
+                setShowTeachingTip(false);
+              }}
             />
           </div>
           <SentenceView 
@@ -2626,6 +2722,9 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             tokens={data.tokens ?? []} 
             selectedWord={selectedWord}
             item={item}
+            globalActiveTokenId={globalActiveTokenId}
+            onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
+            tokenIdPrefix={`line-${lineNo}`}
           />
         </div>
 
@@ -2818,11 +2917,11 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               </div>
             )}
             
-            {/* 练习对话框 */}
+            {/* 练习对话框 - 出现在教学提示卡片的左边 */}
             {showPracticeDialog && (
-              <div className="absolute top-full left-0 mt-2 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-xl border-2 border-blue-300 p-4">
-                {/* 气泡箭头 */}
-                <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-l-2 border-t-2 border-blue-300 transform rotate-45"></div>
+              <div className="absolute top-0 right-full mr-2 z-50 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-xl border-2 border-blue-300 p-4">
+                {/* 气泡箭头 - 指向右边 */}
+                <div className="absolute top-6 -right-2 w-4 h-4 bg-white border-r-2 border-t-2 border-blue-300 transform rotate-45"></div>
                 
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="text-sm font-semibold text-gray-800">造句练习</h4>
@@ -2851,20 +2950,14 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     disabled={isAnalyzingSentence}
                   />
                   
-                  {/* 语音输入按钮 */}
-                  <div className="mt-2 flex items-center gap-2">
-                    <button
-                      onClick={async () => {
-                        if (isRecording) {
-                          // 停止录音
-                          if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                            mediaRecorder.stop();
-                          }
-                          setIsRecording(false);
-                        } else {
-                          // 开始录音
+                  {/* 发送语音按钮 */}
+                  <div className="mt-2">
+                    {!isRecording && !hasPracticeRecording && (
+                      <button
+                        onClick={async () => {
                           try {
                             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                            practiceStreamRef.current = stream;
                             const recorder = new MediaRecorder(stream);
                             const chunks: Blob[] = [];
                             
@@ -2876,96 +2969,252 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             
                             recorder.onstop = async () => {
                               const blob = new Blob(chunks, { type: 'audio/wav' });
-                              // 使用 Whisper API 转写
-                              try {
-                                const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
-                                const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
-                                
-                                const formData = new FormData();
-                                formData.append('file', blob, 'recording.wav');
-                                formData.append('model', 'whisper-1');
-                                formData.append('language', 'zh');
-                                
-                                const response = await fetch(`${apiUrl}/audio/transcriptions`, {
-                                  method: 'POST',
-                                  headers: {
-                                    'Authorization': `Bearer ${apiKey}`,
-                                  },
-                                  body: formData,
-                                });
-                                
-                                if (response.ok) {
-                                  const data = await response.json();
-                                  setPracticeInput(data.text || '');
-                                }
-                              } catch (error) {
-                                console.error('语音转写失败:', error);
+                              setPracticeAudioBlob(blob);
+                              setHasPracticeRecording(true);
+                              if (practiceStreamRef.current) {
+                                practiceStreamRef.current.getTracks().forEach(track => track.stop());
                               }
-                              
-                              stream.getTracks().forEach(track => track.stop());
+                              if (practiceDurationIntervalRef.current) {
+                                clearInterval(practiceDurationIntervalRef.current);
+                                practiceDurationIntervalRef.current = null;
+                              }
                             };
                             
                             recorder.start();
                             setMediaRecorder(recorder);
                             setIsRecording(true);
+                            setPracticeRecordingDuration(0);
+                            practiceStartTimeRef.current = Date.now();
+                            
+                            // 开始计时
+                            practiceDurationIntervalRef.current = setInterval(() => {
+                              setPracticeRecordingDuration(Math.floor((Date.now() - practiceStartTimeRef.current) / 1000));
+                            }, 100);
                           } catch (error) {
                             console.error('无法访问麦克风:', error);
                             alert('无法访问麦克风，请检查权限设置');
                           }
-                        }
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        isRecording
-                          ? 'bg-red-500 text-white hover:bg-red-600'
-                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                      }`}
-                    >
-                      {isRecording ? '停止录音' : '语音输入'}
-                    </button>
+                        }}
+                        className="w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
+                        发送语音
+                      </button>
+                    )}
+                    
+                    {isRecording && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+                          <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                          <span className="text-sm text-red-700 font-medium">
+                            录音中 {Math.floor(practiceRecordingDuration / 60)}:{(practiceRecordingDuration % 60).toString().padStart(2, '0')}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                              mediaRecorder.stop();
+                            }
+                            setIsRecording(false);
+                            if (practiceStreamRef.current) {
+                              practiceStreamRef.current.getTracks().forEach(track => track.stop());
+                            }
+                            if (practiceDurationIntervalRef.current) {
+                              clearInterval(practiceDurationIntervalRef.current);
+                              practiceDurationIntervalRef.current = null;
+                            }
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
+                        >
+                          结束录音
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                              mediaRecorder.stop();
+                            }
+                            if (practiceStreamRef.current) {
+                              practiceStreamRef.current.getTracks().forEach(track => track.stop());
+                            }
+                            if (practiceDurationIntervalRef.current) {
+                              clearInterval(practiceDurationIntervalRef.current);
+                              practiceDurationIntervalRef.current = null;
+                            }
+                            setIsRecording(false);
+                            setPracticeRecordingDuration(0);
+                            setHasPracticeRecording(false);
+                            setPracticeAudioBlob(null);
+                            // 延迟一下再开始录音
+                            setTimeout(() => {
+                              const startRecording = async () => {
+                                try {
+                                  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                  practiceStreamRef.current = stream;
+                                  const recorder = new MediaRecorder(stream);
+                                  const chunks: Blob[] = [];
+                                  
+                                  recorder.ondataavailable = (e) => {
+                                    if (e.data.size > 0) {
+                                      chunks.push(e.data);
+                                    }
+                                  };
+                                  
+                                  recorder.onstop = async () => {
+                                    const blob = new Blob(chunks, { type: 'audio/wav' });
+                                    setPracticeAudioBlob(blob);
+                                    setHasPracticeRecording(true);
+                                    if (practiceStreamRef.current) {
+                                      practiceStreamRef.current.getTracks().forEach(track => track.stop());
+                                    }
+                                    if (practiceDurationIntervalRef.current) {
+                                      clearInterval(practiceDurationIntervalRef.current);
+                                      practiceDurationIntervalRef.current = null;
+                                    }
+                                  };
+                                  
+                                  recorder.start();
+                                  setMediaRecorder(recorder);
+                                  setIsRecording(true);
+                                  setPracticeRecordingDuration(0);
+                                  practiceStartTimeRef.current = Date.now();
+                                  
+                                  practiceDurationIntervalRef.current = setInterval(() => {
+                                    setPracticeRecordingDuration(Math.floor((Date.now() - practiceStartTimeRef.current) / 1000));
+                                  }, 100);
+                                } catch (error) {
+                                  console.error('无法访问麦克风:', error);
+                                  alert('无法访问麦克风，请检查权限设置');
+                                }
+                              };
+                              startRecording();
+                            }, 100);
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
+                        >
+                          重新录音
+                        </button>
+                      </div>
+                    )}
+                    
+                    {hasPracticeRecording && !isRecording && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
+                          录音完成 ({Math.floor(practiceRecordingDuration / 60)}:{(practiceRecordingDuration % 60).toString().padStart(2, '0')})
+                        </div>
+                        <button
+                          onClick={() => {
+                            setHasPracticeRecording(false);
+                            setPracticeAudioBlob(null);
+                            setPracticeRecordingDuration(0);
+                          }}
+                          className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
+                        >
+                          重新录音
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 {/* 提交按钮 */}
-                <button
-                  onClick={async () => {
-                    if (!practiceInput.trim()) {
-                      alert('请输入你造的句子');
-                      return;
-                    }
-                    
-                    if (!userLevel) {
-                      alert('请先选择语言等级');
-                      return;
-                    }
-                    
-                    setIsAnalyzingSentence(true);
-                    setPracticeFeedback(null);
-                    
-                    try {
-                      const feedback = await evaluateSentence(practiceInput, userLevel, zhSentence || data.sentence || "");
-                      setPracticeFeedback(feedback);
-                    } catch (error) {
-                      console.error('评价失败:', error);
-                      alert('评价失败，请稍后重试');
-                    } finally {
-                      setIsAnalyzingSentence(false);
-                    }
-                  }}
-                  disabled={isAnalyzingSentence || !practiceInput.trim()}
-                  className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {isAnalyzingSentence ? (
-                    <>
-                      <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      分析中...
-                    </>
-                  ) : (
-                    '提交评价'
+                <div className="flex gap-2 mt-3">
+                  {practiceInput.trim() && (
+                    <button
+                      onClick={async () => {
+                        if (!practiceInput.trim()) {
+                          alert('请输入你造的句子');
+                          return;
+                        }
+                        
+                        if (!userLevel) {
+                          alert('请先选择语言等级');
+                          return;
+                        }
+                        
+                        setIsAnalyzingSentence(true);
+                        setPracticeFeedback(null);
+                        
+                        try {
+                          const feedback = await evaluateSentence(practiceInput, userLevel, zhSentence || data.sentence || "");
+                          setPracticeFeedback(feedback);
+                        } catch (error) {
+                          console.error('评价失败:', error);
+                          alert('评价失败，请稍后重试');
+                        } finally {
+                          setIsAnalyzingSentence(false);
+                        }
+                      }}
+                      disabled={isAnalyzingSentence || !practiceInput.trim()}
+                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isAnalyzingSentence ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          分析中...
+                        </>
+                      ) : (
+                        '提交评价'
+                      )}
+                    </button>
                   )}
-                </button>
+                  
+                  {hasPracticeRecording && practiceAudioBlob && (
+                    <button
+                      onClick={async () => {
+                        if (!userLevel) {
+                          alert('请先选择语言等级');
+                          return;
+                        }
+                        
+                        setIsAnalyzingSentence(true);
+                        setPracticeFeedback(null);
+                        
+                        try {
+                          // 先转写音频
+                          const { transcribeAudio } = await import('../services/chatgptApi');
+                          const asrText = await transcribeAudio(practiceAudioBlob);
+                          
+                          // 使用跟读反馈API（和打字点评使用相同的提示词逻辑）
+                          const { generateReadingFeedback } = await import('../services/chatgptApi');
+                          const feedbackData = await generateReadingFeedback(
+                            userLevel,
+                            zhSentence || data.sentence || "",
+                            asrText,
+                            practiceRecordingDuration
+                          );
+                          
+                          // 格式化反馈为文本（和打字点评格式一致）
+                          const feedbackText = `${feedbackData.overallComment}\n\n主要问题：${feedbackData.keyIssue}\n\n下一步练习：${feedbackData.oneAction}`;
+                          setPracticeFeedback(feedbackText);
+                        } catch (error) {
+                          console.error('评价失败:', error);
+                          alert('评价失败，请稍后重试');
+                        } finally {
+                          setIsAnalyzingSentence(false);
+                        }
+                      }}
+                      disabled={isAnalyzingSentence}
+                      className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {isAnalyzingSentence ? (
+                        <>
+                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          分析中...
+                        </>
+                      ) : (
+                        '发送语音评价'
+                      )}
+                    </button>
+                  )}
+                </div>
                 
                 {/* 反馈显示 */}
                 {practiceFeedback && (
@@ -3248,14 +3497,6 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   onClick={() => setReviewMode((v) => v === "sentence" ? false : "sentence")}
                 >
                   {reviewMode === "sentence" ? "退出句子复习" : "句子复习"}
-                </button>
-                <button
-                  className={`px-3 py-1 rounded-lg border text-sm ${
-                    reviewMode === "word" ? "bg-black text-white" : "bg-white"
-                  }`}
-                  onClick={() => setReviewMode((v) => v === "word" ? false : "word")}
-                >
-                  {reviewMode === "word" ? "退出单词复习" : "单词复习"}
                 </button>
               </div>
               <button
@@ -3624,7 +3865,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="text-sm text-gray-600 flex items-center justify-between">
               <div>
                 共 {filtered.length} 句（原始 {linesAll.length} 句）
-                {reviewMode === "sentence" ? " · 句子复习模式（仅星标句子）" : reviewMode === "word" ? " · 单词复习模式" : ""}
+                {reviewMode === "sentence" ? " · 句子复习模式（仅星标句子）" : ""}
               </div>
               <div>
                 第 {currentPage} / {totalPages} 页（每页 {pageSize} 句）
@@ -3652,7 +3893,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           <>
             {!showEmpty && pageItems.length === 0 ? (
               <div className="bg-white border rounded-2xl p-6 text-gray-600">
-                没有匹配结果。{reviewMode === "sentence" ? "请调整搜索词或取消句子复习模式。" : reviewMode === "word" ? "请调整搜索词或取消单词复习模式。" : "请调整搜索词。"}
+                没有匹配结果。{reviewMode === "sentence" ? "请调整搜索词或取消句子复习模式。" : "请调整搜索词。"}
               </div>
             ) : null}
 

@@ -6,6 +6,7 @@ interface SingAlongButtonProps {
   text: string; // 要跟读的目标文本
   userLevel: "初级" | "中级" | "高级" | null; // 用户水平
   className?: string;
+  onStartRecording?: () => void; // 开始录音时的回调
 }
 
 interface ReadingFeedback {
@@ -25,7 +26,7 @@ interface ReadingFeedback {
   };
 }
 
-export const SingAlongButton = ({ text, userLevel, className = '' }: SingAlongButtonProps) => {
+export const SingAlongButton = ({ text, userLevel, className = '', onStartRecording }: SingAlongButtonProps) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
@@ -104,6 +105,11 @@ export const SingAlongButton = ({ text, userLevel, className = '' }: SingAlongBu
       setIsRecording(true);
       setRecordingDuration(0);
       startTimeRef.current = Date.now();
+      
+      // 触发回调
+      if (onStartRecording) {
+        onStartRecording();
+      }
       
       // 开始计时
       durationIntervalRef.current = setInterval(() => {
