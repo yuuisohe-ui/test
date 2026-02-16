@@ -4,6 +4,7 @@ export interface Token {
   glossKr?: string;
   example: string;
   pinyin?: string; // 拼音
+  level?: 'basic' | 'intermediate' | 'advanced'; // 难度等级（用于词汇训练模式的颜色标记）
 }
 
 export interface Chunk {

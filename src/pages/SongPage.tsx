@@ -532,28 +532,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     return "";
   });
   
-  // ⭐ 状态持久化：保存关键状态到 localStorage
-  useEffect(() => {
-    try {
-      const stateToSave = {
-        rawText,
-        languageMode,
-        originalText,
-        transcribedText,
-        opalPayload: opalPayload ? {
-          status: opalPayload.status,
-          message: opalPayload.message,
-          songId: opalPayload.songId,
-          version: opalPayload.version,
-          audioUrl: opalPayload.audioUrl || null,
-          lines: opalPayload.lines || [],
-        } : null,
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
-    } catch (error) {
-      console.error('保存状态失败:', error);
-    }
-  }, [rawText, languageMode, originalText, transcribedText, opalPayload]);
+  // ⭐ 状态持久化：保存关键状态到 localStorage（将在 userLevel 定义后重新定义）
   
   // 단어 선택 및 대화 생성
   const [selectedWord, setSelectedWord] = useState<string | null>(null);
@@ -732,9 +711,44 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
   // 星标状态
   const [starMap, setStarMap] = useState<StarMap>({});
-  const [userLevel, setUserLevel] = useState<"初级" | "中级" | "高级" | null>(null);
+  const [userLevel, setUserLevel] = useState<"初级" | "中级" | "高级" | null>(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return parsed.userLevel || null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
   const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
   const [showLevelWarning, setShowLevelWarning] = useState(false);
+
+  // ⭐ 状态持久化：保存关键状态到 localStorage（包括 userLevel）
+  useEffect(() => {
+    try {
+      const stateToSave = {
+        rawText,
+        languageMode,
+        originalText,
+        transcribedText,
+        userLevel,
+        opalPayload: opalPayload ? {
+          status: opalPayload.status,
+          message: opalPayload.message,
+          songId: opalPayload.songId,
+          version: opalPayload.version,
+          audioUrl: opalPayload.audioUrl || null,
+          lines: opalPayload.lines || [],
+        } : null,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('保存状态失败:', error);
+    }
+  }, [rawText, languageMode, originalText, transcribedText, opalPayload, userLevel]);
 
   useEffect(() => {
     // songId变化时，读取对应星标
@@ -2532,6 +2546,46 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     const practiceStreamRef = useRef<MediaStream | null>(null);
     const practiceDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const practiceStartTimeRef = useRef<number>(0);
+
+    // ✅ 添加清理逻辑：组件卸载时重置状态
+    useEffect(() => {
+      return () => {
+        // 组件卸载时重置所有状态
+        setIsGeneratingTipForThis(false);
+        setShowTeachingTip(false);
+        setShowPracticeDialog(false);
+        setIsAnalyzingSentence(false);
+        setIsRecording(false);
+        setHasPracticeRecording(false);
+        // 清理录音相关的资源
+        if (practiceStreamRef.current) {
+          practiceStreamRef.current.getTracks().forEach(track => track.stop());
+        }
+        if (practiceDurationIntervalRef.current) {
+          clearInterval(practiceDurationIntervalRef.current);
+        }
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          try {
+            mediaRecorder.stop();
+          } catch (e) {
+            console.warn('停止录音失败:', e);
+          }
+        }
+      };
+    }, [mediaRecorder]);
+
+    // ✅ 添加超时保护：如果状态卡住超过30秒，自动重置
+    useEffect(() => {
+      if (isGeneratingTipForThis) {
+        const timeout = setTimeout(() => {
+          console.warn('教学提示生成超时，自动重置状态');
+          setIsGeneratingTipForThis(false);
+        }, 30000); // 30秒超时
+        
+        return () => clearTimeout(timeout);
+      }
+    }, [isGeneratingTipForThis]);
+
     const lineNo = Number(item?.lineNo ?? 0);
     
     // displayLine已经在linesAll中处理过了，应该已经是韩文

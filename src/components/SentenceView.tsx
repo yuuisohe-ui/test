@@ -11,6 +11,7 @@ interface SentenceViewProps {
   globalActiveTokenId?: string | null; // 全局激活的词卡ID
   onTokenActivate?: (tokenId: string) => void; // 激活词卡的回调
   tokenIdPrefix?: string; // 用于生成唯一ID的前缀
+  disableWordCards?: boolean; // 是否禁用词卡功能（仅显示颜色标记）
 }
 
 export const SentenceView = ({ 
@@ -21,19 +22,32 @@ export const SentenceView = ({
   item,
   globalActiveTokenId,
   onTokenActivate,
-  tokenIdPrefix = 'default'
+  tokenIdPrefix = 'default',
+  disableWordCards = false
 }: SentenceViewProps) => {
   const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
   const tokenRefs = useRef<{ [key: string]: HTMLSpanElement | null }>({});
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // 创建一个临时Token对象的辅助函数（必须在 useMemo 之前定义）
+  const createTempToken = (word: string): Token => ({
+    text: word,
+    glossZh: '',
+    glossKr: '',
+    example: '',
+  });
   
   // 计算当前应该显示的 token（基于全局状态）
   const activeToken = useMemo(() => {
     if (!globalActiveTokenId || !tokenIdPrefix) return null;
     // 检查 globalActiveTokenId 是否属于当前 SentenceView
     if (globalActiveTokenId.startsWith(tokenIdPrefix)) {
-      // 从 ID 中提取 word
-      const word = globalActiveTokenId.replace(`${tokenIdPrefix}-`, '');
+      // 从 ID 中提取 word（格式：prefix-word-index）
+      // 先移除前缀，然后提取 word（去掉最后的 -index 部分）
+      const idWithoutPrefix = globalActiveTokenId.replace(`${tokenIdPrefix}-`, '');
+      // 提取 word（去掉最后的 -数字部分）
+      const match = idWithoutPrefix.match(/^(.+?)(-\d+)?$/);
+      const word = match ? match[1] : idWithoutPrefix;
       // 查找对应的 token
       const token = tokens.find(t => t.text === word);
       if (token) return token;
@@ -51,11 +65,13 @@ export const SentenceView = ({
     }
   };
 
-  // 延迟关闭词卡
+  // 延迟关闭词卡（使用全局状态）
   const scheduleClose = () => {
     clearCloseTimeout();
     closeTimeoutRef.current = setTimeout(() => {
-      setActiveToken(null);
+      if (onTokenActivate) {
+        onTokenActivate(''); // 清空激活的词卡
+      }
     }, 800); // 800ms延迟，给用户足够时间移动到词卡上并点击按钮
   };
 
@@ -99,19 +115,42 @@ export const SentenceView = ({
     return words.filter(w => w.trim().length > 0);
   };
 
-  // 创建一个临时Token对象的辅助函数
-  const createTempToken = (word: string): Token => ({
-    text: word,
-    glossZh: '',
-    glossKr: '',
-    example: '',
-  });
 
   // 渲染单词的辅助函数（统一处理词卡功能）
-  const renderWord = (word: string, key: string, isToken: boolean = false, token?: Token) => {
+  const renderWord = (word: string, key: string, isToken: boolean = false, token?: Token, index?: number) => {
     const wordToken = isToken && token ? token : createTempToken(word);
-    const tokenId = `${tokenIdPrefix}-${word}`;
+    // 使用 key 作为 tokenId，确保每个字符都有唯一的 ID
+    const tokenId = key;
     const isActive = globalActiveTokenId === tokenId;
+    
+    // 根据难度等级设置颜色（如果有 level 字段）
+    let bgColorClass = 'hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200';
+    let selectedBgClass = 'bg-blue-200 text-blue-800';
+    
+    if (token?.level) {
+      if (token.level === 'basic') {
+        bgColorClass = 'hover:bg-green-100 hover:text-green-700 active:bg-green-200';
+        selectedBgClass = 'bg-green-200 text-green-800';
+      } else if (token.level === 'intermediate') {
+        bgColorClass = 'hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200';
+        selectedBgClass = 'bg-blue-200 text-blue-800';
+      } else if (token.level === 'advanced') {
+        bgColorClass = 'hover:bg-purple-100 hover:text-purple-700 active:bg-purple-200';
+        selectedBgClass = 'bg-purple-200 text-purple-800';
+      }
+    }
+    
+    // 如果有 level，添加背景色（仅在词汇训练模式下）
+    let levelBgClass = '';
+    if (disableWordCards && token?.level) {
+      if (token.level === 'basic') {
+        levelBgClass = 'bg-green-100';
+      } else if (token.level === 'intermediate') {
+        levelBgClass = 'bg-blue-100';
+      } else if (token.level === 'advanced') {
+        levelBgClass = 'bg-purple-100';
+      }
+    }
     
     return (
       <span
@@ -121,15 +160,14 @@ export const SentenceView = ({
         }}
         className={`
           inline-block
-          cursor-pointer
-          hover:bg-blue-100 hover:text-blue-700
-          active:bg-blue-200
-          ${selectedWord === word ? 'bg-blue-200 text-blue-800' : ''}
+          ${disableWordCards ? 'cursor-default' : 'cursor-pointer'}
+          ${disableWordCards ? '' : bgColorClass}
+          ${disableWordCards ? levelBgClass : (selectedWord === word ? selectedBgClass : levelBgClass)}
           rounded transition-colors duration-150
           relative
         `}
-        data-word="true"
-        onClick={(e) => {
+        data-word={disableWordCards ? undefined : "true"}
+        onClick={disableWordCards ? undefined : (e) => {
           clearCloseTimeout();
           const rect = e.currentTarget.getBoundingClientRect();
           // 使用全局状态
@@ -138,7 +176,7 @@ export const SentenceView = ({
           }
           calculateTooltipPosition(rect);
         }}
-        onMouseEnter={(e) => {
+        onMouseEnter={disableWordCards ? undefined : (e) => {
           if (window.innerWidth > 768) {
             clearCloseTimeout();
             const rect = e.currentTarget.getBoundingClientRect();
@@ -149,7 +187,7 @@ export const SentenceView = ({
             calculateTooltipPosition(rect);
           }
         }}
-        onMouseLeave={(e) => {
+        onMouseLeave={disableWordCards ? undefined : (e) => {
           // 不自动关闭词卡，由全局状态管理
         }}
       >
@@ -162,59 +200,194 @@ export const SentenceView = ({
   const renderSentence = () => {
     const elements: JSX.Element[] = [];
     
+    // 词汇训练模式：使用智能匹配逻辑，匹配句子中所有出现的重点词（包括重复的）
+    if (disableWordCards && tokens.length > 0) {
+      // 按词汇长度排序，优先匹配长词
+      const sortedTokens = [...tokens].sort((a, b) => (b.text?.length || 0) - (a.text?.length || 0));
+      
+      // 创建匹配数组
+      interface Match {
+        index: number;
+        length: number;
+        token: Token;
+      }
+      
+      const matches: Match[] = [];
+      const matchedIndices = new Set<number>();
+      
+      // 找到所有匹配的词汇（包括重复的）
+      sortedTokens.forEach((token) => {
+        const word = token.text;
+        if (!word) return;
+        
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedWord, 'g');
+        let match;
+        
+        while ((match = regex.exec(sentence)) !== null) {
+          const startIndex = match.index;
+          const endIndex = startIndex + word.length;
+          
+          // 检查是否与已匹配的词汇重叠
+          let hasOverlap = false;
+          for (let i = startIndex; i < endIndex; i++) {
+            if (matchedIndices.has(i)) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            matches.push({
+              index: startIndex,
+              length: word.length,
+              token: token,
+            });
+            
+            // 标记已匹配的索引
+            for (let i = startIndex; i < endIndex; i++) {
+              matchedIndices.add(i);
+            }
+          }
+        }
+      });
+      
+      // 按索引排序
+      matches.sort((a, b) => a.index - b.index);
+      
+      // 构建结果
+      let lastIndex = 0;
+      matches.forEach((match, matchIdx) => {
+        // 添加匹配前的文本
+        if (match.index > lastIndex) {
+          elements.push(
+            <span key={`text-${lastIndex}-${matchIdx}`}>
+              {sentence.substring(lastIndex, match.index)}
+            </span>
+          );
+        }
+        
+        // 添加带颜色的重点词
+        elements.push(renderWord(
+          sentence.substring(match.index, match.index + match.length),
+          `word-${match.index}-${matchIdx}`,
+          true,
+          match.token
+        ));
+        
+        lastIndex = match.index + match.length;
+      });
+      
+      // 添加剩余文本
+      if (lastIndex < sentence.length) {
+        elements.push(
+          <span key={`text-${lastIndex}-end`}>
+            {sentence.substring(lastIndex)}
+          </span>
+        );
+      }
+      
+      return elements;
+    }
+    
+    // 非词汇训练模式：使用原有逻辑
     // 将整个句子分词，但保留原始空格（作为 fallback）
     const allWords = segmentWordsWithSpaces(sentence);
     
-    // ⭐ 优先使用 tokens 作为词卡渲染源
+    // ⭐ 在标准模式下，始终使用 segmentWordsWithSpaces 分词，确保每个词都有独立的词卡
+    // tokens 只用于提供词卡信息（如果有的话）
     const hasTokens = Array.isArray(tokens) && tokens.length > 0;
-    const renderWords = hasTokens
-      ? tokens.map(t => t.text)
-      : allWords;
+    const tokenMap = new Map<string, Token>();
+    if (hasTokens) {
+      tokens.forEach(token => {
+        tokenMap.set(token.text, token);
+      });
+    }
 
     console.log("🧩 [SentenceView] word source", {
       tokensLen: tokens?.length ?? 0,
       allWordsLen: allWords?.length ?? 0,
-      renderWordsLen: renderWords?.length ?? 0,
-      using: hasTokens ? "tokens" : "segments",
+      using: "segmentWordsWithSpaces",
     });
     
-    // 如果使用 tokens，直接渲染 tokens
-    if (hasTokens) {
-      // 创建一个Map来快速查找token
-      const tokenMap = new Map<string, Token>();
-      tokens.forEach(token => {
-        tokenMap.set(token.text, token);
-      });
-      
-      // 直接使用 tokens 渲染，不保留空格（tokens 中已包含所有字符）
-      renderWords.forEach((word, idx) => {
+    // 始终使用 allWords 分词结果，确保每个词都有独立的词卡
+    allWords.forEach((word, idx) => {
+      // 如果是空格，直接渲染为空格（不创建词卡）
+      if (word.trim() === '') {
+        elements.push(<span key={`space-${idx}`}>{word}</span>);
+      } else {
+        // 检查是否有对应的 token（用于显示词卡信息）
         const token = tokenMap.get(word);
+        // 使用索引确保每个字符都有唯一的 tokenId
+        const uniqueKey = `${tokenIdPrefix}-${word}-${idx}`;
         if (token) {
-          elements.push(renderWord(word, `token-${idx}`, true, token));
+          elements.push(renderWord(word, uniqueKey, true, token, idx));
         } else {
-          elements.push(renderWord(word, `word-${idx}`));
+          // 即使没有 token，也要为每个词创建词卡（使用临时 token）
+          elements.push(renderWord(word, uniqueKey, false, undefined, idx));
         }
-      });
-    } else {
-      // tokens가 없으면使用 segmentWordsWithSpaces 分词结果，保留空格
-      renderWords.forEach((word, idx) => {
-        // 如果是空格，直接渲染为空格
-        if (word.trim() === '') {
-          elements.push(<span key={`space-${idx}`}>{word}</span>);
-        } else {
-          elements.push(renderWord(word, `word-${idx}`));
-        }
-      });
-    }
+      }
+    });
 
     return elements;
   };
 
-  // 分词但保留原始空格
+  // 分词但保留原始空格，使用 Intl.Segmenter 按词分割
   const segmentWordsWithSpaces = (text: string): string[] => {
     if (!text) return [];
     
     const result: string[] = [];
+    
+    try {
+      // 优先使用 Intl.Segmenter 进行中文分词（按词分割）
+      if ('Segmenter' in Intl) {
+        const segmenter = new (Intl as any).Segmenter('zh', { granularity: 'word' });
+        const segments = Array.from(segmenter.segment(text)) as Array<{ 
+          segment: string; 
+          index: number; 
+          isWordLike: boolean 
+        }>;
+        
+        let lastIndex = 0;
+        segments.forEach((seg) => {
+          // 如果当前段之前有空格或其他字符，先添加它们
+          if (seg.index > lastIndex) {
+            const gap = text.substring(lastIndex, seg.index);
+            // 将空格单独添加
+            for (let i = 0; i < gap.length; i++) {
+              if (gap[i].trim() === '') {
+                result.push(gap[i]);
+              } else {
+                // 非空格字符，按字符添加（标点符号等）
+                result.push(gap[i]);
+              }
+            }
+          }
+          
+          // 添加分词结果（词）
+          if (seg.segment.trim()) {
+            result.push(seg.segment);
+          }
+          
+          lastIndex = seg.index + seg.segment.length;
+        });
+        
+        // 添加剩余部分
+        if (lastIndex < text.length) {
+          const remaining = text.substring(lastIndex);
+          for (let i = 0; i < remaining.length; i++) {
+            result.push(remaining[i]);
+          }
+        }
+        
+        return result.filter(item => item.length > 0);
+      }
+    } catch (e) {
+      console.warn('Intl.Segmenter not supported, using fallback');
+    }
+    
+    // Fallback: 使用简单的分词逻辑（按标点和空格分割）
+    const fallbackResult: string[] = [];
     let currentWord = '';
     
     for (let i = 0; i < text.length; i++) {
@@ -223,22 +396,29 @@ export const SentenceView = ({
       if (char.trim() === '') {
         // 遇到空格，先保存当前词（如果有）
         if (currentWord) {
-          result.push(currentWord);
+          fallbackResult.push(currentWord);
           currentWord = '';
         }
-        // 保存空格（保留所有空格字符）
-        result.push(char);
+        // 保存空格
+        fallbackResult.push(char);
+      } else if (/[，。！？、；：]/.test(char)) {
+        // 遇到标点，先保存当前词（如果有）
+        if (currentWord) {
+          fallbackResult.push(currentWord);
+          currentWord = '';
+        }
+        // 标点单独作为一个元素
+        fallbackResult.push(char);
       } else {
-        // 非空格字符，添加到当前词
+        // 中文字符，添加到当前词
         currentWord += char;
         
-        // 检查下一个字符
+        // 检查下一个字符，如果是空格或标点，保存当前词
         if (i + 1 < text.length) {
           const nextChar = text[i + 1];
-          // 如果下一个字符是空格或标点，保存当前词
           if (nextChar.trim() === '' || /[，。！？、；：]/.test(nextChar)) {
             if (currentWord) {
-              result.push(currentWord);
+              fallbackResult.push(currentWord);
               currentWord = '';
             }
           }
@@ -248,10 +428,10 @@ export const SentenceView = ({
     
     // 保存最后一个词
     if (currentWord) {
-      result.push(currentWord);
+      fallbackResult.push(currentWord);
     }
     
-    return result;
+    return fallbackResult;
   };
 
   const handleWordClick = (e: React.MouseEvent<HTMLSpanElement>, word: string) => {
@@ -261,16 +441,22 @@ export const SentenceView = ({
   const handleTokenClick = (e: React.MouseEvent<HTMLSpanElement>, token: Token) => {
     e.stopPropagation();
     const rect = e.currentTarget.getBoundingClientRect();
+    const tokenId = `${tokenIdPrefix}-${token.text}`;
     
     // 如果是移动端，点击切换显示/隐藏
     if (window.innerWidth <= 768) {
-      if (activeToken?.text === token.text) {
-        setActiveToken(null);
+      if (globalActiveTokenId === tokenId) {
+        if (onTokenActivate) {
+          onTokenActivate(''); // 清空激活的词卡
+        }
         return;
       }
     }
     
-    setActiveToken(token);
+    // 使用全局状态管理
+    if (onTokenActivate) {
+      onTokenActivate(tokenId);
+    }
     calculateTooltipPosition(rect);
   };
 
@@ -279,7 +465,11 @@ export const SentenceView = ({
     if (window.innerWidth > 768) {
       clearCloseTimeout();
       const rect = e.currentTarget.getBoundingClientRect();
-      setActiveToken(token);
+      const tokenId = `${tokenIdPrefix}-${token.text}`;
+      // 使用全局状态管理
+      if (onTokenActivate) {
+        onTokenActivate(tokenId);
+      }
       calculateTooltipPosition(rect);
     }
   };
