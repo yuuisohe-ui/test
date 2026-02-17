@@ -12,7 +12,6 @@ interface TTSButtonProps {
 export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label }: TTSButtonProps) => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [isSlowSpeed, setIsSlowSpeed] = useState(true); // 默认慢速
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
@@ -87,55 +86,15 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label
       audioManager.resumeTTS();
       setIsPaused(false);
     } else if (isSpeaking) {
-      // 如果正在播放，点击切换速度
-      // 停止当前播放
-      audioManager.stopCurrentTTS();
-      setIsSpeaking(false);
-      setIsPaused(false);
-      
-      // 切换速度并重新播放
-      const newSpeed = !isSlowSpeed;
-      setIsSlowSpeed(newSpeed);
-      
-      // 延迟一下再播放，确保状态更新
-      setTimeout(() => {
-        if ('speechSynthesis' in window) {
-          const utterance = new SpeechSynthesisUtterance(text);
-          utterance.lang = lang;
-          utterance.rate = newSpeed ? 0.7 : 1.0; // 切换速度：慢速0.7，正常1.0
-          
-          // 设置声音
-          if (voiceRef.current) {
-            utterance.voice = voiceRef.current;
-          }
-          
-          utterance.onstart = () => {
-            setIsSpeaking(true);
-            setIsPaused(false);
-          };
-          
-          utterance.onend = () => {
-            setIsSpeaking(false);
-            setIsPaused(false);
-            utteranceRef.current = null;
-          };
-          
-          utterance.onerror = () => {
-            setIsSpeaking(false);
-            setIsPaused(false);
-            utteranceRef.current = null;
-          };
-
-          utteranceRef.current = utterance;
-          audioManager.playTTS(utterance);
-        }
-      }, 100);
+      // 如果正在播放，点击暂停
+      audioManager.pauseTTS();
+      setIsPaused(true);
     } else {
-      // 开始播放（默认慢速）
+      // 开始播放（固定0.7倍速）
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 0.7; // 默认慢速0.7
+        utterance.rate = 0.7; // 固定0.7倍速
         
         // 设置声音
         if (voiceRef.current) {
@@ -186,8 +145,8 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label
         text-sm font-medium
         ${className}
       `}
-      title={isPaused ? "继续朗读" : isSpeaking ? (isSlowSpeed ? "切换为正常速度" : "切换为慢速") : "AI朗读（慢速）"}
-      aria-label={isPaused ? "继续朗读" : isSpeaking ? (isSlowSpeed ? "切换为正常速度" : "切换为慢速") : "AI朗读（慢速）"}
+      title={isPaused ? "继续朗读" : isSpeaking ? "暂停朗读" : "AI朗读"}
+      aria-label={isPaused ? "继续朗读" : isSpeaking ? "暂停朗读" : "AI朗读"}
     >
       {isPaused ? (
         // 继续图标
@@ -206,12 +165,6 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label
         </svg>
       )}
       {label && <span>{label}</span>}
-      {/* 显示当前速度指示 */}
-      {isSpeaking && (
-        <span className="text-xs ml-1">
-          {isSlowSpeed ? '🐢' : '▶️'}
-        </span>
-      )}
     </button>
   );
 };

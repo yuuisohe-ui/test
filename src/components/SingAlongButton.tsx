@@ -403,11 +403,11 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
         </div>
       )}
 
-      {/* AI跟读点评面板 - 使用绝对定位，出现在按钮下方，确保右边不超出页面 */}
+      {/* AI跟读点评面板 - 使用绝对定位，出现在按钮上方，确保右边不超出页面 */}
       {showFeedback && feedback && (
-        <div className="absolute top-full right-0 mt-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-[100] space-y-4" style={{ right: 0 }}>
+        <div className="absolute bottom-full right-0 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-[100] space-y-4" style={{ right: 0 }}>
           {/* 气泡箭头 */}
-          <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l-2 border-t-2 border-purple-300 transform rotate-45"></div>
+          <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r-2 border-b-2 border-purple-300 transform rotate-45"></div>
           
           <div className="flex items-center justify-between border-b pb-2">
             <h3 className="text-sm font-semibold text-gray-800">AI跟读点评</h3>

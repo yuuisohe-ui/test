@@ -10,10 +10,25 @@ interface RadarChartProps {
   data: RadarChartData[];
 }
 
-export const SpeechRadarChart = ({ data }: RadarChartProps) => {
+interface SpeechRadarChartProps extends RadarChartProps {
+  onClose?: () => void;
+}
+
+export const SpeechRadarChart = ({ data, onClose }: SpeechRadarChartProps) => {
   return (
-    <div className="w-full">
-      <ResponsiveContainer width="100%" height={280}>
+    <div className="w-full relative">
+      {onClose && (
+        <button
+          onClick={onClose}
+          className="absolute top-0 right-0 z-10 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+          title="关闭"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      )}
+      <ResponsiveContainer width="100%" height={200}>
         <RadarChart data={data}>
           <PolarGrid stroke="#e5e7eb" />
           <PolarAngleAxis 

@@ -8,6 +8,7 @@ import { evaluateSentence } from "../services/chatgptApi";
 import { pinyin } from "pinyin-pro";
 import { SentenceView } from "./SentenceView";
 import { Token } from "../types";
+import { SpeechRadarChart } from "./RadarChart";
 
 // YouTube IFrame Player API 类型声明
 declare global {
@@ -56,6 +57,7 @@ export default function YoutubeVideoDetail({
   const [recordingTotalDuration, setRecordingTotalDuration] = useState(0); // 录音总时长（用于播放）
   const [isDraggingRecording, setIsDraggingRecording] = useState(false); // 是否正在拖动录音进度条
   const [showEvaluation, setShowEvaluation] = useState(false); // 是否显示评分结果
+  const [isEvaluating, setIsEvaluating] = useState(false); // 是否正在评分
   const [evaluationResult, setEvaluationResult] = useState<{
     totalScore: number;
     pronunciation: number;
@@ -104,6 +106,17 @@ export default function YoutubeVideoDetail({
   const [pronunciationAudioBlob, setPronunciationAudioBlob] = useState<Record<number, Blob | null>>({}); // 每句的录音文件
   const [pronunciationFeedback, setPronunciationFeedback] = useState<Record<number, string | null>>({}); // 每句的反馈
   const [isAnalyzingPronunciation, setIsAnalyzingPronunciation] = useState<Record<number, boolean>>({}); // 每句是否正在分析
+  const [pronunciationAnalysisProgress, setPronunciationAnalysisProgress] = useState<Record<number, number>>({}); // 每句的分析进度
+  const [pronunciationFeedbackData, setPronunciationFeedbackData] = useState<Record<number, {
+    scores: {
+      contentAccuracy: number;
+      tonePerformance: number;
+      speakingFluency: number;
+    };
+    overallComment: string;
+    keyIssue: string;
+    oneAction: string;
+  } | null>>({}); // 每句的完整反馈数据（用于雷达图）
   const pronunciationStreamRef = useRef<Record<number, MediaStream | null>>({}); // 每句的音频流
   const pronunciationDurationIntervalRef = useRef<Record<number, NodeJS.Timeout | null>>({}); // 每句的计时器
   const pronunciationStartTimeRef = useRef<Record<number, number>>({}); // 每句的开始时间
@@ -739,52 +752,59 @@ export default function YoutubeVideoDetail({
 
   // 生成假评价（模拟AI评分）
   const generateEvaluation = () => {
-    // 生成随机但合理的评分
-    const pronunciation = Math.floor(Math.random() * 20) + 70; // 70-90分
-    const rhythm = Math.floor(Math.random() * 20) + 70; // 70-90分
-    const totalScore = Math.round((pronunciation * 0.6 + rhythm * 0.4)); // 加权平均
+    setIsEvaluating(true);
+    setShowEvaluation(false);
+    
+    // 模拟评分过程（延迟1.5秒）
+    setTimeout(() => {
+      // 生成随机但合理的评分
+      const pronunciation = Math.floor(Math.random() * 20) + 70; // 70-90分
+      const rhythm = Math.floor(Math.random() * 20) + 70; // 70-90分
+      const totalScore = Math.round((pronunciation * 0.6 + rhythm * 0.4)); // 加权平均
 
-    let overall = '';
-    let suggestions: string[] = [];
+      let overall = '';
+      let suggestions: string[] = [];
 
-    if (totalScore >= 90) {
-      overall = '优秀！你的发音和节奏感都很棒！';
-      suggestions = [
-        '继续保持这个水平，多练习不同风格的歌曲',
-        '可以尝试挑战更有难度的歌曲',
-        '注意情感表达，让演唱更有感染力'
-      ];
-    } else if (totalScore >= 80) {
-      overall = '很好！整体表现不错，还有提升空间。';
-      suggestions = [
-        '注意某些字的声调，可以更准确一些',
-        '节奏感很好，继续保持',
-        '多听原唱，模仿发音细节'
-      ];
-    } else if (totalScore >= 70) {
-      overall = '不错！基础扎实，需要更多练习。';
-      suggestions = [
-        '加强声调练习，注意四声的区别',
-        '节奏可以更稳定一些',
-        '建议多跟读，提高发音准确度'
-      ];
-    } else {
-      overall = '继续努力！多练习会有明显进步。';
-      suggestions = [
-        '建议先从慢速跟读开始',
-        '注意每个字的发音要清晰',
-        '多听多练，熟能生巧'
-      ];
-    }
+      if (totalScore >= 90) {
+        overall = '优秀！你的发音和节奏感都很棒！';
+        suggestions = [
+          '继续保持这个水平，多练习不同风格的歌曲',
+          '可以尝试挑战更有难度的歌曲',
+          '注意情感表达，让演唱更有感染力'
+        ];
+      } else if (totalScore >= 80) {
+        overall = '很好！整体表现不错，还有提升空间。';
+        suggestions = [
+          '注意某些字的声调，可以更准确一些',
+          '节奏感很好，继续保持',
+          '多听原唱，模仿发音细节'
+        ];
+      } else if (totalScore >= 70) {
+        overall = '不错！基础扎实，需要更多练习。';
+        suggestions = [
+          '加强声调练习，注意四声的区别',
+          '节奏可以更稳定一些',
+          '建议多跟读，提高发音准确度'
+        ];
+      } else {
+        overall = '继续努力！多练习会有明显进步。';
+        suggestions = [
+          '建议先从慢速跟读开始',
+          '注意每个字的发音要清晰',
+          '多听多练，熟能生巧'
+        ];
+      }
 
-    setEvaluationResult({
-      totalScore,
-      pronunciation,
-      rhythm,
-      overall,
-      suggestions,
-    });
-    setShowEvaluation(true);
+      setEvaluationResult({
+        totalScore,
+        pronunciation,
+        rhythm,
+        overall,
+        suggestions,
+      });
+      setIsEvaluating(false);
+      setShowEvaluation(true);
+    }, 1500);
   };
 
   // 从文本中提取行号和歌词内容
@@ -1067,6 +1087,164 @@ export default function YoutubeVideoDetail({
     }
   }, [vocabMode, currentSubtitleIndex]);
 
+  // 同时渲染句式和词汇的颜色标记
+  const renderLyricWithBoth = (text: string, sentenceIndex: number, structure: string, level: 'beginner' | 'intermediate' | 'advanced') => {
+    const vocab = getVocabForSentence(sentenceIndex);
+    const structureLevelColorClass = level === 'beginner' 
+      ? 'bg-green-100 text-green-800' 
+      : level === 'intermediate' 
+      ? 'bg-blue-100 text-blue-800' 
+      : 'bg-purple-100 text-purple-800';
+    
+    // 提取句式的关键词
+    let keywords: string[] = [];
+    let pattern = structure.replace(/[……]/g, '').trim();
+    pattern = pattern.replace(/동사\+/g, '');
+    if (pattern.includes('+')) {
+      keywords = pattern.split('+').map(k => k.trim()).filter(k => k.length > 0);
+    } else {
+      const chineseChars = pattern.match(/[\u4e00-\u9fff]+/g);
+      if (chineseChars) {
+        keywords = chineseChars;
+      } else {
+        keywords = [pattern];
+      }
+    }
+    keywords = keywords.filter(k => k.length > 0);
+    
+    // 创建匹配数组（包含类型：'structure' 或 'vocab'）
+    interface Match {
+      index: number;
+      length: number;
+      type: 'structure' | 'vocab';
+      level?: 'basic' | 'intermediate' | 'advanced';
+      colorClass: string;
+    }
+    
+    const matches: Match[] = [];
+    const matchedIndices = new Set<number>();
+    
+    // 先添加句式的匹配
+    keywords.forEach((keyword) => {
+      const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedKeyword, 'g');
+      let match;
+      
+      while ((match = regex.exec(text)) !== null) {
+        const startIndex = match.index;
+        const endIndex = startIndex + keyword.length;
+        
+        let hasOverlap = false;
+        for (let i = startIndex; i < endIndex; i++) {
+          if (matchedIndices.has(i)) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        
+        if (!hasOverlap) {
+          matches.push({
+            index: startIndex,
+            length: keyword.length,
+            type: 'structure',
+            colorClass: structureLevelColorClass,
+          });
+          
+          for (let i = startIndex; i < endIndex; i++) {
+            matchedIndices.add(i);
+          }
+        }
+      }
+    });
+    
+    // 再添加词汇的匹配（词汇优先级更高，会覆盖句式的标记）
+    const sortedVocab = [...vocab].sort((a, b) => b.word.length - a.word.length);
+    sortedVocab.forEach((wordItem) => {
+      const word = wordItem.word;
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedWord, 'g');
+      let match;
+      
+      while ((match = regex.exec(text)) !== null) {
+        const startIndex = match.index;
+        const endIndex = startIndex + word.length;
+        
+        // 检查是否与已匹配的部分重叠
+        let hasOverlap = false;
+        for (let i = startIndex; i < endIndex; i++) {
+          if (matchedIndices.has(i)) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        
+        if (!hasOverlap) {
+          // 移除可能重叠的句式匹配
+          const overlappingStructureMatches = matches.filter(m => 
+            m.type === 'structure' && 
+            !(m.index + m.length <= startIndex || m.index >= endIndex)
+          );
+          overlappingStructureMatches.forEach(m => {
+            for (let i = m.index; i < m.index + m.length; i++) {
+              matchedIndices.delete(i);
+            }
+          });
+          matches.splice(matches.indexOf(overlappingStructureMatches[0]), overlappingStructureMatches.length);
+          
+          matches.push({
+            index: startIndex,
+            length: word.length,
+            type: 'vocab',
+            level: wordItem.level,
+            colorClass: getLyricWordBgClass(wordItem.level),
+          });
+          
+          for (let i = startIndex; i < endIndex; i++) {
+            matchedIndices.add(i);
+          }
+        }
+      }
+    });
+    
+    // 按索引排序
+    matches.sort((a, b) => a.index - b.index);
+    
+    // 构建结果
+    const result: JSX.Element[] = [];
+    let lastIndex = 0;
+    
+    matches.forEach((match, matchIdx) => {
+      // 添加匹配前的文本
+      if (match.index > lastIndex) {
+        result.push(
+          <span key={`text-${lastIndex}-${matchIdx}`}>
+            {text.substring(lastIndex, match.index)}
+          </span>
+        );
+      }
+      
+      // 添加带背景颜色的词汇或句式
+      result.push(
+        <span key={`word-${match.index}-${matchIdx}`} className={`${match.colorClass} px-1 rounded font-semibold`}>
+          {text.substring(match.index, match.index + match.length)}
+        </span>
+      );
+      
+      lastIndex = match.index + match.length;
+    });
+    
+    // 添加剩余文本
+    if (lastIndex < text.length) {
+      result.push(
+        <span key={`text-${lastIndex}-end`}>
+          {text.substring(lastIndex)}
+        </span>
+      );
+    }
+    
+    return result.length > 0 ? <>{result}</> : <span>{text}</span>;
+  };
+
   // 渲染歌词（带颜色标记）
   const renderLyricWithColors = (text: string, sentenceIndex: number) => {
     const vocab = getVocabForSentence(sentenceIndex);
@@ -1254,7 +1432,7 @@ export default function YoutubeVideoDetail({
         {/* 主要内容区域：视频（左上）+ 歌词（右上）+ 解析（下方） */}
         <div className="space-y-4">
           {/* 视频和歌词并排 */}
-          <div className="grid grid-cols-12 gap-4">
+          <div className="grid grid-cols-12 gap-4 items-start">
             {/* 左侧：视频 */}
             <div className={`${
               videoSize === 'small' ? 'col-span-4' : 
@@ -1325,6 +1503,31 @@ export default function YoutubeVideoDetail({
                   <div id="youtube-player" className="w-full h-full"></div>
                 )}
               </div>
+              
+              {/* 声音训练模式：雷达图显示区域（仅在声音训练模式且有评分数据时显示） */}
+              {lyricMode === 'pronunciation' && Object.keys(pronunciationFeedbackData).some(idx => pronunciationFeedbackData[parseInt(idx)] !== null) && (
+                <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200 relative">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-3">发音表现雷达图</h3>
+                  {Object.entries(pronunciationFeedbackData).map(([idx, feedbackData]) => {
+                    if (!feedbackData) return null;
+                    return (
+                      <div key={idx} className="mb-4 last:mb-0 relative">
+                        <div className="text-xs text-gray-500 mb-2">第{parseInt(idx) + 1}句</div>
+                        <SpeechRadarChart
+                          data={[
+                            { subject: '内容准确度', score: Math.max(50, feedbackData.scores.contentAccuracy), fullMark: 100 },
+                            { subject: '声调表现', score: Math.max(50, feedbackData.scores.tonePerformance), fullMark: 100 },
+                            { subject: '说话流畅度', score: Math.max(50, feedbackData.scores.speakingFluency), fullMark: 100 },
+                          ]}
+                          onClose={() => {
+                            setPronunciationFeedbackData(prev => ({ ...prev, [parseInt(idx)]: null }));
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               
               {/* 整首跟唱功能区域 */}
               <div className="mt-4 space-y-3">
@@ -1456,12 +1659,23 @@ export default function YoutubeVideoDetail({
                             <button
                               onClick={generateEvaluation}
                               className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
-                              disabled={!recordedAudioBlob}
+                              disabled={!recordedAudioBlob || isEvaluating}
                             >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                              </svg>
-                              评分
+                              {isEvaluating ? (
+                                <>
+                                  <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  评分中...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                                  </svg>
+                                  评分
+                                </>
+                              )}
                             </button>
                             <button
                               onClick={downloadRecording}
@@ -1550,6 +1764,18 @@ export default function YoutubeVideoDetail({
                           </div>
                         )}
 
+                        {/* 评分中提示 */}
+                        {isEvaluating && (
+                          <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+                            <div className="flex items-center justify-center gap-3">
+                              <svg className="w-6 h-6 text-purple-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              <span className="text-lg font-medium text-purple-700">正在评分中，请稍候...</span>
+                            </div>
+                          </div>
+                        )}
+
                         {/* 评分结果 */}
                         {showEvaluation && evaluationResult && (
                           <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200 space-y-3">
@@ -1568,6 +1794,20 @@ export default function YoutubeVideoDetail({
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
+                            </div>
+
+                            {/* 雷达图 */}
+                            <div className="bg-white rounded-lg p-4 border border-purple-100">
+                              <div className="text-xs text-gray-500 mb-3 text-center">发音表现雷达图</div>
+                              <SpeechRadarChart
+                                data={[
+                                  { subject: '发音准确度', score: evaluationResult.pronunciation, fullMark: 100 },
+                                  { subject: '节奏感', score: evaluationResult.rhythm, fullMark: 100 },
+                                  { subject: '流畅度', score: Math.round(evaluationResult.pronunciation * 0.9), fullMark: 100 },
+                                  { subject: '情感表达', score: Math.round(evaluationResult.rhythm * 0.85), fullMark: 100 },
+                                  { subject: '整体表现', score: evaluationResult.totalScore, fullMark: 100 },
+                                ]}
+                              />
                             </div>
 
                             {/* 总分 */}
@@ -2096,13 +2336,29 @@ export default function YoutubeVideoDetail({
                                 {lyricMode === 'pronunciation' && (
                                   <div className="text-lg leading-relaxed">
                                     {(() => {
-                                      // 先检查是否有句式，如果有则显示句式的颜色标记
+                                      // 同时显示句式和词汇的颜色标记
                                       const structureData = getSentenceStructure(sentenceIndex);
-                                      if (structureData && structureData.structure) {
+                                      const vocab = getVocabForSentence(sentenceIndex);
+                                      
+                                      // 如果既有句式又有词汇，需要合并标记
+                                      if (structureData && structureData.structure && vocab.length > 0) {
+                                        // 先应用句式的颜色标记
+                                        const structureResult = renderLyricWithStructure(lyricText, structureData.structure, structureData.level);
+                                        
+                                        // 然后在此基础上应用词汇的颜色标记
+                                        // 由于React元素已经渲染，我们需要重新处理文本
+                                        // 创建一个新的函数来合并两种标记
+                                        return renderLyricWithBoth(lyricText, sentenceIndex, structureData.structure, structureData.level);
+                                      } else if (structureData && structureData.structure) {
+                                        // 只有句式
                                         return renderLyricWithStructure(lyricText, structureData.structure, structureData.level);
+                                      } else if (vocab.length > 0) {
+                                        // 只有词汇
+                                        return renderLyricWithColors(lyricText, sentenceIndex);
+                                      } else {
+                                        // 都没有
+                                        return <span>{lyricText}</span>;
                                       }
-                                      // 如果没有句式，则显示词汇的颜色标记
-                                      return renderLyricWithColors(lyricText, sentenceIndex);
                                     })()}
                                   </div>
                                 )}
@@ -2726,6 +2982,26 @@ export default function YoutubeVideoDetail({
                               >
                                 取消
                               </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (pronunciationMediaRecorder[sentenceIndex] && pronunciationMediaRecorder[sentenceIndex]!.state !== 'inactive') {
+                                    pronunciationMediaRecorder[sentenceIndex]!.stop();
+                                  }
+                                  setPronunciationRecording(prev => ({ ...prev, [sentenceIndex]: false }));
+                                  if (pronunciationStreamRef.current[sentenceIndex]) {
+                                    pronunciationStreamRef.current[sentenceIndex]!.getTracks().forEach(track => track.stop());
+                                  }
+                                  if (pronunciationDurationIntervalRef.current[sentenceIndex]) {
+                                    clearInterval(pronunciationDurationIntervalRef.current[sentenceIndex]!);
+                                    pronunciationDurationIntervalRef.current[sentenceIndex] = null;
+                                  }
+                                  // 结束录音，保留录音数据用于评分
+                                }}
+                                className="px-3 py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600"
+                              >
+                                结束
+                              </button>
                             </div>
                           )}
                           
@@ -2741,11 +3017,27 @@ export default function YoutubeVideoDetail({
                                   
                                   setIsAnalyzingPronunciation(prev => ({ ...prev, [sentenceIndex]: true }));
                                   setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: null }));
+                                  setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 0 }));
+                                  setPronunciationFeedbackData(prev => ({ ...prev, [sentenceIndex]: null }));
+                                  
+                                  // 模拟进度更新
+                                  const progressInterval = setInterval(() => {
+                                    setPronunciationAnalysisProgress(prev => {
+                                      const current = prev[sentenceIndex] || 0;
+                                      if (current < 90) {
+                                        return { ...prev, [sentenceIndex]: current + 10 };
+                                      }
+                                      return prev;
+                                    });
+                                  }, 200);
                                   
                                   try {
                                     // 先转写音频
+                                    setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 20 }));
                                     const { transcribeAudio } = await import('../services/chatgptApi');
                                     const asrText = await transcribeAudio(pronunciationAudioBlob[sentenceIndex]!);
+                                    
+                                    setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 50 }));
                                     
                                     // 使用跟读反馈API
                                     const { generateReadingFeedback } = await import('../services/chatgptApi');
@@ -2756,12 +3048,20 @@ export default function YoutubeVideoDetail({
                                       pronunciationRecordingDuration[sentenceIndex] || 0
                                     );
                                     
+                                    setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 100 }));
+                                    clearInterval(progressInterval);
+                                    
+                                    // 保存完整反馈数据（用于雷达图）
+                                    setPronunciationFeedbackData(prev => ({ ...prev, [sentenceIndex]: feedbackData }));
+                                    
                                     // 格式化反馈为文本
                                     const feedbackText = `${feedbackData.overallComment}\n\n主要问题：${feedbackData.keyIssue}\n\n下一步练习：${feedbackData.oneAction}`;
                                     setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: feedbackText }));
                                   } catch (error) {
                                     console.error('评价失败:', error);
                                     alert('评价失败，请稍后重试');
+                                    clearInterval(progressInterval);
+                                    setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 0 }));
                                   } finally {
                                     setIsAnalyzingPronunciation(prev => ({ ...prev, [sentenceIndex]: false }));
                                   }
@@ -2769,7 +3069,17 @@ export default function YoutubeVideoDetail({
                                 disabled={isAnalyzingPronunciation[sentenceIndex]}
                                 className="px-3 py-2 rounded-lg text-sm font-medium bg-purple-500 text-white hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                {isAnalyzingPronunciation[sentenceIndex] ? '分析中...' : '评分'}
+                                {isAnalyzingPronunciation[sentenceIndex] ? (
+                                  <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    评分中 {pronunciationAnalysisProgress[sentenceIndex] || 0}%
+                                  </span>
+                                ) : (
+                                  '评分'
+                                )}
                               </button>
                               <button
                                 onClick={(e) => {

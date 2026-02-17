@@ -34,3 +34,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return tianmimiKoreanTranslations[sentenceIndex] || '';
 }
 
+

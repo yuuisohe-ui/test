@@ -26,6 +26,18 @@ const getSongImageUrl = (song: { id: string; videoId?: string }): string => {
   return `https://picsum.photos/seed/${song.id}/400/300`;
 };
 
+// 处理 YouTube 缩略图加载错误，回退到 hqdefault.jpg
+const handleYouTubeThumbnailError = (e: React.SyntheticEvent<HTMLImageElement, Event>, videoId?: string) => {
+  const img = e.target as HTMLImageElement;
+  // maxresdefault.jpg 加载失败时，回退到 hqdefault.jpg
+  if (img.src.includes('maxresdefault.jpg') && videoId) {
+    img.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+  } else {
+    // 如果 hqdefault.jpg 也失败或没有 videoId，使用占位符
+    img.src = `https://picsum.photos/seed/${videoId || 'fallback'}/400/300`;
+  }
+};
+
 export default function YoutubePage() {
   // 筛选状态（只保存在本地状态）
   const [level, setLevel] = useState<string>("");
@@ -351,10 +363,7 @@ export default function YoutubePage() {
                             src={getSongImageUrl(tianmimi)}
                             alt="甜蜜蜜"
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                              // 如果 YouTube 封面加载失败，尝试使用 hqdefault
-                              (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${tianmimi.videoId}/hqdefault.jpg`;
-                            }}
+                            onError={(e) => handleYouTubeThumbnailError(e, tianmimi.videoId)}
                           />
                         </div>
                         <div className="p-4">

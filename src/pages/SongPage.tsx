@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "react";
+import { songPageTranslations, translate } from "../i18n/songPageTranslations";
 
 /**
  * 将语言代码统一映射为内部格式（与 chatgptApi.ts 中的 normalizeWhisperLanguage 保持一致）
@@ -726,6 +727,16 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   });
   const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
   const [showLevelWarning, setShowLevelWarning] = useState(false);
+  const [uiLanguage, setUiLanguage] = useState<'zh' | 'ko'>(() => {
+    // 从 localStorage 读取保存的语言设置
+    const saved = localStorage.getItem('uiLanguage');
+    return (saved === 'ko' ? 'ko' : 'zh') as 'zh' | 'ko';
+  });
+
+  // 保存语言设置到 localStorage
+  useEffect(() => {
+    localStorage.setItem('uiLanguage', uiLanguage);
+  }, [uiLanguage]);
 
   // ⭐ 状态持久化：保存关键状态到 localStorage（包括 userLevel）
   useEffect(() => {
@@ -2141,8 +2152,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               <div className="flex items-center gap-3 flex-1">
                 <span className="text-2xl">📖</span>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">整段歌词</h3>
-                  <p className="text-sm text-blue-100">共 {linesAll.length} 句</p>
+                  <h3 className="text-lg font-semibold">{songPageTranslations[uiLanguage].wholeParagraphLyrics}</h3>
+                  <p className="text-sm text-blue-100">{translate('totalSentences', uiLanguage, { count: linesAll.length })}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -2164,8 +2175,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         transition-colors duration-200
                         text-sm font-medium
                       `}
-                      title={isPlaying ? "暂停原唱" : "播放原唱"}
-                      aria-label={isPlaying ? "暂停原唱" : "播放原唱"}
+                      title={isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}
+                      aria-label={isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}
                     >
                       {isPlaying ? (
                         // 暂停图标
@@ -2179,7 +2190,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       )}
-                      <span>{isPlaying ? "暂停原唱" : "播放原唱"}</span>
+                      <span>{isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}</span>
                     </button>
                     
                     {/* 时间显示 */}
@@ -2489,8 +2500,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📚</span>
-                <h3 className="text-lg font-semibold">重点词汇</h3>
-                <span className="text-sm text-purple-100">({allVocabulary.length} 个)</span>
+                <h3 className="text-lg font-semibold">{songPageTranslations[uiLanguage].keyVocabSummary}</h3>
+                <span className="text-sm text-purple-100">({allVocabulary.length} {uiLanguage === 'zh' ? '个' : '개'})</span>
               </div>
               <svg 
                 className={`w-6 h-6 transition-transform ${showVocabSummary ? 'rotate-180' : ''}`}
@@ -2509,7 +2520,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   type="text"
                   value={vocabSearch}
                   onChange={(e) => setVocabSearch(e.target.value)}
-                  placeholder="搜索词汇..."
+                  placeholder={uiLanguage === 'zh' ? '搜索词汇...' : '어휘 검색...'}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -2518,12 +2529,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.current.length > 0 && (
                   <div className="border-l-4 border-purple-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">当前重点 ({vocabularyGroups.current.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].currentFocus} ({vocabularyGroups.current.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('current')}
                         className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.current ? '收起' : '展开'}
+                        {vocabGroupExpanded.current ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.current && (
@@ -2550,12 +2561,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.advanced.length > 0 && (
                   <div className="border-l-4 border-blue-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">提升词 ({vocabularyGroups.advanced.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].advancedWords} ({vocabularyGroups.advanced.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('advanced')}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.advanced ? '收起' : '展开'}
+                        {vocabGroupExpanded.advanced ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.advanced && (
@@ -2582,12 +2593,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.basic.length > 0 && (
                   <div className="border-l-4 border-green-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">基础词 ({vocabularyGroups.basic.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].basicWords} ({vocabularyGroups.basic.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('basic')}
                         className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.basic ? '收起' : '展开'}
+                        {vocabGroupExpanded.basic ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.basic && (
@@ -3008,7 +3019,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         <div className="mb-4">
           {/* 中文整句展示 */}
           <div className="mb-2">
-            <div className="text-sm font-semibold text-gray-700 mb-2">中文整句展示</div>
+            <div className="text-sm font-semibold text-gray-700 mb-2">{songPageTranslations[uiLanguage].chineseSentenceDisplay}</div>
             {/* 使用与整段歌词相同的显示逻辑，字体放大并居中，支持词卡功能 */}
             <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed justify-center">
             {(() => {
@@ -3133,7 +3144,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold text-gray-700">学习分析表</div>
+            <div className="text-sm font-semibold text-gray-700">{songPageTranslations[uiLanguage].learningAnalysisTable}</div>
             <div className="relative">
             <button
               onClick={async () => {
@@ -3230,7 +3241,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 text-sm font-medium
                 ${!userLevel ? 'opacity-50 cursor-not-allowed' : ''}
               `}
-              title={!userLevel ? "请先选择语言等级" : isGeneratingTipForThis ? "生成中..." : showTeachingTip ? "收起教学提示" : "查看本句教学提示"}
+              title={!userLevel ? songPageTranslations[uiLanguage].pleaseSelectLanguageLevelFirst : isGeneratingTipForThis ? songPageTranslations[uiLanguage].analyzing : showTeachingTip ? (uiLanguage === 'zh' ? '收起教学提示' : '학습 팁 접기') : (uiLanguage === 'zh' ? '查看本句教学提示' : '이 문장 학습 팁 보기')}
             >
               {isGeneratingTipForThis ? (
                 <>
@@ -3274,7 +3285,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  本句教学提示
+                  {songPageTranslations[uiLanguage].teachingTip}
                 </>
               )}
             </button>
@@ -3315,7 +3326,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 }}
                 className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
               >
-                试着造个句子，我来点评
+                {songPageTranslations[uiLanguage].tryMakingSentence}
               </button>
               </div>
             )}
@@ -3515,10 +3526,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          分析中...
+                          {songPageTranslations[uiLanguage].analyzing}
                         </>
                       ) : (
-                        '提交评价'
+                        songPageTranslations[uiLanguage].submitEvaluation
                       )}
                     </button>
                   )}
@@ -3567,10 +3578,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          分析中...
+                          {songPageTranslations[uiLanguage].analyzing}
                         </>
                       ) : (
-                        '发送语音评价'
+                        songPageTranslations[uiLanguage].sendVoiceEvaluation
                       )}
                     </button>
                   )}
@@ -3595,6 +3606,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             startSec={item?.startSec}
             endSec={item?.endSec}
             userLevel={userLevel}
+            uiLanguage={uiLanguage}
           />
         </div>
       </div>
@@ -3839,15 +3851,26 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       <div className=" z-50 bg-white/80 backdrop-blur border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">中文歌词学习分析</h1>
+            <h1 className="text-xl font-bold">{songPageTranslations[uiLanguage].title}</h1>
             <div className="flex items-center gap-2">
+              {/* 语言切换按钮 */}
+              <button
+                onClick={() => setUiLanguage(uiLanguage === 'zh' ? 'ko' : 'zh')}
+                className="px-3 py-1 rounded-lg border text-sm bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+                title={uiLanguage === 'zh' ? '한국어로 전환' : '切换到中文'}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+                <span>{uiLanguage === 'zh' ? '한국어' : '中文'}</span>
+              </button>
               <button
                 className="px-3 py-1 rounded-lg border text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
                 onClick={testChatGPTAPI}
                 disabled={isLoading}
                 title="ChatGPT API 연결 테스트"
               >
-                🧪 API 테스트
+                🧪 {songPageTranslations[uiLanguage].apiTest}
               </button>
               {/* 复习模式选择 */}
               <div className="flex items-center gap-2">
@@ -3857,7 +3880,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   }`}
                   onClick={() => setReviewMode((v) => v === "sentence" ? false : "sentence")}
                 >
-                  {reviewMode === "sentence" ? "退出句子复习" : "句子复习"}
+                  {reviewMode === "sentence" ? songPageTranslations[uiLanguage].exitSentenceReview : songPageTranslations[uiLanguage].sentenceReview}
                 </button>
               </div>
               <button
@@ -3865,7 +3888,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 onClick={exportCurrentPage}
                 disabled={pageItems.length === 0}
               >
-                导出本页 HTML
+                {songPageTranslations[uiLanguage].exportHTML}
               </button>
             </div>
           </div>
@@ -3883,15 +3906,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               onDrop={handleDrop}
             >
               <div className="text-lg md:text-xl font-semibold">
-                上传音频可获得更完整的学习资料
+                {songPageTranslations[uiLanguage].uploadAudioTitle}
               </div>
               <div className="text-xs text-gray-500 mt-1">
-                建议吐字清晰、节奏稳定（当前仅 UI 占位，不接 Opal）
+                {songPageTranslations[uiLanguage].uploadAudioHint}
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer hover:bg-gray-50 text-sm">
-                  选择音频文件
+                  {songPageTranslations[uiLanguage].selectAudioFile}
                   <input
                     className="hidden"
                     type="file"
@@ -3901,7 +3924,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 </label>
 
                 <div className="flex items-center gap-2 relative">
-                  <label className="text-sm text-gray-700">语言：</label>
+                  <label className="text-sm text-gray-700">{songPageTranslations[uiLanguage].language}</label>
                   <select
                     value={languageMode || ''}
                     onChange={(e) => {
@@ -3921,9 +3944,9 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                     required
                   >
-                    <option value="">请选择语言</option>
-                    <option value="zh">中文</option>
-                    <option value="ko">韩文</option>
+                    <option value="">{songPageTranslations[uiLanguage].pleaseSelectLanguage}</option>
+                    <option value="zh">{songPageTranslations[uiLanguage].chinese}</option>
+                    <option value="ko">{songPageTranslations[uiLanguage].korean}</option>
                   </select>
                   
                   {/* 提示气泡 */}
@@ -3934,7 +3957,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                           </svg>
-                          <span>请选择和音频内容一致的语言哦</span>
+                          <span>{songPageTranslations[uiLanguage].pleaseSelectMatchingLanguage}</span>
                         </div>
                         {/* 气泡箭头 */}
                         <div className="absolute -top-1 left-4 w-2 h-2 bg-blue-500 rotate-45"></div>
@@ -3954,16 +3977,16 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         <svg className="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        <span>暂停分析</span>
+                        <span>{songPageTranslations[uiLanguage].pauseAnalysis}</span>
                       </>
                     ) : (
-                      "开始转写 / 分析"
+                      songPageTranslations[uiLanguage].startTranscribe
                     )}
                   </button>
                   
                   {/* 中文水平选择器 */}
                   <div className="relative">
-                    <div className="text-xs text-gray-500 mb-1 text-center">请选择您的语言等级</div>
+                    <div className="text-xs text-gray-500 mb-1 text-center">{songPageTranslations[uiLanguage].selectLanguageLevel}</div>
                     <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
                       <button
                         onClick={() => {
@@ -3976,7 +3999,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             : "text-gray-600 hover:text-gray-800"
                         }`}
                       >
-                        初级
+                        {songPageTranslations[uiLanguage].beginner}
                       </button>
                       <button
                         onClick={() => {
@@ -3989,7 +4012,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             : "text-gray-600 hover:text-gray-800"
                         }`}
                       >
-                        中级
+                        {songPageTranslations[uiLanguage].intermediate}
                       </button>
                       <button
                         onClick={() => {
@@ -4002,7 +4025,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             : "text-gray-600 hover:text-gray-800"
                         }`}
                       >
-                        高级
+                        {songPageTranslations[uiLanguage].advanced}
                       </button>
                     </div>
                     
@@ -4014,7 +4037,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                             </svg>
-                            <span>请先选择您的语言等级</span>
+                            <span>{songPageTranslations[uiLanguage].pleaseSelectLanguageLevelFirst}</span>
                           </div>
                           {/* 气泡箭头 */}
                           <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45"></div>
@@ -4027,7 +4050,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <div className={`text-xs transition-colors ${
                   isDragging ? 'text-blue-600 font-semibold' : 'text-gray-400'
                 }`}>
-                  {isDragging ? '松开鼠标以放置文件' : '或直接拖拽音频到此区域'}
+                  {isDragging ? songPageTranslations[uiLanguage].releaseMouseToUpload : songPageTranslations[uiLanguage].orDragAudioHere}
                 </div>
               </div>
 
@@ -4035,7 +4058,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               {isLoading && (
                 <div className="mt-4 space-y-2">
                   <div className="flex items-center justify-between text-xs text-gray-600">
-                    <span>{loadingMessage || "분석 중..."}</span>
+                    <span>{loadingMessage || songPageTranslations[uiLanguage].analyzing}</span>
                     <span className="font-semibold">{loadingProgress}%</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -4074,11 +4097,11 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             {/* 下半：文本粘贴（次级） */}
             <div className="p-4">
               <div className="text-sm font-semibold text-gray-700 mb-2">
-                或直接粘贴歌词文本（支持中文 / 韩文）
+                {songPageTranslations[uiLanguage].orPasteLyrics}
               </div>
               <textarea
                 className="w-full h-28 p-3 rounded-xl border bg-white"
-                placeholder="在这里粘贴歌词，每行一句…（粘贴后请点击上方「开始转写/分析」按钮）"
+                placeholder={songPageTranslations[uiLanguage].pasteLyricsPlaceholder}
                 value={rawText}
                 onChange={(e) => {
                   setRawText(e.target.value);
@@ -4088,7 +4111,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               
               {/* 学习模式选择 */}
               <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="text-sm font-semibold text-gray-700 mb-3">学习模式</div>
+                <div className="text-sm font-semibold text-gray-700 mb-3">{songPageTranslations[uiLanguage].studyMode}</div>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setStudyMode("整段学习")}
@@ -4098,7 +4121,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
                     }`}
                   >
-                    📖 整段学习
+                    {songPageTranslations[uiLanguage].wholeParagraphStudy}
                   </button>
                   <button
                     onClick={() => setStudyMode("分句学习")}
@@ -4108,7 +4131,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
                     }`}
                   >
-                    📝 分句学习
+                    {songPageTranslations[uiLanguage].sentenceBySentenceStudy}
                   </button>
                 </div>
               </div>

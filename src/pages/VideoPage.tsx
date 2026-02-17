@@ -172,8 +172,14 @@ export default function VideoPage() {
                   alt={video.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    // 썸네일 로드 실패 시 플레이스홀더
-                    (e.target as HTMLImageElement).src = "https://via.placeholder.com/640x360?text=No+Thumbnail";
+                    const img = e.target as HTMLImageElement;
+                    // maxresdefault.jpg 加载失败时，回退到 hqdefault.jpg
+                    if (img.src.includes('maxresdefault.jpg')) {
+                      img.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`;
+                    } else {
+                      // 如果 hqdefault.jpg 也失败，使用占位符
+                      img.src = "https://via.placeholder.com/640x360?text=No+Thumbnail";
+                    }
                   }}
                 />
                 {/* 플레이 버튼 오버레이 */}

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { SentenceData } from '../types';
 import { SentenceView } from './SentenceView';
 import { AnalysisTable } from './AnalysisTable';
@@ -8,6 +9,17 @@ interface AnalyzePageProps {
 }
 
 export const AnalyzePage = ({ data }: AnalyzePageProps) => {
+  const [uiLanguage, setUiLanguage] = useState<'zh' | 'ko'>(() => {
+    // 从 localStorage 读取保存的语言设置
+    const saved = localStorage.getItem('uiLanguage');
+    return (saved === 'ko' ? 'ko' : 'zh') as 'zh' | 'ko';
+  });
+
+  // 保存语言设置到 localStorage
+  useEffect(() => {
+    localStorage.setItem('uiLanguage', uiLanguage);
+  }, [uiLanguage]);
+
   return (
     <div className="min-h-screen bg-gray-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
@@ -50,7 +62,7 @@ export const AnalyzePage = ({ data }: AnalyzePageProps) => {
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
             学习分析表
           </h2>
-          <AnalysisTable chunks={data.chunks} />
+          <AnalysisTable chunks={data.chunks} uiLanguage={uiLanguage} />
         </div>
       </div>
     </div>
