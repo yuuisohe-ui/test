@@ -57,6 +57,19 @@ export const SentenceView = ({
     return null;
   }, [globalActiveTokenId, tokenIdPrefix, tokens]);
 
+  // 当 activeToken 变化时，重新计算词卡位置
+  useEffect(() => {
+    if (activeToken && globalActiveTokenId) {
+      // 找到对应的 DOM 元素
+      const word = activeToken.text;
+      const element = tokenRefs.current[word];
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        calculateTooltipPosition(rect);
+      }
+    }
+  }, [activeToken, globalActiveTokenId]);
+
   // 清除关闭定时器
   const clearCloseTimeout = () => {
     if (closeTimeoutRef.current) {
@@ -311,20 +324,104 @@ export const SentenceView = ({
     });
     
     // 始终使用 allWords 分词结果，确保每个词都有独立的词卡
+    // 同时按照标点、回车、空格进行分行
+    // 首先检查句子是否包含换行符
+    if (sentence.includes('\n') || sentence.includes('\r')) {
+      // 如果包含换行符，按换行符分行
+      const lines = sentence.split(/\r?\n/).filter(l => l.trim());
+      lines.forEach((line, lineIdx) => {
+        const lineWords = segmentWordsWithSpaces(line);
+        
+        lineWords.forEach((word, wordIdx) => {
+          if (word.trim() === '') {
+            elements.push(<span key={`space-${lineIdx}-${wordIdx}`}>{word}</span>);
+          } else {
+            const token = tokenMap.get(word);
+            const uniqueKey = `${tokenIdPrefix}-${word}-${lineIdx}-${wordIdx}`;
+            if (token) {
+              elements.push(renderWord(word, uniqueKey, true, token, wordIdx));
+            } else {
+              elements.push(renderWord(word, uniqueKey, false, undefined, wordIdx));
+            }
+          }
+        });
+        
+        // 在每行末尾添加换行（除了最后一行）
+        if (lineIdx < lines.length - 1) {
+          elements.push(<br key={`br-line-${lineIdx}`} />);
+        }
+      });
+      
+      return elements;
+    }
+    
+    // 如果没有换行符，按照标点、空格进行分行
+    let currentLineLength = 0;
+    const maxLineLength = 50; // 每行最大长度（字符数）
+    const preferredLineLength = 30; // 理想行长度（字符数）
+    const punctuationRegex = /[，。！？、；：,.!?;:]/;
+    const spaceRegex = /\s/;
+    
     allWords.forEach((word, idx) => {
       // 如果是空格，直接渲染为空格（不创建词卡）
       if (word.trim() === '') {
         elements.push(<span key={`space-${idx}`}>{word}</span>);
+        currentLineLength += word.length;
       } else {
+        // 计算当前词的长度（中文字符按1计算）
+        const wordLength = word.length;
+        
+        // 检查是否需要换行
+        // 1. 如果遇到标点符号，且当前行长度超过阈值（preferredLineLength），在标点后换行
+        const shouldBreakAfter = punctuationRegex.test(word) && currentLineLength >= preferredLineLength;
+        // 2. 如果当前行长度超过最大长度，在空格处换行
+        const shouldBreakBefore = currentLineLength >= maxLineLength && spaceRegex.test(word);
+        // 3. 如果当前行长度超过最大长度，强制换行（即使没有标点或空格）
+        const shouldForceBreak = currentLineLength + wordLength > maxLineLength && currentLineLength >= preferredLineLength;
+        
         // 检查是否有对应的 token（用于显示词卡信息）
         const token = tokenMap.get(word);
         // 使用索引确保每个字符都有唯一的 tokenId
         const uniqueKey = `${tokenIdPrefix}-${word}-${idx}`;
-        if (token) {
-          elements.push(renderWord(word, uniqueKey, true, token, idx));
+        
+        // 如果需要换行，在词前或词后添加换行
+        if (shouldBreakAfter) {
+          // 在标点后换行
+          if (token) {
+            elements.push(renderWord(word, uniqueKey, true, token, idx));
+          } else {
+            elements.push(renderWord(word, uniqueKey, false, undefined, idx));
+          }
+          elements.push(<br key={`br-after-${idx}`} />);
+          currentLineLength = 0;
+        } else if (shouldBreakBefore) {
+          // 在空格前换行
+          elements.push(<br key={`br-before-${idx}`} />);
+          currentLineLength = 0;
+          if (token) {
+            elements.push(renderWord(word, uniqueKey, true, token, idx));
+          } else {
+            elements.push(renderWord(word, uniqueKey, false, undefined, idx));
+          }
+          currentLineLength += wordLength;
+        } else if (shouldForceBreak) {
+          // 强制换行（没有标点或空格，但超过最大长度）
+          elements.push(<br key={`br-force-${idx}`} />);
+          currentLineLength = 0;
+          if (token) {
+            elements.push(renderWord(word, uniqueKey, true, token, idx));
+          } else {
+            elements.push(renderWord(word, uniqueKey, false, undefined, idx));
+          }
+          currentLineLength += wordLength;
         } else {
-          // 即使没有 token，也要为每个词创建词卡（使用临时 token）
-          elements.push(renderWord(word, uniqueKey, false, undefined, idx));
+          // 不需要换行，正常添加
+          if (token) {
+            elements.push(renderWord(word, uniqueKey, true, token, idx));
+          } else {
+            elements.push(renderWord(word, uniqueKey, false, undefined, idx));
+          }
+          currentLineLength += wordLength;
         }
       }
     });
@@ -539,7 +636,7 @@ export const SentenceView = ({
 
   return (
     <div className="relative">
-      <div className="text-2xl md:text-3xl font-medium text-gray-900 leading-relaxed text-center py-6 px-4">
+      <div className="text-2xl md:text-3xl font-medium text-gray-900 leading-relaxed text-left py-6 px-4 break-words whitespace-normal">
         {renderSentence()}
       </div>
       

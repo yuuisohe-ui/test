@@ -271,10 +271,10 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
 
   return (
     <div className={`relative inline-block ${className}`}>
-      {/* 跟读按钮 */}
-      {!hasRecording && !isRecording && (
+      {/* 跟读按钮 - 一直显示 */}
+      {!isRecording && (
         <button
-          onClick={startRecording}
+          onClick={hasRecording ? restartRecording : startRecording}
           disabled={!userLevel}
           className="
             inline-flex items-center justify-center gap-1
@@ -285,7 +285,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
             text-sm font-medium
             disabled:opacity-50 disabled:cursor-not-allowed
           "
-          title={!userLevel ? "请先选择语言等级" : "开始跟读录音"}
+          title={!userLevel ? "请先选择语言等级" : hasRecording ? "重新跟读" : "开始跟读录音"}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -301,7 +301,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
             />
           </svg>
-          🎤 跟读
+          {hasRecording ? '再读一次' : '跟读'}
         </button>
       )}
 
@@ -327,8 +327,8 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
             结束录音
           </button>
           <button
-            onClick={async () => {
-              // 先停止当前录音
+            onClick={() => {
+              // 取消录音
               if (mediaRecorderRef.current && isRecording) {
                 mediaRecorderRef.current.stop();
               }
@@ -341,23 +341,18 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               }
               setIsRecording(false);
               setRecordingDuration(0);
-              
-              // 清理之前的录音
-              if (audioRef.current) {
-                audioRef.current.pause();
-                URL.revokeObjectURL(audioRef.current.src);
-                audioRef.current = null;
-              }
               setHasRecording(false);
               setFeedback(null);
               setShowFeedback(false);
               setAnalysisProgress(0);
               setIsAnalyzing(false);
               
-              // 延迟一下再开始新录音
-              setTimeout(() => {
-                startRecording();
-              }, 200);
+              // 清理录音资源
+              if (audioRef.current) {
+                audioRef.current.pause();
+                URL.revokeObjectURL(audioRef.current.src);
+                audioRef.current = null;
+              }
             }}
             className="
               inline-flex items-center justify-center
@@ -367,7 +362,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               transition-colors
             "
           >
-            重新录音
+            取消
           </button>
         </div>
       )}
@@ -410,7 +405,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
 
       {/* AI跟读点评面板 - 使用绝对定位，出现在按钮下方，确保右边不超出页面 */}
       {showFeedback && feedback && (
-        <div className="absolute top-full right-0 mt-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4" style={{ right: 0 }}>
+        <div className="absolute top-full right-0 mt-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-[100] space-y-4" style={{ right: 0 }}>
           {/* 气泡箭头 */}
           <div className="absolute -top-2 right-6 w-4 h-4 bg-white border-l-2 border-t-2 border-purple-300 transform rotate-45"></div>
           

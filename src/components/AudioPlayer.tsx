@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { audioManager } from '../utils/audioManager';
 
 interface AudioPlayerProps {
   audioFile: File | null;
@@ -18,6 +19,8 @@ export const AudioPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasAudio, setHasAudio] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null); // 添加超时引用
+  const hasPlayedRef = useRef<boolean>(false); // 添加播放标志
 
   useEffect(() => {
     // 检查是否有音频
@@ -29,6 +32,13 @@ export const AudioPlayer = ({
     if (!hasAudio) return;
 
     try {
+      // 清除之前的超时和标志
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      hasPlayedRef.current = false;
+
       let audio: HTMLAudioElement;
 
       if (audioFile) {
@@ -70,31 +80,74 @@ export const AudioPlayer = ({
       if (startSec !== undefined && startSec >= 0) {
         // ⭐ 重要：等 seeked 触发后再播放
         const playAfterSeek = () => {
+          // 检查是否已经播放过
+          if (hasPlayedRef.current) {
+            console.log('🎵 [AudioPlayer] 已经播放过，跳过');
+            return;
+          }
+          
           console.log('🎵 [AudioPlayer] seeked 事件触发，准备播放 - currentTime:', audio.currentTime);
-          audio.play().then(() => {
-            console.log('🎵 [AudioPlayer] 开始播放 - currentTime:', audio.currentTime);
-          }).catch((err) => {
-            console.error('🎵 [AudioPlayer] 播放失败:', err);
-          });
+          
+          // 清除超时保护
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+          
+          // 标记为已播放
+          hasPlayedRef.current = true;
+          
+          // 确保 currentTime 正确
+          if (Math.abs(audio.currentTime - startSec) > 0.1) {
+            audio.currentTime = startSec;
+            // 如果 currentTime 不正确，等待再次 seeked
+            audio.addEventListener('seeked', () => {
+              audioManager.playAudio(audio);
+            }, { once: true });
+          } else {
+            // 使用 audioManager 播放（会自动停止其他音频）
+            audioManager.playAudio(audio);
+          }
+          
           audio.removeEventListener('seeked', playAfterSeek);
         };
+        
         audio.addEventListener('seeked', playAfterSeek);
         console.log('🎵 [AudioPlayer] 设置 currentTime 前:', audio.currentTime);
         audio.currentTime = startSec;
         console.log('🎵 [AudioPlayer] 设置 currentTime 后:', audio.currentTime, '(目标:', startSec, ')');
         
         // ⭐ 如果 seeked 事件没有触发，添加超时保护
-        setTimeout(() => {
+        timeoutRef.current = setTimeout(() => {
+          // 检查是否已经播放过
+          if (hasPlayedRef.current) {
+            console.log('🎵 [AudioPlayer] 超时保护：已经播放过，跳过');
+            return;
+          }
+          
           if (audio.readyState >= 2) { // HAVE_CURRENT_DATA
             console.log('🎵 [AudioPlayer] seeked 事件可能未触发，直接播放 - currentTime:', audio.currentTime);
-            audio.play().catch((err) => {
-              console.error('🎵 [AudioPlayer] 超时后播放失败:', err);
-            });
+            
+            // 确保 currentTime 正确
+            if (Math.abs(audio.currentTime - startSec) > 0.1) {
+              audio.currentTime = startSec;
+              // 等待 seeked 后再播放
+              audio.addEventListener('seeked', () => {
+                hasPlayedRef.current = true;
+                audioManager.playAudio(audio);
+              }, { once: true });
+            } else {
+              // 标记为已播放
+              hasPlayedRef.current = true;
+              // 使用 audioManager 播放（会自动停止其他音频）
+              audioManager.playAudio(audio);
+            }
           }
         }, 1000);
       } else {
-        // 如果没有设置起始时间，直接播放
-        await audio.play();
+        // 如果没有设置起始时间，使用 audioManager 播放
+        hasPlayedRef.current = true;
+        audioManager.playAudio(audio);
       }
 
       // 如果设置了结束时间，在到达时停止
@@ -104,6 +157,7 @@ export const AudioPlayer = ({
             audio.pause();
             setIsPlaying(false);
             clearInterval(checkTime);
+            hasPlayedRef.current = false; // 重置标志
             if (audioFile) {
               URL.revokeObjectURL(audio.src);
             }
@@ -113,6 +167,7 @@ export const AudioPlayer = ({
         audio.onended = () => {
           clearInterval(checkTime);
           setIsPlaying(false);
+          hasPlayedRef.current = false; // 重置标志
           if (audioFile) {
             URL.revokeObjectURL(audio.src);
           }
@@ -121,6 +176,7 @@ export const AudioPlayer = ({
         // 如果没有设置结束时间，正常播放到结束
         audio.onended = () => {
           setIsPlaying(false);
+          hasPlayedRef.current = false; // 重置标志
           if (audioFile) {
             URL.revokeObjectURL(audio.src);
           }
@@ -128,14 +184,29 @@ export const AudioPlayer = ({
       }
 
       audio.onplay = () => setIsPlaying(true);
+      audio.onpause = () => setIsPlaying(false);
       audio.onerror = () => {
         setIsPlaying(false);
+        hasPlayedRef.current = false; // 重置标志
         if (audioFile) {
           URL.revokeObjectURL(audio.src);
         }
       };
 
-      await audio.play();
+      // 监听 audioManager 的音频变化，同步播放状态
+      const handleAudioChange = (currentAudio: HTMLAudioElement | null) => {
+        if (currentAudio === audio) {
+          setIsPlaying(!audio.paused);
+        } else {
+          // 其他音频正在播放，停止当前音频
+          if (!audio.paused) {
+            audio.pause();
+            setIsPlaying(false);
+          }
+        }
+      };
+
+      audioManager.setOnAudioChange(handleAudioChange);
     } catch (error) {
       console.error('音频播放错误:', error);
       setIsPlaying(false);
@@ -144,8 +215,13 @@ export const AudioPlayer = ({
 
   const stopAudio = () => {
     if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
+      // 清除超时
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      hasPlayedRef.current = false; // 重置标志
+      audioManager.stopCurrentAudio();
       setIsPlaying(false);
     }
   };
@@ -185,7 +261,7 @@ export const AudioPlayer = ({
           >
             <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
           </svg>
-          <span className="text-xs">停止</span>
+          <span className="text-sm">停止</span>
         </>
       ) : (
         <>
@@ -203,7 +279,7 @@ export const AudioPlayer = ({
               d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
             />
           </svg>
-          <span className="text-xs">原唱</span>
+          <span className="text-sm">原唱</span>
         </>
       )}
     </button>

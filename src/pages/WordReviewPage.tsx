@@ -665,6 +665,7 @@ function ListenGame({ words }: { words: Word[] }) {
       setIsPlaying(true);
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'zh-CN';
+      utterance.rate = 0.7; // 默认慢速
       utterance.onend = () => setIsPlaying(false);
       speechSynthesis.speak(utterance);
     }

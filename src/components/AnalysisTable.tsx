@@ -1,6 +1,7 @@
 import { Chunk } from '../types';
 import { TTSButton } from './TTSButton';
 import { AudioPlayer } from './AudioPlayer';
+import { SingAlongButton } from './SingAlongButton';
 
 interface AnalysisTableProps {
   chunks: Chunk[];
@@ -9,6 +10,7 @@ interface AnalysisTableProps {
   audioUrl?: string; // 音频URL
   startSec?: number; // 开始时间
   endSec?: number; // 结束时间
+  userLevel?: "初级" | "中级" | "高级" | null; // 用户水平（用于跟读按钮）
 }
 
 // 按照chunk边界（语义断句）分段拼音和声调
@@ -176,7 +178,7 @@ const HSKLevelIndicator = ({ level }: { level: number }) => {
   );
 };
 
-export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec, endSec }: AnalysisTableProps) => {
+export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec, endSec, userLevel }: AnalysisTableProps) => {
   if (chunks.length === 0) return null;
   
   const chunk = chunks[0]; // 只显示第一个（整句分析）
@@ -197,7 +199,7 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
               难度等级
             </th>
             <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">
-              整句拼音
+              跟读试试
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">
               整句声调结构
@@ -213,17 +215,11 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
               <HSKLevelIndicator level={chunk.hskLevel || 1} />
             </td>
             <td className="px-4 py-4 text-base text-gray-700 min-w-[300px]">
-              {pinyinLines.length > 0 ? (
-                <div className="space-y-1 text-center">
-                  {pinyinLines.map((line, index) => (
-                    <div key={index} className="leading-relaxed break-words">
-                      {line}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                '—'
-              )}
+              {/* 跟读按钮 */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="text-xs text-gray-500">点击开始跟读</div>
+                <SingAlongButton text={chunk.text} userLevel={userLevel || null} />
+              </div>
             </td>
             <td className="px-4 py-4">
               {tonesLines.length > 0 ? (
@@ -244,16 +240,21 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
               )}
             </td>
             <td className="px-4 py-4 text-center">
-              <div className="flex items-center justify-center gap-2">
+              <div className="flex flex-col items-center gap-2">
                 {hasAudio && (
                   <AudioPlayer 
-                    audioFile={audioFile || undefined}
+                    audioFile={audioFile || null}
                     audioUrl={audioUrl}
                     startSec={startSec}
                     endSec={endSec}
+                    className="w-full px-3 py-1.5"
                   />
                 )}
-                <TTSButton text={chunk.text} />
+                <TTSButton 
+                  text={chunk.text} 
+                  className="w-full px-3 py-1.5"
+                  label="朗读"
+                />
               </div>
             </td>
           </tr>

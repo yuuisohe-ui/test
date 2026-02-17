@@ -27,8 +27,8 @@ import { opalMockOk } from "../data/opalMock";
 import { SentenceView } from "../components/SentenceView";
 import { AnalysisTable } from "../components/AnalysisTable";
 import { TTSButton } from "../components/TTSButton";
-import { SingAlongButton } from "../components/SingAlongButton";
 import { AudioPlayer } from "../components/AudioPlayer";
+import { audioManager } from "../utils/audioManager";
 import { SentenceData } from "../types";
 import { SongPayload } from "../data/opalMock";
 import { callOpalApiWithAudio, callOpalApiWithText } from "../services/opalApi";
@@ -463,6 +463,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null); // 用于取消API请求
   const [languageMode, setLanguageMode] = useState<'ko' | 'zh' | null>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -579,8 +580,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         if (isChinese(displayLine) || displayLine.includes("한국어 가사 원문") || displayLine.includes("한국어")) {
           // 策略1: 从转写文本中查找韩文（音频输入）
           if (transcribedText && isKorean(transcribedText)) {
-            const transcribedLines = transcribedText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-            const koreanLines = transcribedLines.filter(l => isKorean(l));
+            const transcribedLines = transcribedText.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+            const koreanLines = transcribedLines.filter((l: string) => isKorean(l));
             const lineNo = Number(line?.lineNo ?? index + 1);
             if (koreanLines.length > 0) {
               if (lineNo > 0 && lineNo <= koreanLines.length) {
@@ -592,7 +593,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           }
           // 策略2: 从rawText中查找韩文（文本输入）
           else if (rawText) {
-            const rawLines = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+            const rawLines = rawText.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
             const lineNo = Number(line?.lineNo ?? index + 1);
             
             // 优先匹配行号
@@ -600,7 +601,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               displayLine = rawLines[lineNo - 1];
             } else {
               // 查找所有韩文行
-              const koreanLines = rawLines.filter(l => isKorean(l));
+              const koreanLines = rawLines.filter((l: string) => isKorean(l));
               if (koreanLines.length > 0) {
                 if (lineNo > 0 && lineNo <= koreanLines.length) {
                   displayLine = koreanLines[lineNo - 1];
@@ -661,8 +662,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           // 检查rawText中是否有韩文
           let hasKoreanInRawText = false;
           if (rawText) {
-            const rawLines = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-            hasKoreanInRawText = rawLines.some(l => isKorean(l));
+            const rawLines = rawText.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+            hasKoreanInRawText = rawLines.some((l: string) => isKorean(l));
           }
           
           // 如果rawText中也没有韩文，且displayLine是中文（不是占位符），需要翻译
@@ -969,6 +970,23 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         // ⭐ 一致性校验与修复：确保 tokensZh 与 zhSentence 一致
         ensureTokensZhConsistency(result);
         
+        // ⭐ 如果是中文音频，调整时间戳
+        if (result.status === 'ok' && result.lines && result.lines.length > 0 && languageMode === 'zh') {
+          result.lines.forEach((line: any, index: number) => {
+            // 每句结束时间戳提前0.5秒
+            if (line.endSec !== undefined && line.endSec > 0) {
+              line.endSec = Math.max(0, line.endSec - 0.5);
+            }
+            // 每句开始时间戳提前0.3秒（第一句如果是0则不变）
+            if (index === 0 && line.startSec === 0) {
+              // 第一句且开始时间是0，保持不变
+              // 不需要做任何操作
+            } else if (line.startSec !== undefined && line.startSec > 0) {
+              line.startSec = Math.max(0, line.startSec - 0.3);
+            }
+          });
+        }
+        
         setOpalPayload(result);
         setAudioHint(`ChatGPT API 테스트 성공! ${result.lines?.length || 0}개 라인 분석 완료.`);
       } else {
@@ -985,8 +1003,28 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     }
   }
 
+  // 暂停分析
+  function handleCancelAnalysis() {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsLoading(false);
+    setLoadingProgress(0);
+    setLoadingMessage("已取消分析");
+    setTimeout(() => {
+      setLoadingMessage("");
+    }, 2000);
+  }
+
   // API 호출 (ChatGPT 우선, Opal 대체, Mock 폴백)
   async function onClickTranscribe() {
+    // 如果正在分析，则暂停
+    if (isLoading) {
+      handleCancelAnalysis();
+      return;
+    }
+    
     // ⭐ 生成 requestId
     const requestId = Date.now();
     console.log(`🆔 [Request Start] requestId: ${requestId}`);
@@ -1007,6 +1045,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         return; // 用户取消，不执行分析
       }
     }
+    
+    // 创建新的AbortController
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     
     setIsLoading(true);
     setLoadingProgress(0);
@@ -1052,9 +1094,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             return;
           }
           
+          // 检查是否已取消
+          if (signal.aborted) {
+            console.log('分析已取消');
+            return;
+          }
+          
           // 使用优化后的函数，只调用一次 Whisper API，同时获取转写文本和分析结果
           const { result: apiResult, transcribedText: transcribed, detectedLang: whisperDetectedLang } = 
-            await callChatGPTApiWithAudioAndTranscription(audioFile, languageMode, requestId);
+            await callChatGPTApiWithAudioAndTranscription(audioFile, languageMode, requestId, signal);
           
           // 保存检测到的语言（确保格式统一为 'ko' 或 'zh'）
           const normalizedDetectedLang = normalizeLanguage(whisperDetectedLang) || whisperDetectedLang;
@@ -1090,8 +1138,14 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           setLoadingMessage("ChatGPT로 가사 분석 중... (30%)");
           setLoadingProgress(30);
           
+          // 检查是否已取消
+          if (signal.aborted) {
+            console.log('分析已取消');
+            return;
+          }
+          
           // ChatGPT API로 텍스트 분석
-          result = await callChatGPTApiWithText(rawText.trim(), detectedLang, requestId);
+          result = await callChatGPTApiWithText(rawText.trim(), detectedLang, requestId, signal);
           
           setLoadingMessage("분석 결과 처리 중... (80%)");
           setLoadingProgress(80);
@@ -1226,6 +1280,23 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         });
       }
       
+      // ⭐ 如果是中文音频，调整时间戳
+      if (result.status === 'ok' && result.lines && result.lines.length > 0 && languageMode === 'zh') {
+        result.lines.forEach((line: any, index: number) => {
+          // 每句结束时间戳提前0.5秒
+          if (line.endSec !== undefined && line.endSec > 0) {
+            line.endSec = Math.max(0, line.endSec - 0.5);
+          }
+          // 每句开始时间戳提前0.3秒（第一句如果是0则不变）
+          if (index === 0 && line.startSec === 0) {
+            // 第一句且开始时间是0，保持不变
+          } else if (line.startSec !== undefined && line.startSec > 0) {
+            line.startSec = Math.max(0, line.startSec - 0.3);
+          }
+        });
+        console.log('⏰ [中文音频] 已将所有句子的开始时间戳提前0.3秒（第一句为0时不变），结束时间戳提前0.5秒');
+      }
+      
       setOpalPayload(result);
       
       setLoadingMessage("완료! (100%)");
@@ -1243,7 +1314,13 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       setTimeout(() => {
         setLoadingMessage("");
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
+      // 如果是取消操作，不显示错误
+      if (error?.name === 'AbortError' || signal?.aborted) {
+        console.log('分析已取消');
+        return;
+      }
+      
       console.error('❌ API 호출 오류:', error);
       setLoadingMessage("❌ 오류 발생");
       setLoadingProgress(0);
@@ -1269,11 +1346,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       
       setOpalPayload(opalMockOk);
     } finally {
-      setIsLoading(false);
-      setTimeout(() => {
-        setLoadingProgress(0);
-        setLoadingMessage("");
-      }, 2000);
+      // 只有在没有取消的情况下才清理
+      if (!signal?.aborted) {
+        setIsLoading(false);
+        setTimeout(() => {
+          setLoadingProgress(0);
+          setLoadingMessage("");
+        }, 2000);
+      }
+      abortControllerRef.current = null;
     }
   }
 
@@ -1651,10 +1732,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       
       try {
         if (isPlaying) {
-          audioRef.current.pause();
+          // 暂停当前音频
+          audioManager.pauseCurrentAudio();
           setIsPlaying(false);
         } else {
-          await audioRef.current.play();
+          // 使用 audioManager 播放（会自动停止其他音频）
+          audioManager.playAudio(audioRef.current);
           setIsPlaying(true);
         }
       } catch (error) {
@@ -1662,6 +1745,30 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         setIsPlaying(false);
       }
     };
+
+    // 监听 audioManager 的音频变化，同步播放状态
+    useEffect(() => {
+      const handleAudioChange = (currentAudio: HTMLAudioElement | null) => {
+        if (currentAudio === audioRef.current) {
+          // 当前音频正在播放
+          if (audioRef.current) {
+            setIsPlaying(!audioRef.current.paused);
+          }
+        } else {
+          // 其他音频正在播放，停止当前音频
+          if (audioRef.current && !audioRef.current.paused) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+          }
+        }
+      };
+
+      audioManager.setOnAudioChange(handleAudioChange);
+
+      return () => {
+        audioManager.setOnAudioChange(() => {});
+      };
+    }, []);
 
     // 处理进度条拖动
     const handleProgressChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1723,35 +1830,35 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
     // 处理句子点击：跳转到该句子的起始位置并开始播放（只在点击空白处时触发）
     const handleLineClick = (e: React.MouseEvent<HTMLElement>, lineNo: number) => {
-      // 检查点击的目标元素，如果是词卡相关元素，则不触发音频跳转
+      // 检查点击的目标元素，如果是词卡相关元素或TTS按钮，则不触发音频跳转
       const target = e.target as HTMLElement;
       if (target && (
         target.closest('[data-word]') || // 词卡元素
         target.closest('[data-word-tooltip]') || // 词卡工具提示
         target.hasAttribute('data-word') || // 直接点击词卡
-        target.closest('.word-tooltip') // 词卡容器（如果有这个class）
+        target.closest('.word-tooltip') || // 词卡容器
+        target.closest('button') && target.closest('button')?.querySelector('svg') // TTS按钮
       )) {
-        // 点击的是词卡，不触发音频跳转
+        // 点击的是词卡或按钮，不触发音频跳转
         return;
       }
-      
-      if (!audioRef.current) return;
       
       const line = linesAll.find((l: any) => Number(l?.lineNo ?? 0) === lineNo);
       if (!line) return;
       
-      const startSec = line?.startSec ?? 0;
-      if (startSec >= 0 && startSec < audioDuration) {
-        audioRef.current.currentTime = startSec;
-        setCurrentTime(startSec);
-        setCurrentPlayingLineNo(lineNo);
-        scrollToCurrentLine(lineNo);
-        
-        // 开始播放
-        audioRef.current.play().catch((error) => {
-          console.error('播放失败:', error);
-        });
-        setIsPlaying(true);
+      // 默认情况下，如果有原唱，播放原唱
+      if (audioRef.current) {
+        const startSec = line?.startSec ?? 0;
+        if (startSec >= 0 && startSec < audioDuration) {
+          audioRef.current.currentTime = startSec;
+          setCurrentTime(startSec);
+          setCurrentPlayingLineNo(lineNo);
+          scrollToCurrentLine(lineNo);
+          
+          // 使用 audioManager 播放（会自动停止其他音频和TTS）
+          audioManager.playAudio(audioRef.current);
+          setIsPlaying(true);
+        }
       }
     };
 
@@ -1994,6 +2101,35 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
     return (
       <div className="space-y-6">
+        {/* 颜色标记系统 - 爱心形状 */}
+        <div className="flex justify-end">
+          <div className="flex items-center gap-6">
+            {/* 基础 - 淡绿色爱心 */}
+            <div className="relative">
+              <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#86efac" stroke="#4ade80" strokeWidth="1.5"/>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-green-600">基础</span>
+            </div>
+            
+            {/* 中级 - 淡蓝色爱心 */}
+            <div className="relative">
+              <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#93c5fd" stroke="#60a5fa" strokeWidth="1.5"/>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-blue-600">中级</span>
+            </div>
+            
+            {/* 高级 - 淡紫色爱心 */}
+            <div className="relative">
+              <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#c4b5fd" stroke="#a78bfa" strokeWidth="1.5"/>
+              </svg>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-purple-600">高级</span>
+            </div>
+          </div>
+        </div>
+        
         {/* 大卡片容器 */}
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
           {/* 头部 */}
@@ -2002,14 +2138,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             onClick={() => setIsExpanded(!isExpanded)}
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-1">
                 <span className="text-2xl">📖</span>
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-semibold">整段歌词</h3>
                   <p className="text-sm text-blue-100">共 {linesAll.length} 句</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
+                {/* 原唱按钮 */}
                 {(audioFile || audioUrl) && (
                   <>
                     <button
@@ -2017,23 +2154,32 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         e.stopPropagation();
                         togglePlay();
                       }}
-                      className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex items-center gap-2"
+                      className={`
+                        inline-flex items-center justify-center gap-1
+                        px-2 py-1 rounded-lg
+                        ${isPlaying
+                          ? 'bg-indigo-200 hover:bg-indigo-300 text-indigo-800'
+                          : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+                        }
+                        transition-colors duration-200
+                        text-sm font-medium
+                      `}
+                      title={isPlaying ? "暂停原唱" : "播放原唱"}
+                      aria-label={isPlaying ? "暂停原唱" : "播放原唱"}
                     >
                       {isPlaying ? (
-                        <>
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          <span>暂停</span>
-                        </>
+                        // 暂停图标
+                        <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+                        </svg>
                       ) : (
-                        <>
-                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                          </svg>
-                          <span>播放整段</span>
-                        </>
+                        // 播放图标
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                       )}
+                      <span>{isPlaying ? "暂停原唱" : "播放原唱"}</span>
                     </button>
                     
                     {/* 时间显示 */}
@@ -2150,7 +2296,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           {displayLine}
                         </div>
                         {/* 中文+拼音：按语义分段对齐 */}
-                        <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed">
+                        <div className="flex items-start gap-2 leading-relaxed">
+                          <div className="flex-1 flex flex-wrap items-end gap-x-1 gap-y-2">
                           {(() => {
                             // 优先使用 chunkSegments（语义分段）
                             const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
@@ -2254,7 +2401,16 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                 </div>
                               </>
                             );
-                          })()}
+                            })()}
+                          </div>
+                          {/* 每句朗读按钮 - 放在右边 */}
+                          <div className="flex-shrink-0 mt-1">
+                            <TTSButton 
+                              text={zhSentence} 
+                              lang="zh-CN"
+                              className="w-5 h-5 text-gray-600 hover:text-blue-600 bg-gray-100 hover:bg-blue-100 rounded-lg p-1"
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2621,8 +2777,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       }
       // 策略2: 从 rawText 中查找韩文（文本输入）
       else if (rawText) {
-        const rawLines = rawText.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-        const koreanLines = rawLines.filter(l => checkKorean(l));
+        const rawLines = rawText.split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean);
+        const koreanLines = rawLines.filter((l: string) => checkKorean(l));
         if (koreanLines.length > 0) {
           if (lineNo > 0 && lineNo <= koreanLines.length) {
             displayLine = koreanLines[lineNo - 1];
@@ -2728,12 +2884,103 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       finalZhSentence = data.sentence || "";
     }
 
+    // 按照空格、标点分行显示文本的函数
+    const formatTextWithLineBreaks = (text: string, maxLength: number = 50): JSX.Element => {
+      if (!text) return <></>;
+      
+      // 如果文本很短，直接返回
+      if (text.length <= maxLength) {
+        return <>{text}</>;
+      }
+      
+      // 如果文本包含换行符，按换行符分行
+      if (text.includes('\n') || text.includes('\r')) {
+        const lines = text.split(/\r?\n/).filter(l => l.trim());
+        return (
+          <>
+            {lines.map((line, idx) => (
+              <div key={idx} className={idx > 0 ? 'mt-1' : ''}>
+                {line.trim()}
+              </div>
+            ))}
+          </>
+        );
+      }
+      
+      // 如果没有换行符，按照空格、标点进行分行
+      // 分行规则：在标点符号（，。！？、；：,.!?;:）后，或者在空格后（如果当前行长度超过maxLength）
+      const parts: string[] = [];
+      let currentLine = '';
+      let currentLength = 0;
+      
+      // 标点符号正则
+      const punctuationRegex = /[，。！？、；：,.!?;:]/;
+      // 空格正则
+      const spaceRegex = /\s/;
+      
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        currentLine += char;
+        currentLength++;
+        
+        // 如果遇到标点符号，且当前行长度超过阈值，分行
+        if (punctuationRegex.test(char) && currentLength > maxLength * 0.6) {
+          parts.push(currentLine.trim());
+          currentLine = '';
+          currentLength = 0;
+        }
+        // 如果遇到空格，且当前行长度超过阈值，分行
+        else if (spaceRegex.test(char) && currentLength > maxLength) {
+          parts.push(currentLine.trim());
+          currentLine = '';
+          currentLength = 0;
+        }
+        // 如果当前行长度超过最大长度，强制分行（在最近的空格或标点处）
+        else if (currentLength > maxLength) {
+          // 向前查找最近的标点或空格
+          let breakPoint = currentLine.length;
+          for (let j = currentLine.length - 1; j >= Math.max(0, currentLine.length - 20); j--) {
+            if (punctuationRegex.test(currentLine[j]) || spaceRegex.test(currentLine[j])) {
+              breakPoint = j + 1;
+              break;
+            }
+          }
+          
+          if (breakPoint < currentLine.length) {
+            parts.push(currentLine.substring(0, breakPoint).trim());
+            currentLine = currentLine.substring(breakPoint);
+            currentLength = currentLine.length;
+          } else {
+            // 如果找不到合适的断点，强制在当前位置分行
+            parts.push(currentLine.trim());
+            currentLine = '';
+            currentLength = 0;
+          }
+        }
+      }
+      
+      // 添加最后一行
+      if (currentLine.trim()) {
+        parts.push(currentLine.trim());
+      }
+      
+      return (
+        <>
+          {parts.map((part, idx) => (
+            <div key={idx} className={idx > 0 ? 'mt-1' : ''}>
+              {part}
+            </div>
+          ))}
+        </>
+      );
+    };
+
     return (
     <div className="bg-white rounded-2xl shadow-sm border p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="text-sm text-gray-500 w-10">{formatLineNo(lineNo)}</div>
-          <div className="font-medium flex-1 truncate">
-            {displayLine}
+        <div className="flex items-start gap-3 mb-3">
+          <div className="text-sm text-gray-500 w-10 flex-shrink-0">{formatLineNo(lineNo)}</div>
+          <div className="font-medium flex-1">
+            {formatTextWithLineBreaks(displayLine)}
             {isDuplicate && (
               <span className="ml-2 text-xs text-gray-400 italic">(重复)</span>
             )}
@@ -2759,27 +3006,129 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         </div>
 
         <div className="mb-4">
-          {/* 中文整句展示 + 跟唱 */}
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold text-gray-700">中文整句展示</div>
-            <SingAlongButton 
-              text={finalZhSentence}
-              userLevel={userLevel}
-              onStartRecording={() => {
-                // 点击跟读按钮时，关闭教学提示
-                setShowTeachingTip(false);
-              }}
-            />
+          {/* 中文整句展示 */}
+          <div className="mb-2">
+            <div className="text-sm font-semibold text-gray-700 mb-2">中文整句展示</div>
+            {/* 使用与整段歌词相同的显示逻辑，字体放大并居中，支持词卡功能 */}
+            <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed justify-center">
+            {(() => {
+              // 优先使用 chunkSegments（语义分段）- 保持原有逻辑，不验证
+              const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
+              
+              if (chunkSegments.length > 0) {
+                // 按语义分段显示 - 保持原有显示方式，但使用 SentenceView 支持词卡
+                return chunkSegments.map((seg: any, segIdx: number) => {
+                  const chunkZh = seg.chunkZh || '';
+                  const segPinyin = seg.pinyin || '';
+                  
+                  // 为整个分段添加词卡支持
+                  // 找到属于这个分段的 tokens
+                  const segmentTokens = data.tokens?.filter((t: any) => {
+                    if (!t.text) return false;
+                    return chunkZh.includes(t.text);
+                  }) || [];
+                  
+                  // 将 chunkZh 按字符拆分（只保留中文字符）
+                  const zhChars = chunkZh.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c));
+                  // 将拼音按空格拆分
+                  const pinyinWords = segPinyin.split(/\s+/).filter((p: string) => p.trim());
+                  
+                  // 无论是否逐字对齐，都使用 SentenceView 支持词卡，按词分词
+                  // 使用 SentenceView 渲染整个分段，但保持拼音在上的布局
+                  return (
+                    <div key={`seg-${lineNo}-${segIdx}`} className="inline-flex flex-col items-center justify-end mx-1">
+                      {/* 拼音 */}
+                      {segPinyin && (
+                        <span className="text-sm text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
+                          {segPinyin}
+                        </span>
+                      )}
+                      {/* 中文 - 使用 SentenceView 支持词卡，按词分词 */}
+                      <div className="text-2xl font-medium text-gray-900">
+                        <SentenceView
+                          sentence={chunkZh}
+                          tokens={segmentTokens}
+                          selectedWord={selectedWord}
+                          item={item}
+                          globalActiveTokenId={globalActiveTokenId}
+                          onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
+                          tokenIdPrefix={`line-${lineNo}-seg-${segIdx}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                });
+              }
+              
+              // 如果没有 chunkSegments，但有 tokens，使用 SentenceView 渲染整个句子
+              if (data.tokens && data.tokens.length > 0) {
+                // 获取整句拼音
+                const pinyinArray = data.tokens
+                  .map((token: any) => token.pinyin || '')
+                  .filter((p: string) => p.trim().length > 0);
+                const pinyin = pinyinArray.length > 0 ? pinyinArray.join(' ') : '';
+                
+                // 使用 SentenceView 渲染整个句子，但保持拼音在上的布局
+                const currentSentence = data.sentence || zhSentence || "";
+                
+                return (
+                  <>
+                    {pinyin && (
+                      <div className="text-base text-gray-500 leading-relaxed w-full text-center mb-2">
+                        {pinyin}
+                      </div>
+                    )}
+                    <div className="text-2xl font-medium text-gray-900 leading-relaxed w-full text-center">
+                      <SentenceView
+                        sentence={currentSentence}
+                        tokens={data.tokens ?? []}
+                        selectedWord={selectedWord}
+                        item={item}
+                        globalActiveTokenId={globalActiveTokenId}
+                        onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
+                        tokenIdPrefix={`line-${lineNo}`}
+                      />
+                    </div>
+                  </>
+                );
+              }
+              
+              // 最后回退：使用 SentenceView 显示，支持词卡功能
+              // 使用 data.sentence 而不是 finalZhSentence，确保是当前句子的内容
+              const currentSentence = data.sentence || zhSentence || "";
+              let pinyin = '';
+              if (data.chunks && data.chunks.length > 0) {
+                const pinyinArray = data.chunks
+                  .map((chunk: any) => chunk.pinyin || '')
+                  .filter((p: string) => p.trim().length > 0);
+                if (pinyinArray.length > 0) {
+                  pinyin = pinyinArray.join(' ');
+                }
+              }
+              
+              return (
+                <>
+                  {pinyin && (
+                    <div className="text-base text-gray-500 leading-relaxed w-full text-center mb-2">
+                      {pinyin}
+                    </div>
+                  )}
+                  <div className="text-2xl font-medium text-gray-900 leading-relaxed w-full text-center">
+                    <SentenceView
+                      sentence={currentSentence}
+                      tokens={data.tokens ?? []}
+                      selectedWord={selectedWord}
+                      item={item}
+                      globalActiveTokenId={globalActiveTokenId}
+                      onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
+                      tokenIdPrefix={`line-${lineNo}`}
+                    />
+                  </div>
+                </>
+              );
+            })()}
+            </div>
           </div>
-          <SentenceView 
-            sentence={finalZhSentence} 
-            tokens={data.tokens ?? []} 
-            selectedWord={selectedWord}
-            item={item}
-            globalActiveTokenId={globalActiveTokenId}
-            onTokenActivate={(tokenId: string) => setGlobalActiveTokenId(tokenId)}
-            tokenIdPrefix={`line-${lineNo}`}
-          />
         </div>
 
         <div>
@@ -2872,20 +3221,20 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               disabled={isGeneratingTipForThis || !userLevel}
               className={`
                 inline-flex items-center justify-center gap-1
-                px-2 py-1 rounded-lg
+                px-3 py-1.5 rounded-lg
                 ${isGeneratingTipForThis 
                   ? 'bg-amber-200 text-amber-800 cursor-wait' 
                   : 'bg-amber-100 hover:bg-amber-200 active:bg-amber-300 text-amber-700 hover:text-amber-800'
                 }
                 transition-colors duration-200
-                text-xs font-medium
+                text-sm font-medium
                 ${!userLevel ? 'opacity-50 cursor-not-allowed' : ''}
               `}
               title={!userLevel ? "请先选择语言等级" : isGeneratingTipForThis ? "生成中..." : showTeachingTip ? "收起教学提示" : "查看本句教学提示"}
             >
               {isGeneratingTipForThis ? (
                 <>
-                  <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
@@ -2895,7 +3244,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
+                    className="h-4 w-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -2913,7 +3262,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <>
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-3 w-3"
+                    className="h-4 w-4"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -2925,7 +3274,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  教学提示
+                  本句教学提示
                 </>
               )}
             </button>
@@ -3096,58 +3445,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                               clearInterval(practiceDurationIntervalRef.current);
                               practiceDurationIntervalRef.current = null;
                             }
+                            // 取消录音，不进行分析
                             setIsRecording(false);
                             setPracticeRecordingDuration(0);
                             setHasPracticeRecording(false);
                             setPracticeAudioBlob(null);
-                            // 延迟一下再开始录音
-                            setTimeout(() => {
-                              const startRecording = async () => {
-                                try {
-                                  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                                  practiceStreamRef.current = stream;
-                                  const recorder = new MediaRecorder(stream);
-                                  const chunks: Blob[] = [];
-                                  
-                                  recorder.ondataavailable = (e) => {
-                                    if (e.data.size > 0) {
-                                      chunks.push(e.data);
-                                    }
-                                  };
-                                  
-                                  recorder.onstop = async () => {
-                                    const blob = new Blob(chunks, { type: 'audio/wav' });
-                                    setPracticeAudioBlob(blob);
-                                    setHasPracticeRecording(true);
-                                    if (practiceStreamRef.current) {
-                                      practiceStreamRef.current.getTracks().forEach(track => track.stop());
-                                    }
-                                    if (practiceDurationIntervalRef.current) {
-                                      clearInterval(practiceDurationIntervalRef.current);
-                                      practiceDurationIntervalRef.current = null;
-                                    }
-                                  };
-                                  
-                                  recorder.start();
-                                  setMediaRecorder(recorder);
-                                  setIsRecording(true);
-                                  setPracticeRecordingDuration(0);
-                                  practiceStartTimeRef.current = Date.now();
-                                  
-                                  practiceDurationIntervalRef.current = setInterval(() => {
-                                    setPracticeRecordingDuration(Math.floor((Date.now() - practiceStartTimeRef.current) / 1000));
-                                  }, 100);
-                                } catch (error) {
-                                  console.error('无法访问麦克风:', error);
-                                  alert('无法访问麦克风，请检查权限设置');
-                                }
-                              };
-                              startRecording();
-                            }, 100);
                           }}
                           className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
                         >
-                          重新录音
+                          取消
                         </button>
                       </div>
                     )}
@@ -3270,9 +3576,9 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   )}
                 </div>
                 
-                {/* 反馈显示 */}
+                {/* 反馈显示 - 在按钮上方 */}
                 {practiceFeedback && (
-                  <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="text-sm text-gray-800 whitespace-pre-wrap">{practiceFeedback}</div>
                   </div>
                 )}
@@ -3288,6 +3594,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             audioUrl={opalPayload?.audioUrl}
             startSec={item?.startSec}
             endSec={item?.endSec}
+            userLevel={userLevel}
           />
         </div>
       </div>
@@ -3644,11 +3951,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   >
                     {isLoading ? (
                       <>
-                        <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        <svg className="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
-                        <span>分析中...</span>
+                        <span>暂停分析</span>
                       </>
                     ) : (
                       "开始转写 / 分析"

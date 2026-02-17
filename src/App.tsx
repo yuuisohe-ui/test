@@ -67,11 +67,21 @@ export default function App() {
   return (
     <div className="min-h-screen">
       {topBar}
-      {view === "song" && <SongPage />}
-      {view === "analyze" && <AnalyzePage data={sentenceData} />}
-      {view === "video" && <VideoPage />}
-      {view === "wordReview" && <WordReviewPage />}
-      {view === "youtube" && <YoutubePage />}
+      <div style={{ display: view === "song" ? "block" : "none" }}>
+        <SongPage />
+      </div>
+      <div style={{ display: view === "analyze" ? "block" : "none" }}>
+        <AnalyzePage data={sentenceData} />
+      </div>
+      <div style={{ display: view === "video" ? "block" : "none" }}>
+        <VideoPage />
+      </div>
+      <div style={{ display: view === "wordReview" ? "block" : "none" }}>
+        <WordReviewPage />
+      </div>
+      <div style={{ display: view === "youtube" ? "block" : "none" }}>
+        <YoutubePage />
+      </div>
     </div>
   );
 }

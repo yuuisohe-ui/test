@@ -201,22 +201,27 @@ function chooseBestBreakIndexForRefinement(s: string, min: number = 8, max: numb
 }
 
 /**
- * 二次细分单个 segment：强制每个输出小段中文长度 ≤ MAX_CHARS
+ * 二次细分单个 segment：根据语言模式使用不同的字符限制
  * @param seg 原始 segment
  * @param words 所有 words（用于时间戳分配）
  * @param segStart segment 的起始时间
  * @param segEnd segment 的结束时间
+ * @param languageMode 语言模式：'zh' 使用15字符限制，'ko' 使用40字符限制
  * @returns 细分后的 segments 数组
  */
 function refineSegment(
   seg: any,
   words: Array<{ word: string; start: number; end: number }> | null,
   segStart: number,
-  segEnd: number
+  segEnd: number,
+  languageMode: 'ko' | 'zh' = 'zh'
 ): Array<{ text: string; start: number; end: number; isEstimated?: boolean }> {
-  const MAX_CHARS = 15;
-  const MIN_CHARS = 8;
-  const TARGET = 12;
+  // 根据语言模式设置不同的字符限制
+  // 中文：15字符（因为中文字符信息密度高）
+  // 韩文：40字符（因为韩文字符信息密度低，需要更多字符才能表达相同意思）
+  const MAX_CHARS = languageMode === 'ko' ? 40 : 15;
+  const MIN_CHARS = languageMode === 'ko' ? 20 : 8;
+  const TARGET = languageMode === 'ko' ? 30 : 12;
   
   const text = seg.text?.trim() || '';
   const textLength = text.length;
@@ -484,7 +489,7 @@ export interface ChatGPTRequest {
 /**
  * ChatGPT API를 호출하여 텍스트/음성을 분석하고 학습 데이터를 생성합니다
  */
-export async function callChatGPTApi(request: ChatGPTRequest): Promise<SongPayload> {
+export async function callChatGPTApi(request: ChatGPTRequest, signal?: AbortSignal): Promise<SongPayload> {
   try {
     // API 키 확인 (환경 변수에서 직접 가져오기)
     // Vite는 빌드 시점에 환경 변수를 주입하므로, 런타임에 직접 읽어야 함
@@ -500,23 +505,38 @@ export async function callChatGPTApi(request: ChatGPTRequest): Promise<SongPaylo
       throw new Error('OpenAI API 키가 설정되지 않았습니다. Vercel Dashboard의 Environment Variables에서 VITE_OPENAI_API_KEY를 설정하고 프로젝트를 재배포해주세요.');
     }
 
+    // 检查是否已取消
+    if (signal?.aborted) {
+      throw new Error('AbortError');
+    }
+
     // 텍스트 분석 요청
     if (request.text) {
-      return await analyzeTextWithChatGPT(request.text, request.sourceLang || 'ko');
+      return await analyzeTextWithChatGPT(request.text, request.sourceLang || 'ko', signal);
     }
 
     // 오디오 파일 분석 (Whisper API 사용)
     if (request.audioFile) {
-      return await analyzeAudioWithChatGPT(request.audioFile, request.sourceLang || 'ko');
+      return await analyzeAudioWithChatGPT(request.audioFile, request.sourceLang || 'ko', signal);
     }
 
     // 오디오 URL 분석
     if (request.audioUrl) {
-      return await analyzeAudioUrlWithChatGPT(request.audioUrl, request.sourceLang || 'ko');
+      return await analyzeAudioUrlWithChatGPT(request.audioUrl, request.sourceLang || 'ko', signal);
     }
 
     throw new Error('분석할 텍스트 또는 오디오가 제공되지 않았습니다.');
   } catch (error) {
+    // 如果是取消操作，重新抛出以便上层处理
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw error;
+    }
+    if (error instanceof Error && error.message === 'AbortError') {
+      const abortError = new Error('AbortError');
+      abortError.name = 'AbortError';
+      throw abortError;
+    }
+    
     console.error('ChatGPT API 호출 오류:', error);
     
     return {
@@ -536,7 +556,7 @@ export async function callChatGPTApi(request: ChatGPTRequest): Promise<SongPaylo
 /**
  * 텍스트를 ChatGPT로 분석하여 학습 데이터 생성
  */
-async function analyzeTextWithChatGPT(text: string, sourceLang: 'ko' | 'zh'): Promise<SongPayload> {
+async function analyzeTextWithChatGPT(text: string, sourceLang: 'ko' | 'zh', signal?: AbortSignal): Promise<SongPayload> {
   const prompt = getTextAnalysisPrompt(text, sourceLang);
 
   // API 키와 URL을 환경 변수에서 직접 가져오기
@@ -568,6 +588,7 @@ async function analyzeTextWithChatGPT(text: string, sourceLang: 'ko' | 'zh'): Pr
       response_format: { type: 'json_object' },
       max_tokens: 8000, // 긴 가사를 위해 토큰 수 증가
     }),
+    signal: signal,
   });
 
   console.log('📥 ChatGPT API 응답 상태:', response.status, response.statusText);
@@ -925,7 +946,8 @@ async function analyzeLinesWithChatGPT(
   displayLines: string[],
   sourceLang: 'ko' | 'zh',
   audioFileName?: string,
-  requestId?: number
+  requestId?: number,
+  signal?: AbortSignal
 ): Promise<SongPayload> {
   console.log(`🆔 [GPT Request] requestId: ${requestId}`);
   const prompt = getLineByLineAnalysisPrompt(displayLines, sourceLang, audioFileName);
@@ -940,6 +962,11 @@ async function analyzeLinesWithChatGPT(
     promptLength: prompt.length,
     linesCount: displayLines.length,
   });
+
+  // 检查是否已取消
+  if (signal?.aborted) {
+    throw new Error('AbortError');
+  }
 
   const response = await fetch(`${apiUrl}/chat/completions`, {
     method: 'POST',
@@ -959,6 +986,7 @@ async function analyzeLinesWithChatGPT(
       response_format: { type: 'json_object' },
       max_tokens: 8000,
     }),
+    signal: signal,
   });
 
   console.log('📥 ChatGPT API 응답 상태:', response.status, response.statusText);
@@ -1246,13 +1274,13 @@ ${chineseText}
 /**
  * 텍스트만으로 ChatGPT API 호출
  */
-export async function callChatGPTApiWithText(text: string, sourceLang: 'ko' | 'zh' = 'ko', requestId?: number): Promise<SongPayload> {
+export async function callChatGPTApiWithText(text: string, sourceLang: 'ko' | 'zh' = 'ko', requestId?: number, signal?: AbortSignal): Promise<SongPayload> {
   console.log(`🆔 [Text Analysis Request] requestId: ${requestId}`);
   const result = await callChatGPTApi({
     text,
     sourceLang,
     targetLang: 'zh',
-  });
+  }, signal);
   console.log(`🆔 [Text Analysis Response] requestId: ${requestId}`);
   return result;
 }
@@ -1263,7 +1291,8 @@ export async function callChatGPTApiWithText(text: string, sourceLang: 'ko' | 'z
 export async function callChatGPTApiWithAudioAndTranscription(
   audioFile: File,
   languageMode: 'ko' | 'zh',
-  requestId?: number
+  requestId?: number,
+  signal?: AbortSignal
 ): Promise<{ result: SongPayload; transcribedText: string; detectedLang?: string }> {
   console.log(`🆔 [Whisper Request] requestId: ${requestId}`);
   // API 키와 URL을 환경 변수에서 직접 가져오기
@@ -1285,12 +1314,18 @@ export async function callChatGPTApiWithAudioAndTranscription(
   formData.append('timestamp_granularities[]', 'word');
   formData.append('timestamp_granularities[]', 'segment');
 
+  // 检查是否已取消
+  if (signal?.aborted) {
+    throw new Error('AbortError');
+  }
+
   const transcriptionResponse = await fetch(`${apiUrl}/audio/transcriptions`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: formData,
+    signal: signal,
   });
 
   if (!transcriptionResponse.ok) {
@@ -1819,7 +1854,8 @@ export async function callChatGPTApiWithAudioAndTranscription(
     }];
   }
 
-  // ⭐ 二次细分：对所有 finalSegments 进行细分，强制每个输出小段中文长度 ≤ 15 字
+  // ⭐ 二次细分：对所有 finalSegments 进行细分，根据语言模式使用不同的字符限制
+  // 中文：≤ 15 字符，韩文：≤ 40 字符
   const rawWords = transcriptionData.segments?.[0]?.words ?? transcriptionData.words;
   const hasWords = rawWords && Array.isArray(rawWords) && rawWords.length > 0;
   
@@ -1836,7 +1872,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
       }))
       .sort((a: any, b: any) => a.start - b.start);
     
-    // 对每个 finalSegment 进行细分
+    // 对每个 finalSegment 进行细分，传递 languageMode
     for (const seg of finalSegments) {
       const segStart = seg.start || 0;
       const segEnd = seg.end || 0;
@@ -1844,11 +1880,11 @@ export async function callChatGPTApiWithAudioAndTranscription(
       // 获取属于该 seg 时间范围内的 words
       const segWords = words.filter((w: any) => w.start >= segStart && w.end <= segEnd);
       
-      const refined = refineSegment(seg, segWords.length > 0 ? segWords : words, segStart, segEnd);
+      const refined = refineSegment(seg, segWords.length > 0 ? segWords : words, segStart, segEnd, languageMode);
       refinedSegments.push(...refined);
     }
     
-    console.log(`✂️ [二次细分] 原始 ${finalSegments.length} 个 segments，细分后 ${refinedSegments.length} 个 segments`);
+    console.log(`✂️ [二次细分] 语言模式: ${languageMode}, 原始 ${finalSegments.length} 个 segments，细分后 ${refinedSegments.length} 个 segments`);
   } else {
     // 没有 words，不要二次细分，直接用原 finalSegments
     refinedSegments = finalSegments.map((seg: any) => ({
@@ -1885,8 +1921,13 @@ export async function callChatGPTApiWithAudioAndTranscription(
   const displayLinesList = baseLines.map(line => line.displayLine);
   console.log('🎤 [Segments-Driven] 发送给 GPT 的行列表 (前3个):', displayLinesList.slice(0, 3));
 
+  // 检查是否已取消
+  if (signal?.aborted) {
+    throw new Error('AbortError');
+  }
+  
   // 调用新的逐行分析函数
-  const gptResult = await analyzeLinesWithChatGPT(displayLinesList, sourceLang, audioFile.name, requestId);
+  const gptResult = await analyzeLinesWithChatGPT(displayLinesList, sourceLang, audioFile.name, requestId, signal);
   
   // ⭐ C. 合并：只填内容，不改时间戳
   if (gptResult.lines && gptResult.lines.length > 0) {
