@@ -31,7 +31,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "似乎、仿佛",
       meaningKr: "마치 ~인 것 같다",
-      example: "他好像很累。"
+      example: "他好像很累。",
+      exampleKr: "그는 피곤한 것 같다."
     },
     {
       word: "春风",
@@ -39,7 +40,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "春天的风",
       meaningKr: "봄바람",
-      example: "春风吹过田野。"
+      example: "春风吹过田野。",
+      exampleKr: "봄바람이 들판을 지나간다."
     }
   ],
   3: [
@@ -49,7 +51,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "春天的风",
       meaningKr: "봄바람",
-      example: "春风吹过田野。"
+      example: "春风吹过田野。",
+      exampleKr: "봄바람이 들판을 지나간다."
     }
   ],
   4: [
@@ -59,7 +62,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   5: [
@@ -69,7 +73,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "微笑的表情",
       meaningKr: "미소",
-      example: "她的笑容很温暖。"
+      example: "她的笑容很温暖。",
+      exampleKr: "그녀의 미소가 매우 따뜻하다."
     },
     {
       word: "熟悉",
@@ -77,7 +82,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "了解得很清楚",
       meaningKr: "익숙하다",
-      example: "我对这个地方很熟悉。"
+      example: "我对这个地方很熟悉。",
+      exampleKr: "나는 이곳이 매우 익숙하다."
     }
   ],
   6: [
@@ -87,7 +93,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "无法回忆",
       meaningKr: "기억이 나지 않다",
-      example: "我想不起他的名字。"
+      example: "我想不起他的名字。",
+      exampleKr: "나는 그의 이름이 기억나지 않는다."
     }
   ],
   7: [
@@ -97,7 +104,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     }
   ],
   8: [
@@ -107,7 +115,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     },
     {
       word: "见过",
@@ -115,7 +124,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   9: [
@@ -125,7 +135,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "形容幸福愉快",
       meaningKr: "달콤하고 행복한",
-      example: "他们过着甜蜜的生活。"
+      example: "他们过着甜蜜的生活。",
+      exampleKr: "그들은 달콤한 삶을 살고 있다."
     }
   ],
   10: [
@@ -135,7 +146,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "在梦中看到",
       meaningKr: "꿈에서 보다",
-      example: "我昨晚梦见了你。"
+      example: "我昨晚梦见了你。",
+      exampleKr: "나는 어제 밤 너를 꿈꿨다."
     }
   ],
   11: [
@@ -145,7 +157,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   12: [
@@ -155,7 +168,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "微笑的表情",
       meaningKr: "미소",
-      example: "她的笑容很温暖。"
+      example: "她的笑容很温暖。",
+      exampleKr: "그녀의 미소가 매우 따뜻하다."
     },
     {
       word: "熟悉",
@@ -163,7 +177,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "了解得很清楚",
       meaningKr: "익숙하다",
-      example: "我对这个地方很熟悉。"
+      example: "我对这个地方很熟悉。",
+      exampleKr: "나는 이곳이 매우 익숙하다."
     }
   ],
   13: [
@@ -173,7 +188,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "无法回忆",
       meaningKr: "기억이 나지 않다",
-      example: "我想不起他的名字。"
+      example: "我想不起他的名字。",
+      exampleKr: "나는 그의 이름이 기억나지 않는다."
     }
   ],
   14: [
@@ -183,7 +199,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     }
   ],
   15: [
@@ -193,7 +210,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   16: [
@@ -203,7 +221,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "微笑的表情",
       meaningKr: "미소",
-      example: "她的笑容很温暖。"
+      example: "她的笑容很温暖。",
+      exampleKr: "그녀의 미소가 매우 따뜻하다."
     },
     {
       word: "熟悉",
@@ -211,7 +230,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "了解得很清楚",
       meaningKr: "익숙하다",
-      example: "我对这个地方很熟悉。"
+      example: "我对这个地方很熟悉。",
+      exampleKr: "나는 이곳이 매우 익숙하다."
     }
   ],
   17: [
@@ -221,7 +241,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "无法回忆",
       meaningKr: "기억이 나지 않다",
-      example: "我想不起他的名字。"
+      example: "我想不起他的名字。",
+      exampleKr: "나는 그의 이름이 기억나지 않는다."
     }
   ],
   18: [
@@ -231,7 +252,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     }
   ],
   19: [
@@ -241,7 +263,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     },
     {
       word: "见过",
@@ -249,7 +272,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   20: [
@@ -259,7 +283,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "形容幸福愉快",
       meaningKr: "달콤하고 행복한",
-      example: "他们过着甜蜜的生活。"
+      example: "他们过着甜蜜的生活。",
+      exampleKr: "그들은 달콤한 삶을 살고 있다."
     }
   ],
   21: [
@@ -269,7 +294,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "在梦中看到",
       meaningKr: "꿈에서 보다",
-      example: "我昨晚梦见了你。"
+      example: "我昨晚梦见了你。",
+      exampleKr: "나는 어제 밤 너를 꿈꿨다."
     }
   ],
   22: [
@@ -279,7 +305,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "曾经见到过",
       meaningKr: "본 적이 있다",
-      example: "我见过他一次。"
+      example: "我见过他一次。",
+      exampleKr: "나는 그를 한 번 본 적이 있다."
     }
   ],
   23: [
@@ -289,7 +316,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "微笑的表情",
       meaningKr: "미소",
-      example: "她的笑容很温暖。"
+      example: "她的笑容很温暖。",
+      exampleKr: "그녀의 미소가 매우 따뜻하다."
     },
     {
       word: "熟悉",
@@ -297,7 +325,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "了解得很清楚",
       meaningKr: "익숙하다",
-      example: "我对这个地方很熟悉。"
+      example: "我对这个地方很熟悉。",
+      exampleKr: "나는 이곳이 매우 익숙하다."
     }
   ],
   24: [
@@ -307,7 +336,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "intermediate",
       meaning: "无法回忆",
       meaningKr: "기억이 나지 않다",
-      example: "我想不起他的名字。"
+      example: "我想不起他的名字。",
+      exampleKr: "나는 그의 이름이 기억나지 않는다."
     }
   ],
   25: [
@@ -317,7 +347,8 @@ export const tianmimiVocabAnalysis: Record<number, WordAnalysis[]> = {
       level: "basic",
       meaning: "在梦中",
       meaningKr: "꿈속에서",
-      example: "我在梦里见过你。"
+      example: "我在梦里见过你。",
+      exampleKr: "나는 꿈속에서 너를 본 적이 있다."
     }
   ],
 };

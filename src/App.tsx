@@ -4,6 +4,7 @@ import VideoPage from "./pages/VideoPage";
 import WordReviewPage from "./pages/WordReviewPage";
 import YoutubePage from "./pages/YoutubePage";
 import { AnalyzePage } from "./components/AnalyzePage";
+import { TeacherHelper } from "./components/TeacherHelper";
 import { sentenceData } from "./data/mockData";
 
 type View = "song" | "analyze" | "video" | "wordReview" | "youtube";
@@ -67,6 +68,8 @@ export default function App() {
   return (
     <div className="min-h-screen">
       {topBar}
+      {/* 全局女老师助手 - 显示在所有页面 */}
+      <TeacherHelper />
       <div style={{ display: view === "song" ? "block" : "none" }}>
         <SongPage />
       </div>

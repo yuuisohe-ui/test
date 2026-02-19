@@ -1,14 +1,17 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { parseSRT, SubtitleItem } from "../utils/srtParser";
-import { getVocabForSentence, getAllVocab, WordAnalysis } from "../data/tianmimiVocab";
-import { getKoreanTranslation } from "../data/tianmimiKorean";
-import { getPracticeForSentence, PracticeQuestion } from "../data/tianmimiPractice";
-import { getSentenceStructure } from "../data/tianmimiSentenceStructures";
+import { WordAnalysis } from "../data/tianmimiVocab";
+import { getVocabForSentence as getVocabForSentenceUtil, getAllVocab as getAllVocabUtil } from "../utils/vocabLoader";
+import { getKoreanTranslation as getKoreanTranslationUtil } from "../utils/koreanTranslationLoader";
+import { getPracticeForSentence as getPracticeForSentenceUtil, PracticeQuestion } from "../utils/practiceLoader";
+import { getSentenceStructure as getSentenceStructureUtil } from "../utils/sentenceStructureLoader";
 import { evaluateSentence } from "../services/chatgptApi";
 import { pinyin } from "pinyin-pro";
 import { SentenceView } from "./SentenceView";
 import { Token } from "../types";
 import { SpeechRadarChart } from "./RadarChart";
+import { TTSButton } from "./TTSButton";
+import { extractLineNumberAndText as extractLineNumberAndTextUtil } from "../utils/srtProcessor";
 
 // YouTube IFrame Player API 类型声明
 declare global {
@@ -37,7 +40,8 @@ export default function YoutubeVideoDetail({
   const [currentTime, setCurrentTime] = useState(0);
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState<number | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
-  const [vocabMode, setVocabMode] = useState<'current' | 'all'>('current');
+  // vocabMode 已移除，现在只显示所有词汇
+  const [selectedLevel, setSelectedLevel] = useState<'all' | 'basic' | 'intermediate' | 'advanced'>('all'); // 等级筛选
   const [videoSize, setVideoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [globalActiveTokenId, setGlobalActiveTokenId] = useState<string | null>(null);
   const [playingSubtitleIndex, setPlayingSubtitleIndex] = useState<number | null>(null); // 当前正在播放的歌词索引
@@ -120,9 +124,11 @@ export default function YoutubeVideoDetail({
   const pronunciationStreamRef = useRef<Record<number, MediaStream | null>>({}); // 每句的音频流
   const pronunciationDurationIntervalRef = useRef<Record<number, NodeJS.Timeout | null>>({}); // 每句的计时器
   const pronunciationStartTimeRef = useRef<Record<number, number>>({}); // 每句的开始时间
+  const pronunciationRecordingRef = useRef<Record<number, boolean>>({}); // 每句的录音状态（用于视频控制）
   const [isSlowSpeed, setIsSlowSpeed] = useState(true); // 默认慢速
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const [showPractice, setShowPractice] = useState<number | null>(null); // 显示练习的句子索引
+  const [showDownloadDialog, setShowDownloadDialog] = useState(false); // 下载对话框
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0); // 当前题目索引
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({}); // 用户答案：questionIndex -> answer
   const [showResult, setShowResult] = useState<Record<number, boolean>>({}); // 是否显示结果：questionIndex -> boolean
@@ -156,7 +162,7 @@ export default function YoutubeVideoDetail({
       const sentencesWithVocab = new Set<number>();
       parsed.forEach((_, idx) => {
         const sentenceIndex = idx + 1;
-        const vocab = getVocabForSentence(sentenceIndex);
+        const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
         if (vocab.length > 0) {
           sentencesWithVocab.add(sentenceIndex);
         }
@@ -198,7 +204,15 @@ export default function YoutubeVideoDetail({
             startTimeTracking();
           },
           onStateChange: (event: any) => {
+            // 检查是否有任何句子正在录音
+            const isAnyRecording = Object.values(pronunciationRecordingRef.current).some(rec => rec === true);
+            
             if (event.data === window.YT.PlayerState.PLAYING) {
+              // 如果正在录音，暂停视频
+              if (isAnyRecording && playerRef.current) {
+                playerRef.current.pauseVideo();
+                return;
+              }
               startTimeTracking();
               setIsVideoPlaying(true);
             } else {
@@ -245,7 +259,7 @@ export default function YoutubeVideoDetail({
             setCurrentSubtitleIndex(currentIndex);
             scrollToSubtitle(currentIndex);
             // 如果是在"当前句子"模式，滚动解析区
-            if (vocabMode === 'current' && vocabScrollRef.current) {
+            if (vocabScrollRef.current) {
               vocabScrollRef.current.scrollTop = 0;
             }
           } else if (currentIndex === -1) {
@@ -750,75 +764,732 @@ export default function YoutubeVideoDetail({
     }
   };
 
-  // 生成假评价（模拟AI评分）
-  const generateEvaluation = () => {
+  // HTML转义函数
+  const escapeHtml = (text: string) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
+  // 生成TTS脚本
+  const generateTTSScript = () => {
+    return `
+    <script>
+      class TTSManager {
+        constructor() {
+          this.currentUtterance = null;
+          this.voice = null;
+          this.initVoice();
+        }
+
+        initVoice() {
+          const loadVoices = () => {
+            if ('speechSynthesis' in window) {
+              const voices = window.speechSynthesis.getVoices();
+              const preferredVoices = ['Microsoft Xiaoxiao', 'Microsoft Yaoyao', 'Ting-Ting', 'Sin-Ji', 'Google 普通话', 'Microsoft Kangkang'];
+              
+              for (const preferredName of preferredVoices) {
+                const voice = voices.find(v => v.name.includes(preferredName.split(' ')[0]) && v.lang.startsWith('zh'));
+                if (voice) {
+                  this.voice = voice;
+                  return;
+                }
+              }
+              
+              const chineseVoice = voices.find(v => v.lang.startsWith('zh-CN') || v.lang.startsWith('zh'));
+              if (chineseVoice) this.voice = chineseVoice;
+            }
+          };
+          
+          loadVoices();
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+          }
+        }
+
+        speak(text, lang = 'zh-CN') {
+          if (!('speechSynthesis' in window)) {
+            alert('您的浏览器不支持语音合成功能');
+            return;
+          }
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = lang;
+          utterance.rate = 0.7;
+          if (this.voice) utterance.voice = this.voice;
+          this.currentUtterance = utterance;
+          window.speechSynthesis.speak(utterance);
+        }
+      }
+
+      const ttsManager = new TTSManager();
+
+      function handleTTSButtonClick(text, lang = 'zh-CN') {
+        ttsManager.speak(text, lang);
+      }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-tts-text]').forEach(button => {
+          button.addEventListener('click', function() {
+            const text = this.getAttribute('data-tts-text');
+            const lang = this.getAttribute('data-tts-lang') || 'zh-CN';
+            handleTTSButtonClick(text, lang);
+          });
+        });
+      });
+    </script>
+  `;
+  };
+
+  // 生成CSS样式
+  const generateStyles = () => {
+    return `
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        background-color: #f9fafb;
+        color: #1f2937;
+        line-height: 1.6;
+        padding: 20px;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        padding: 24px;
+      }
+      h1 { font-size: 24px; font-weight: 700; margin-bottom: 16px; color: #111827; }
+      h2 { font-size: 20px; font-weight: 600; margin-bottom: 12px; color: #374151; }
+      h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; color: #4b5563; }
+      .tts-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 12px;
+        background-color: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s;
+        margin-left: 8px;
+      }
+      .tts-button:hover { background-color: #2563eb; }
+      .vocab-item, .sentence-item {
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        background: white;
+      }
+      .vocab-item.basic { border-color: #86efac; background-color: #f0fdf4; }
+      .vocab-item.intermediate { border-color: #93c5fd; background-color: #eff6ff; }
+      .vocab-item.advanced { border-color: #c4b5fd; background-color: #faf5ff; }
+      .level-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 500;
+        margin-left: 8px;
+      }
+      .level-basic { color: #16a34a; border: 2px solid #86efac; background-color: #dcfce7; }
+      .level-intermediate { color: #2563eb; border: 2px solid #93c5fd; background-color: #dbeafe; }
+      .level-advanced { color: #9333ea; border: 2px solid #c4b5fd; background-color: #f3e8ff; }
+      .lyric-line {
+        padding: 12px;
+        margin-bottom: 8px;
+        background: #f9fafb;
+        border-radius: 6px;
+      }
+      .pinyin { font-size: 14px; color: #6b7280; margin-top: 4px; }
+      .korean { font-size: 14px; color: #4b5563; margin-top: 4px; }
+      .example {
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid #e5e7eb;
+        font-size: 14px;
+      }
+      .example-text { color: #374151; font-style: italic; }
+      .example-kr { color: #6b7280; margin-top: 4px; }
+    </style>
+  `;
+  };
+
+  // 生成带颜色标记的歌词HTML（用于下载）
+  const generateColoredLyricHTML = (lyricText: string, sentenceIndex: number): string => {
+    const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
+    const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
+    
+    // 如果没有词汇和句式，直接返回原文本
+    if (vocab.length === 0 && (!structureData || !structureData.structure)) {
+      return escapeHtml(lyricText);
+    }
+    
+    // 创建匹配数组
+    interface Match {
+      index: number;
+      length: number;
+      type: 'vocab' | 'structure';
+      colorClass: string;
+    }
+    
+    const matches: Match[] = [];
+    const matchedIndices = new Set<number>();
+    
+    // 先添加句式的匹配
+    if (structureData && structureData.structure) {
+      const structure = structureData.structure;
+      const level = structureData.level;
+      const structureLevelColorClass = level === 'beginner' 
+        ? 'bg-green-100 text-green-800' 
+        : level === 'intermediate' 
+        ? 'bg-blue-100 text-blue-800' 
+        : 'bg-purple-100 text-purple-800';
+      
+      // 提取句式的关键词
+      let keywords: string[] = [];
+      let pattern = structure.replace(/[……]/g, '').trim();
+      pattern = pattern.replace(/동사\+/g, '');
+      if (pattern.includes('+')) {
+        keywords = pattern.split('+').map(k => k.trim()).filter(k => k.length > 0);
+      } else {
+        const chineseChars = pattern.match(/[\u4e00-\u9fff]+/g);
+        if (chineseChars) {
+          keywords = chineseChars;
+        } else {
+          keywords = [pattern];
+        }
+      }
+      keywords = keywords.filter(k => k.length > 0);
+      
+      keywords.forEach((keyword) => {
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(escapedKeyword, 'g');
+        let match;
+        
+        while ((match = regex.exec(lyricText)) !== null) {
+          const startIndex = match.index;
+          const endIndex = startIndex + keyword.length;
+          
+          let hasOverlap = false;
+          for (let i = startIndex; i < endIndex; i++) {
+            if (matchedIndices.has(i)) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          
+          if (!hasOverlap) {
+            matches.push({
+              index: startIndex,
+              length: keyword.length,
+              type: 'structure',
+              colorClass: structureLevelColorClass,
+            });
+            
+            for (let i = startIndex; i < endIndex; i++) {
+              matchedIndices.add(i);
+            }
+          }
+        }
+      });
+    }
+    
+    // 再添加词汇的匹配（词汇优先级更高）
+    const sortedVocab = [...vocab].sort((a, b) => b.word.length - a.word.length);
+    sortedVocab.forEach((wordItem) => {
+      const word = wordItem.word;
+      const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escapedWord, 'g');
+      let match;
+      
+      while ((match = regex.exec(lyricText)) !== null) {
+        const startIndex = match.index;
+        const endIndex = startIndex + word.length;
+        
+        let hasOverlap = false;
+        for (let i = startIndex; i < endIndex; i++) {
+          if (matchedIndices.has(i)) {
+            hasOverlap = true;
+            break;
+          }
+        }
+        
+        if (!hasOverlap) {
+          // 移除可能重叠的句式匹配
+          const overlappingStructureMatches = matches.filter(m => 
+            m.type === 'structure' && 
+            !(m.index + m.length <= startIndex || m.index >= endIndex)
+          );
+          overlappingStructureMatches.forEach(m => {
+            for (let i = m.index; i < m.index + m.length; i++) {
+              matchedIndices.delete(i);
+            }
+          });
+          matches.splice(0, matches.length, ...matches.filter(m => !overlappingStructureMatches.includes(m)));
+          
+          const vocabColorClass = wordItem.level === 'basic' 
+            ? 'bg-green-100 text-green-800' 
+            : wordItem.level === 'intermediate' 
+            ? 'bg-blue-100 text-blue-800' 
+            : 'bg-purple-100 text-purple-800';
+          
+          matches.push({
+            index: startIndex,
+            length: word.length,
+            type: 'vocab',
+            colorClass: vocabColorClass,
+          });
+          
+          for (let i = startIndex; i < endIndex; i++) {
+            matchedIndices.add(i);
+          }
+        }
+      }
+    });
+    
+    // 按索引排序
+    matches.sort((a, b) => a.index - b.index);
+    
+    // 构建HTML
+    let result = '';
+    let lastIndex = 0;
+    
+    matches.forEach((match) => {
+      // 添加匹配前的文本
+      if (match.index > lastIndex) {
+        result += escapeHtml(lyricText.substring(lastIndex, match.index));
+      }
+      
+      // 添加带颜色的词汇或句式
+      result += `<span class="${match.colorClass} px-1 rounded font-semibold">${escapeHtml(lyricText.substring(match.index, match.index + match.length))}</span>`;
+      
+      lastIndex = match.index + match.length;
+    });
+    
+    // 添加剩余文本
+    if (lastIndex < lyricText.length) {
+      result += escapeHtml(lyricText.substring(lastIndex));
+    }
+    
+    return result || escapeHtml(lyricText);
+  };
+
+  // 生成标准模式HTML（带颜色标记）
+  const generateStandardModeHTML = () => {
+    let content = '<div class="container"><h1>' + escapeHtml(title) + ' - 标准模式</h1><div class="lyric-section">';
+    
+    subtitles.forEach((sub, idx) => {
+      const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
+      const pinyin = getPinyinForSentence(lyricText);
+      const korean = getKoreanTranslationUtil(videoId, idx + 1);
+      const coloredLyric = generateColoredLyricHTML(lyricText, idx + 1);
+      
+      content += `
+        <div class="lyric-line">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+              ${lineNumber ? `<span style="color: #6b7280; margin-right: 8px;">${lineNumber}</span>` : ''}
+              <span style="font-size: 18px;">${coloredLyric}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(lyricText)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          <div class="pinyin">${escapeHtml(pinyin)}</div>
+          ${korean ? `<div class="korean">${escapeHtml(korean)}</div>` : ''}
+          <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">
+            ${formatTime(sub.startTime)} - ${formatTime(sub.endTime)}
+          </div>
+        </div>
+      `;
+    });
+    
+    content += '</div></div>';
+    return content;
+  };
+
+  // 生成词汇训练HTML（包含所有歌词）
+  const generateVocabModeHTML = () => {
+    let content = '<div class="container"><h1>' + escapeHtml(title) + ' - 词汇训练</h1>';
+    
+    // 显示所有歌词（带重点词颜色标记），每句下方显示该句的重点词
+    content += '<h2>所有歌词</h2><div class="lyric-section">';
+    subtitles.forEach((sub, idx) => {
+      const sentenceIndex = idx + 1;
+      const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
+      const pinyin = getPinyinForSentence(lyricText);
+      const korean = getKoreanTranslationUtil(videoId, sentenceIndex);
+      const coloredLyric = generateColoredLyricHTML(lyricText, sentenceIndex);
+      
+      // 获取该句的重点词
+      const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
+      
+      content += `
+        <div class="lyric-line" style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e5e7eb;">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+              ${lineNumber ? `<span style="color: #6b7280; margin-right: 8px;">${lineNumber}</span>` : ''}
+              <span style="font-size: 18px;">${coloredLyric}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(lyricText)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          <div class="pinyin">${escapeHtml(pinyin)}</div>
+          ${korean ? `<div class="korean">${escapeHtml(korean)}</div>` : ''}
+          
+          ${vocab.length > 0 ? `
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #e5e7eb;">
+              <div style="font-size: 14px; font-weight: 600; color: #374151; margin-bottom: 8px;">本句重点词：</div>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                ${vocab.map((word) => {
+                  const levelClass = word.level === 'basic' ? 'basic' : word.level === 'intermediate' ? 'intermediate' : 'advanced';
+                  const levelLabel = word.level === 'basic' ? '基础' : word.level === 'intermediate' ? '中级' : '高级';
+                  const levelColor = word.level === 'basic' ? '#10b981' : word.level === 'intermediate' ? '#3b82f6' : '#8b5cf6';
+                  
+                  return `
+                    <div style="padding: 12px; background-color: #f9fafb; border-radius: 8px; border-left: 3px solid ${levelColor};">
+                      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                          <span style="font-size: 16px; font-weight: 600; color: ${levelColor};">${escapeHtml(word.word)}</span>
+                          <span style="padding: 2px 8px; background-color: ${levelColor}20; color: ${levelColor}; border-radius: 4px; font-size: 11px; font-weight: 500;">${levelLabel}</span>
+                          <span style="color: #6b7280; font-size: 14px;">${escapeHtml(word.pinyin)}</span>
+                        </div>
+                        <button class="tts-button" data-tts-text="${escapeHtml(word.word)}" data-tts-lang="zh-CN" style="padding: 4px 8px; font-size: 12px;">🔊</button>
+                      </div>
+                      ${word.meaningKr ? `<div style="color: #374151; margin-bottom: 6px; font-size: 14px;">${escapeHtml(word.meaningKr)}</div>` : ''}
+                      ${word.example ? `
+                        <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
+                          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <span style="color: #6b7280; font-size: 13px;">例句：</span>
+                            <span style="color: #1f2937; font-size: 14px;">${escapeHtml(word.example)}</span>
+                            <button class="tts-button" data-tts-text="${escapeHtml(word.example)}" data-tts-lang="zh-CN" style="padding: 2px 6px; font-size: 11px;">🔊</button>
+                          </div>
+                          ${word.exampleKr ? `<div style="color: #6b7280; font-size: 13px; margin-left: 40px;">${escapeHtml(word.exampleKr)}</div>` : ''}
+                        </div>
+                      ` : ''}
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    content += '</div></div>';
+    return content;
+  };
+
+  // 生成句式训练HTML（包含所有歌词）
+  const generateSentenceModeHTML = () => {
+    let content = '<div class="container"><h1>' + escapeHtml(title) + ' - 句式训练</h1>';
+    
+    // 先显示所有歌词（带重点句式颜色标记）
+    content += '<h2>所有歌词</h2><div class="lyric-section">';
+    subtitles.forEach((sub, idx) => {
+      const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
+      const pinyin = getPinyinForSentence(lyricText);
+      const korean = getKoreanTranslationUtil(videoId, idx + 1);
+      const coloredLyric = generateColoredLyricHTML(lyricText, idx + 1);
+      
+      content += `
+        <div class="lyric-line">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+              ${lineNumber ? `<span style="color: #6b7280; margin-right: 8px;">${lineNumber}</span>` : ''}
+              <span style="font-size: 18px;">${coloredLyric}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(lyricText)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          <div class="pinyin">${escapeHtml(pinyin)}</div>
+          ${korean ? `<div class="korean">${escapeHtml(korean)}</div>` : ''}
+        </div>
+      `;
+    });
+    content += '</div>';
+    
+    // 再显示所有句式
+    content += '<h2 style="margin-top: 32px;">所有句式</h2><div class="sentence-section">';
+    getAllSentenceStructures.forEach(({ structure }) => {
+      const levelClass = structure.level === 'beginner' ? 'basic' : structure.level === 'intermediate' ? 'intermediate' : 'advanced';
+      const levelLabel = structure.level === 'beginner' ? '基础' : structure.level === 'intermediate' ? '中级' : '高级';
+      
+      content += `
+        <div class="sentence-item">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 16px; font-weight: 600;">${escapeHtml(structure.structure)}</span>
+              <span class="level-badge level-${levelClass}">${levelLabel}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(structure.structure)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          ${structure.explanation ? `<div style="color: #6b7280; margin-bottom: 8px;">${escapeHtml(structure.explanation)}</div>` : ''}
+          ${structure.example ? `
+            <div class="example">
+              <div class="example-text">
+                ${escapeHtml(structure.example)}
+                <button class="tts-button" data-tts-text="${escapeHtml(structure.example)}" data-tts-lang="zh-CN" style="margin-left: 8px; padding: 4px 8px; font-size: 12px;">🔊</button>
+              </div>
+              ${structure.exampleKr ? `<div class="example-kr">${escapeHtml(structure.exampleKr)}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    
+    content += '</div></div>';
+    return content;
+  };
+
+  // 生成歌词+句式HTML（本首歌的歌词+句式，包含词汇和句式解析）
+  const generateLyricAndSentenceHTML = () => {
+    let content = '<div class="container"><h1>' + escapeHtml(title) + ' - 本首歌的歌词+句式</h1>';
+    
+    // 先显示所有歌词（带重点词和重点句式颜色标记）
+    content += '<h2>所有歌词</h2><div class="lyric-section">';
+    subtitles.forEach((sub, idx) => {
+      const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
+      const pinyin = getPinyinForSentence(lyricText);
+      const korean = getKoreanTranslationUtil(videoId, idx + 1);
+      const coloredLyric = generateColoredLyricHTML(lyricText, idx + 1);
+      
+      content += `
+        <div class="lyric-line">
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="flex: 1;">
+              ${lineNumber ? `<span style="color: #6b7280; margin-right: 8px;">${lineNumber}</span>` : ''}
+              <span style="font-size: 18px;">${coloredLyric}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(lyricText)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          <div class="pinyin">${escapeHtml(pinyin)}</div>
+          ${korean ? `<div class="korean">${escapeHtml(korean)}</div>` : ''}
+        </div>
+      `;
+    });
+    content += '</div>';
+    
+    // 显示所有词汇解析
+    content += '<h2 style="margin-top: 32px;">所有词汇</h2><div class="vocab-section">';
+    displayedVocab.forEach((word) => {
+      const levelClass = word.level === 'basic' ? 'basic' : word.level === 'intermediate' ? 'intermediate' : 'advanced';
+      const levelLabel = word.level === 'basic' ? '基础' : word.level === 'intermediate' ? '中级' : '高级';
+      
+      content += `
+        <div class="vocab-item ${levelClass}">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 18px; font-weight: 600;">${escapeHtml(word.word)}</span>
+              <span class="level-badge level-${levelClass}">${levelLabel}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(word.word)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          <div style="color: #6b7280; margin-bottom: 8px;">${escapeHtml(word.pinyin)}</div>
+          ${word.meaningKr ? `<div style="color: #374151; margin-bottom: 8px;">${escapeHtml(word.meaningKr)}</div>` : ''}
+          ${word.example ? `
+            <div class="example">
+              <div class="example-text">
+                ${escapeHtml(word.example)}
+                <button class="tts-button" data-tts-text="${escapeHtml(word.example)}" data-tts-lang="zh-CN" style="margin-left: 8px; padding: 4px 8px; font-size: 12px;">🔊</button>
+              </div>
+              ${word.exampleKr ? `<div class="example-kr">${escapeHtml(word.exampleKr)}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    content += '</div>';
+    
+    // 再显示所有句式
+    content += '<h2 style="margin-top: 32px;">所有句式</h2><div class="sentence-section">';
+    getAllSentenceStructures.forEach(({ structure }) => {
+      const levelClass = structure.level === 'beginner' ? 'basic' : structure.level === 'intermediate' ? 'intermediate' : 'advanced';
+      const levelLabel = structure.level === 'beginner' ? '基础' : structure.level === 'intermediate' ? '中级' : '高级';
+      
+      content += `
+        <div class="sentence-item">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+            <div style="display: flex; align-items: center;">
+              <span style="font-size: 16px; font-weight: 600;">${escapeHtml(structure.structure)}</span>
+              <span class="level-badge level-${levelClass}">${levelLabel}</span>
+            </div>
+            <button class="tts-button" data-tts-text="${escapeHtml(structure.structure)}" data-tts-lang="zh-CN">🔊 朗读</button>
+          </div>
+          ${structure.explanation ? `<div style="color: #6b7280; margin-bottom: 8px;">${escapeHtml(structure.explanation)}</div>` : ''}
+          ${structure.example ? `
+            <div class="example">
+              <div class="example-text">
+                ${escapeHtml(structure.example)}
+                <button class="tts-button" data-tts-text="${escapeHtml(structure.example)}" data-tts-lang="zh-CN" style="margin-left: 8px; padding: 4px 8px; font-size: 12px;">🔊</button>
+              </div>
+              ${structure.exampleKr ? `<div class="example-kr">${escapeHtml(structure.exampleKr)}</div>` : ''}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    });
+    content += '</div></div>';
+    
+    return content;
+  };
+
+  // 下载HTML文件
+  const downloadAsHTML = (type: 'standard' | 'vocab' | 'sentence' | 'lyricSentence') => {
+    let htmlContent = '';
+    let filename = '';
+    let pageTitle = '';
+    
+    switch(type) {
+      case 'standard':
+        htmlContent = generateStandardModeHTML();
+        filename = `${title}_标准模式_${new Date().getTime()}.html`;
+        pageTitle = '标准模式';
+        break;
+      case 'vocab':
+        htmlContent = generateVocabModeHTML();
+        filename = `${title}_词汇训练_${new Date().getTime()}.html`;
+        pageTitle = '词汇训练';
+        break;
+      case 'sentence':
+        htmlContent = generateSentenceModeHTML();
+        filename = `${title}_句式训练_${new Date().getTime()}.html`;
+        pageTitle = '句式训练';
+        break;
+      case 'lyricSentence':
+        htmlContent = generateLyricAndSentenceHTML();
+        filename = `${title}_歌词和句式_${new Date().getTime()}.html`;
+        pageTitle = '本首歌的歌词+句式';
+        break;
+    }
+    
+    const fullHTML = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${escapeHtml(title)} - ${pageTitle}</title>
+  ${generateStyles()}
+</head>
+<body>
+  ${htmlContent}
+  ${generateTTSScript()}
+</body>
+</html>`;
+    
+    const blob = new Blob([fullHTML], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    setShowDownloadDialog(false);
+  };
+
+  // 生成评价（使用真实API）
+  const generateEvaluation = async () => {
+    if (!recordedAudioBlob) {
+      alert('没有录音文件');
+      return;
+    }
+
     setIsEvaluating(true);
     setShowEvaluation(false);
     
-    // 模拟评分过程（延迟1.5秒）
-    setTimeout(() => {
-      // 生成随机但合理的评分
-      const pronunciation = Math.floor(Math.random() * 20) + 70; // 70-90分
-      const rhythm = Math.floor(Math.random() * 20) + 70; // 70-90分
-      const totalScore = Math.round((pronunciation * 0.6 + rhythm * 0.4)); // 加权平均
+    try {
+      // 1. 从 subtitles 中提取所有歌词文本作为 targetText
+      const allLyrics = subtitles
+        .map(sub => {
+          // 提取歌词文本（去掉行号，如果有的话）
+          const { lyricText } = extractLineNumberAndText(sub.text);
+          return lyricText;
+        })
+        .filter(text => text.trim()) // 过滤空文本
+        .join(' '); // 用空格连接所有歌词
 
-      let overall = '';
-      let suggestions: string[] = [];
+      if (!allLyrics) {
+        throw new Error('无法获取歌词文本');
+      }
 
-      if (totalScore >= 90) {
-        overall = '优秀！你的发音和节奏感都很棒！';
-        suggestions = [
-          '继续保持这个水平，多练习不同风格的歌曲',
-          '可以尝试挑战更有难度的歌曲',
-          '注意情感表达，让演唱更有感染力'
-        ];
-      } else if (totalScore >= 80) {
-        overall = '很好！整体表现不错，还有提升空间。';
-        suggestions = [
-          '注意某些字的声调，可以更准确一些',
-          '节奏感很好，继续保持',
-          '多听原唱，模仿发音细节'
-        ];
-      } else if (totalScore >= 70) {
-        overall = '不错！基础扎实，需要更多练习。';
-        suggestions = [
-          '加强声调练习，注意四声的区别',
-          '节奏可以更稳定一些',
-          '建议多跟读，提高发音准确度'
-        ];
-      } else {
-        overall = '继续努力！多练习会有明显进步。';
-        suggestions = [
-          '建议先从慢速跟读开始',
-          '注意每个字的发音要清晰',
-          '多听多练，熟能生巧'
-        ];
+      // 2. 转写录音音频
+      const { transcribeAudio } = await import('../services/chatgptApi');
+      const asrText = await transcribeAudio(recordedAudioBlob);
+
+      if (!asrText || asrText.trim() === '') {
+        throw new Error('录音转写失败，请检查录音内容');
+      }
+
+      // 3. 调用跟读反馈API进行评分
+      const { generateReadingFeedback } = await import('../services/chatgptApi');
+      const feedbackData = await generateReadingFeedback(
+        '中级', // 默认中级，可以根据实际情况调整
+        allLyrics, // 完整歌词作为目标文本
+        asrText,   // 录音转写结果
+        recordingDuration // 录音时长
+      );
+
+      // 4. 将反馈数据转换为 evaluationResult 格式
+      const totalScore = Math.round(
+        (feedbackData.scores.contentAccuracy * 0.4 +
+         feedbackData.scores.tonePerformance * 0.3 +
+         feedbackData.scores.speakingFluency * 0.3)
+      );
+
+      // 根据评分生成建议
+      const suggestions: string[] = [];
+      
+      // 添加内容检查相关的建议
+      if (feedbackData.contentCheck.missing.length > 0) {
+        suggestions.push(`漏读的词语：${feedbackData.contentCheck.missing.slice(0, 3).join('、')}`);
+      }
+      if (feedbackData.contentCheck.extra.length > 0) {
+        suggestions.push(`多读的词语：${feedbackData.contentCheck.extra.slice(0, 3).join('、')}`);
+      }
+      if (feedbackData.contentCheck.substitutions.length > 0) {
+        const subs = feedbackData.contentCheck.substitutions.slice(0, 3);
+        suggestions.push(`替换的词语：${subs.map(s => `${s.original}→${s.replaced}`).join('、')}`);
+      }
+
+      // 添加主要问题和下一步行动
+      if (feedbackData.keyIssue) {
+        suggestions.push(feedbackData.keyIssue);
+      }
+      if (feedbackData.oneAction) {
+        suggestions.push(feedbackData.oneAction);
+      }
+
+      // 如果没有建议，添加默认建议
+      if (suggestions.length === 0) {
+        suggestions.push('继续练习，保持这个水平');
       }
 
       setEvaluationResult({
         totalScore,
-        pronunciation,
-        rhythm,
-        overall,
-        suggestions,
+        pronunciation: feedbackData.scores.contentAccuracy,
+        rhythm: feedbackData.scores.tonePerformance,
+        overall: feedbackData.overallComment || '整体表现不错，继续努力！',
+        suggestions: suggestions.slice(0, 5), // 最多显示5条建议
       });
+      
       setIsEvaluating(false);
       setShowEvaluation(true);
-    }, 1500);
+    } catch (error) {
+      console.error('评分失败:', error);
+      alert(`评分失败：${error instanceof Error ? error.message : '未知错误'}`);
+      setIsEvaluating(false);
+    }
   };
 
   // 从文本中提取行号和歌词内容
+  // 使用通用的SRT处理工具（所有视频统一使用，以甜蜜蜜为基础）
   const extractLineNumberAndText = (text: string): { lineNumber: string; lyricText: string } => {
-    // 匹配行号格式：01, 02, 03 等（两位数字，后面跟空格）
-    const match = text.match(/^(\d{2})\s+(.+)$/);
-    if (match) {
-      return {
-        lineNumber: match[1], // 行号（如 "01"）
-        lyricText: match[2],  // 歌词内容（去掉行号后的文本）
-      };
-    }
-    // 如果没有匹配到行号，返回空行号和原文本
-    return { lineNumber: '', lyricText: text };
+    return extractLineNumberAndTextUtil(text);
   };
 
   // 获取句子的拼音（接收的已经是去掉行号的歌词内容）
@@ -849,7 +1520,7 @@ export default function YoutubeVideoDetail({
     setIsAnalyzingSentence(true);
     
     try {
-      const structureData = getSentenceStructure(currentSentenceIndex);
+      const structureData = getSentenceStructureUtil(videoId, currentSentenceIndex);
       const targetSentence = structureData?.sentence || '';
       const feedback = await evaluateSentence(userMessage, '中级', targetSentence);
       
@@ -1075,21 +1746,48 @@ export default function YoutubeVideoDetail({
     }));
   };
 
-  // 获取当前显示的词汇
+  // 获取所有词汇（根据等级筛选）
   const displayedVocab = useMemo(() => {
-    if (vocabMode === 'current' && currentSubtitleIndex !== null) {
-      // 模式1：只显示当前句子的词汇
-      const sentenceIndex = currentSubtitleIndex + 1; // SRT索引从1开始
-      return getVocabForSentence(sentenceIndex);
-    } else {
-      // 模式2：显示所有词汇（去重）
-      return getAllVocab();
+    const allVocab = getAllVocabUtil(videoId);
+    if (selectedLevel === 'all') {
+      return allVocab;
     }
-  }, [vocabMode, currentSubtitleIndex]);
+    // 将 selectedLevel 转换为对应的 level 值
+    const levelMap: Record<string, 'basic' | 'intermediate' | 'advanced'> = {
+      'basic': 'basic',
+      'intermediate': 'intermediate',
+      'advanced': 'advanced'
+    };
+    return allVocab.filter(word => word.level === levelMap[selectedLevel]);
+  }, [videoId, selectedLevel]);
+
+  // 获取所有句式（根据等级筛选）
+  const getAllSentenceStructures = useMemo(() => {
+    const structures: Array<{ sentenceIndex: number; structure: any }> = [];
+    for (let i = 1; i <= subtitles.length; i++) {
+      const structure = getSentenceStructureUtil(videoId, i);
+      // 修正：只显示有structure字段且不为空的句式
+      if (structure && structure.structure && structure.structure.trim()) {
+        // 将 structure.level 转换为对应的筛选值
+        const levelMap: Record<string, string> = {
+          'beginner': 'basic',
+          'intermediate': 'intermediate',
+          'advanced': 'advanced'
+        };
+        const structureLevel = levelMap[structure.level] || 'basic';
+        
+        // 如果选中了特定等级，只显示该等级的句式
+        if (selectedLevel === 'all' || structureLevel === selectedLevel) {
+          structures.push({ sentenceIndex: i, structure });
+        }
+      }
+    }
+    return structures;
+  }, [subtitles.length, selectedLevel]);
 
   // 同时渲染句式和词汇的颜色标记
   const renderLyricWithBoth = (text: string, sentenceIndex: number, structure: string, level: 'beginner' | 'intermediate' | 'advanced') => {
-    const vocab = getVocabForSentence(sentenceIndex);
+    const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
     const structureLevelColorClass = level === 'beginner' 
       ? 'bg-green-100 text-green-800' 
       : level === 'intermediate' 
@@ -1247,7 +1945,7 @@ export default function YoutubeVideoDetail({
 
   // 渲染歌词（带颜色标记）
   const renderLyricWithColors = (text: string, sentenceIndex: number) => {
-    const vocab = getVocabForSentence(sentenceIndex);
+    const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
     if (vocab.length === 0) {
       return <span>{text}</span>;
     }
@@ -1368,11 +2066,23 @@ export default function YoutubeVideoDetail({
   const getLevelLabel = (level: 'basic' | 'intermediate' | 'advanced') => {
     switch (level) {
       case 'basic':
-        return '基础词';
+        return '基础';
       case 'intermediate':
-        return '中级词';
+        return '中级';
       case 'advanced':
-        return '高级词';
+        return '高级';
+    }
+  };
+
+  // 获取等级颜色（用于圈起来）
+  const getLevelColor = (level: 'basic' | 'intermediate' | 'advanced') => {
+    switch (level) {
+      case 'basic':
+        return 'text-green-500 border-green-500';
+      case 'intermediate':
+        return 'text-blue-500 border-blue-500';
+      case 'advanced':
+        return 'text-purple-500 border-purple-500';
     }
   };
 
@@ -1504,30 +2214,6 @@ export default function YoutubeVideoDetail({
                 )}
               </div>
               
-              {/* 声音训练模式：雷达图显示区域（仅在声音训练模式且有评分数据时显示） */}
-              {lyricMode === 'pronunciation' && Object.keys(pronunciationFeedbackData).some(idx => pronunciationFeedbackData[parseInt(idx)] !== null) && (
-                <div className="mt-4 bg-white rounded-lg p-4 border border-gray-200 relative">
-                  <h3 className="text-sm font-semibold text-gray-700 mb-3">发音表现雷达图</h3>
-                  {Object.entries(pronunciationFeedbackData).map(([idx, feedbackData]) => {
-                    if (!feedbackData) return null;
-                    return (
-                      <div key={idx} className="mb-4 last:mb-0 relative">
-                        <div className="text-xs text-gray-500 mb-2">第{parseInt(idx) + 1}句</div>
-                        <SpeechRadarChart
-                          data={[
-                            { subject: '内容准确度', score: Math.max(50, feedbackData.scores.contentAccuracy), fullMark: 100 },
-                            { subject: '声调表现', score: Math.max(50, feedbackData.scores.tonePerformance), fullMark: 100 },
-                            { subject: '说话流畅度', score: Math.max(50, feedbackData.scores.speakingFluency), fullMark: 100 },
-                          ]}
-                          onClose={() => {
-                            setPronunciationFeedbackData(prev => ({ ...prev, [parseInt(idx)]: null }));
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
               
               {/* 整首跟唱功能区域 */}
               <div className="mt-4 space-y-3">
@@ -1915,7 +2601,7 @@ export default function YoutubeVideoDetail({
                 >
                   标准模式
                 </button>
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
                   <button
                     onClick={() => setLyricMode('vocab')}
                     className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -1952,7 +2638,7 @@ export default function YoutubeVideoDetail({
               <div className="h-[400px] overflow-y-auto space-y-2">
                 {subtitles.map((sub, idx) => {
                   const sentenceIndex = idx + 1;
-                  const vocab = getVocabForSentence(sentenceIndex);
+                  const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
                   const tokens: Token[] = convertVocabToTokens(vocab);
                   // 提取行号和歌词内容（只提取一次）
                   const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
@@ -1961,6 +2647,9 @@ export default function YoutubeVideoDetail({
                     <div
                       key={idx}
                       id={`subtitle-${idx}`}
+                      className="relative"
+                    >
+                      <div
                       onClick={(e) => {
                         // 只有点击空白部分（不是词卡）才触发播放
                         const target = e.target as HTMLElement;
@@ -1968,7 +2657,7 @@ export default function YoutubeVideoDetail({
                           handleSubtitleClick(sub);
                         }
                       }}
-                      className={`p-3 rounded-lg cursor-pointer transition-all border-2 relative ${
+                        className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${
                         currentSubtitleIndex === idx
                           ? 'bg-blue-50 border-blue-500 shadow-md'
                           : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
@@ -1976,7 +2665,7 @@ export default function YoutubeVideoDetail({
                     >
                       {/* 练一练气泡 - 只遮挡该句歌词内容，不影响视频 */}
                       {showPractice === sentenceIndex && vocab.length > 0 && (() => {
-                        const questions = getPracticeForSentence(sentenceIndex);
+                        const questions = getPracticeForSentenceUtil(videoId, sentenceIndex);
                         const currentQuestion = questions[currentQuestionIndex];
                         const totalQuestions = questions.length;
                         
@@ -2304,7 +2993,7 @@ export default function YoutubeVideoDetail({
                               `}</style>
                               <div className="sentence-view-wrapper">
                                 {lyricMode === 'sentence' && (() => {
-                                  const structureData = getSentenceStructure(sentenceIndex);
+                                  const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
                                   if (structureData && structureData.structure) {
                                     return (
                                       <div className="text-lg leading-relaxed">
@@ -2323,22 +3012,27 @@ export default function YoutubeVideoDetail({
                                     />
                                   );
                                 })()}
-                                {lyricMode !== 'sentence' && lyricMode !== 'pronunciation' && (
+                                {lyricMode === 'vocab' && (
+                                  <div className="text-lg leading-relaxed">
+                                    {renderLyricWithColors(lyricText, sentenceIndex)}
+                                  </div>
+                                )}
+                                {lyricMode === 'standard' && (
                                   <SentenceView
                                     sentence={lyricText}
                                     tokens={tokens}
-                                    globalActiveTokenId={lyricMode === 'vocab' ? null : globalActiveTokenId}
-                                    onTokenActivate={lyricMode === 'vocab' ? undefined : (tokenId) => setGlobalActiveTokenId(tokenId)}
+                                    globalActiveTokenId={globalActiveTokenId}
+                                    onTokenActivate={(tokenId) => setGlobalActiveTokenId(tokenId)}
                                     tokenIdPrefix={`youtube-subtitle-${idx}`}
-                                    disableWordCards={lyricMode === 'vocab'}
+                                    disableWordCards={false}
                                   />
                                 )}
                                 {lyricMode === 'pronunciation' && (
                                   <div className="text-lg leading-relaxed">
                                     {(() => {
                                       // 同时显示句式和词汇的颜色标记
-                                      const structureData = getSentenceStructure(sentenceIndex);
-                                      const vocab = getVocabForSentence(sentenceIndex);
+                                      const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
+                                      const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
                                       
                                       // 如果既有句式又有词汇，需要合并标记
                                       if (structureData && structureData.structure && vocab.length > 0) {
@@ -2397,7 +3091,7 @@ export default function YoutubeVideoDetail({
                           {lineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
-                          <span className="flex-1">{getKoreanTranslation(sentenceIndex) || ''}</span>
+                          <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
                           {/* 播放/暂停按钮 - 放在韩文翻译右边 */}
                           <button
                             onClick={(e) => {
@@ -2427,7 +3121,7 @@ export default function YoutubeVideoDetail({
                           {lineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
-                          <span className="flex-1">{getKoreanTranslation(sentenceIndex) || ''}</span>
+                          <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
                           {/* 播放/暂停按钮 - 放在韩文翻译右边 */}
                           <button
                             onClick={(e) => {
@@ -2457,7 +3151,7 @@ export default function YoutubeVideoDetail({
                           {lineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
-                          <span className="flex-1">{getKoreanTranslation(sentenceIndex) || ''}</span>
+                          <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
                           {/* 播放/暂停按钮 - 放在韩文翻译右边 */}
                           <button
                             onClick={(e) => {
@@ -2627,7 +3321,7 @@ export default function YoutubeVideoDetail({
                       
                       {/* 句式训练模式：本句结构区域 */}
                       {lyricMode === 'sentence' && (() => {
-                        const structureData = getSentenceStructure(sentenceIndex);
+                        const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
                         if (!structureData) {
                           return null; // 如果没有数据，不显示
                         }
@@ -2789,7 +3483,7 @@ export default function YoutubeVideoDetail({
                           
                           {/* 句型/扩写和韩文翻译 */}
                           {(() => {
-                            const structureData = getSentenceStructure(sentenceIndex);
+                            const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
                             if (!structureData) return null;
                             return (
                               <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -2888,10 +3582,44 @@ export default function YoutubeVideoDetail({
                       {/* 声音训练模式：跟读按钮和评分区域 */}
                       {lyricMode === 'pronunciation' && (
                         <div className="mt-2 border-t border-gray-200 pt-2 space-y-2">
-                          {/* 反馈显示 - 在按钮上方 */}
-                          {pronunciationFeedback[sentenceIndex] && (
-                            <div className="mb-2 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                              <div className="text-sm text-gray-800 whitespace-pre-wrap">{pronunciationFeedback[sentenceIndex]}</div>
+                          {/* 雷达图和反馈内容并排显示 */}
+                          {(pronunciationFeedback[sentenceIndex] || pronunciationFeedbackData[sentenceIndex]) && (
+                            <div className="mb-2 relative bg-gradient-to-br from-purple-50 to-blue-50 rounded-lg p-4 border-2 border-purple-200">
+                              {/* 关闭按钮 - 放在整个评分内容的右上角 */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setPronunciationFeedbackData(prev => ({ ...prev, [sentenceIndex]: null }));
+                                  setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: null }));
+                                }}
+                                className="absolute top-2 right-2 z-10 p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-white rounded-full shadow-sm hover:bg-gray-50"
+                                title="关闭评分内容"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                              
+                              <div className="flex items-start gap-3 pr-6">
+                                {/* 雷达图（左边） */}
+                                {pronunciationFeedbackData[sentenceIndex] && (
+                                  <div className="flex-shrink-0 w-32">
+                                    <SpeechRadarChart
+                                      data={[
+                                        { subject: '内容准确度', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.contentAccuracy), fullMark: 100 },
+                                        { subject: '声调表现', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.tonePerformance), fullMark: 100 },
+                                        { subject: '说话流畅度', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.speakingFluency), fullMark: 100 },
+                                      ]}
+                                    />
+                                  </div>
+                                )}
+                                {/* 反馈内容（右边） */}
+                                {pronunciationFeedback[sentenceIndex] && (
+                                  <div className="flex-1 p-3 bg-white rounded-lg border border-gray-200">
+                                    <div className="text-sm text-gray-800 whitespace-pre-wrap">{pronunciationFeedback[sentenceIndex]}</div>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           )}
                           
@@ -2901,6 +3629,14 @@ export default function YoutubeVideoDetail({
                               onClick={async (e) => {
                                 e.stopPropagation();
                                 try {
+                                  // 录音时暂停视频播放
+                                  if (playerRef.current) {
+                                    const playerState = playerRef.current.getPlayerState();
+                                    if (playerState === 1) { // 1 = playing
+                                      playerRef.current.pauseVideo();
+                                    }
+                                  }
+                                  
                                   const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                                   pronunciationStreamRef.current[sentenceIndex] = stream;
                                   const recorder = new MediaRecorder(stream);
@@ -2916,6 +3652,7 @@ export default function YoutubeVideoDetail({
                                     const blob = new Blob(chunks, { type: 'audio/wav' });
                                     setPronunciationAudioBlob(prev => ({ ...prev, [sentenceIndex]: blob }));
                                     setHasPronunciationRecording(prev => ({ ...prev, [sentenceIndex]: true }));
+                                    pronunciationRecordingRef.current[sentenceIndex] = false; // 更新ref，录音已结束
                                     if (pronunciationStreamRef.current[sentenceIndex]) {
                                       pronunciationStreamRef.current[sentenceIndex]!.getTracks().forEach(track => track.stop());
                                     }
@@ -2928,6 +3665,7 @@ export default function YoutubeVideoDetail({
                                   recorder.start();
                                   setPronunciationMediaRecorder(prev => ({ ...prev, [sentenceIndex]: recorder }));
                                   setPronunciationRecording(prev => ({ ...prev, [sentenceIndex]: true }));
+                                  pronunciationRecordingRef.current[sentenceIndex] = true; // 更新ref
                                   setPronunciationRecordingDuration(prev => ({ ...prev, [sentenceIndex]: 0 }));
                                   pronunciationStartTimeRef.current[sentenceIndex] = Date.now();
                                   
@@ -2966,6 +3704,7 @@ export default function YoutubeVideoDetail({
                                     pronunciationMediaRecorder[sentenceIndex]!.stop();
                                   }
                                   setPronunciationRecording(prev => ({ ...prev, [sentenceIndex]: false }));
+                                  pronunciationRecordingRef.current[sentenceIndex] = false; // 更新ref
                                   if (pronunciationStreamRef.current[sentenceIndex]) {
                                     pronunciationStreamRef.current[sentenceIndex]!.getTracks().forEach(track => track.stop());
                                   }
@@ -2989,6 +3728,7 @@ export default function YoutubeVideoDetail({
                                     pronunciationMediaRecorder[sentenceIndex]!.stop();
                                   }
                                   setPronunciationRecording(prev => ({ ...prev, [sentenceIndex]: false }));
+                                  pronunciationRecordingRef.current[sentenceIndex] = false; // 更新ref
                                   if (pronunciationStreamRef.current[sentenceIndex]) {
                                     pronunciationStreamRef.current[sentenceIndex]!.getTracks().forEach(track => track.stop());
                                   }
@@ -3057,6 +3797,14 @@ export default function YoutubeVideoDetail({
                                     // 格式化反馈为文本
                                     const feedbackText = `${feedbackData.overallComment}\n\n主要问题：${feedbackData.keyIssue}\n\n下一步练习：${feedbackData.oneAction}`;
                                     setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: feedbackText }));
+                                    
+                                    // 评分完成后，滚动到当前句子，使其锁定在中间
+                                    setTimeout(() => {
+                                      const element = document.getElementById(`subtitle-${sentenceIndex}`);
+                                      if (element) {
+                                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                      }
+                                    }, 100);
                                   } catch (error) {
                                     console.error('评价失败:', error);
                                     alert('评价失败，请稍后重试');
@@ -3098,6 +3846,7 @@ export default function YoutubeVideoDetail({
                         </div>
                       )}
                       
+                      </div>
                     </div>
                   );
                 })}
@@ -3105,51 +3854,173 @@ export default function YoutubeVideoDetail({
             </div>
           </div>
 
-
-          {/* 下方：歌词解析区（全宽） */}
+          {/* 下方：歌词解析区（左右各占一半） */}
           <div className="bg-white rounded-xl shadow-sm border p-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-gray-700">歌词解析</h2>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-3">
+                {/* 下载按钮 - 重新设计 */}
                 <button
-                  onClick={() => setVocabMode('current')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    vocabMode === 'current'
+                  onClick={() => setShowDownloadDialog(true)}
+                  className="group relative px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 overflow-hidden"
+                  title="下载学习资料"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <svg className="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span className="relative z-10">下载</span>
+                  <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+                </button>
+                {/* 提示文字 */}
+                <div className="hidden md:flex items-center gap-1 text-xs text-gray-500">
+                  <svg className="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>下载后可离线观看</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* 下载选择对话框 */}
+            {showDownloadDialog && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowDownloadDialog(false)}>
+                <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800">选择下载内容</h3>
+                    <button
+                      onClick={() => setShowDownloadDialog(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="text-sm text-blue-800">
+                        <div className="font-medium mb-1">📥 下载后可离线观看</div>
+                        <div className="text-xs">HTML文件包含完整内容，支持朗读功能，无需网络连接</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => downloadAsHTML('standard')}
+                      className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-800">标准模式</div>
+                        <div className="text-xs text-gray-500 mt-0.5">完整歌词（重点词和句式标记）、拼音、翻译</div>
+                      </div>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    
+                    <button
+                      onClick={() => downloadAsHTML('vocab')}
+                      className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-800">词汇训练</div>
+                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点词标记）+ 所有词汇及例句</div>
+                      </div>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    
+                    <button
+                      onClick={() => downloadAsHTML('sentence')}
+                      className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-800">句式训练</div>
+                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点句式标记）+ 所有句式及例句</div>
+                      </div>
+                      <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                    
+                    <button
+                      onClick={() => downloadAsHTML('lyricSentence')}
+                      className="w-full px-4 py-3 rounded-lg text-left border-2 border-orange-200 bg-orange-50 hover:border-orange-500 hover:bg-orange-100 transition-all flex items-center justify-between group"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-800 flex items-center gap-2">
+                          <span>本首歌的歌词+句式</span>
+                          <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-700 rounded">推荐</span>
+                        </div>
+                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点词和句式标记）+ 所有词汇解析 + 所有句式解析</div>
+                      </div>
+                      <svg className="w-5 h-5 text-orange-600 group-hover:text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="flex items-center justify-between mb-4">
+              {/* 等级筛选按钮 */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedLevel('all')}
+                  className={`px-4 py-1.5 text-sm rounded transition-colors ${
+                    selectedLevel === 'all'
                       ? 'bg-blue-500 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  当前句子
+                  全部
                 </button>
                 <button
-                  onClick={() => setVocabMode('all')}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    vocabMode === 'all'
-                      ? 'bg-blue-500 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  onClick={() => setSelectedLevel('basic')}
+                  className={`px-4 py-1.5 text-sm rounded-full border-2 transition-colors ${
+                    selectedLevel === 'basic'
+                      ? 'text-green-600 border-green-500 bg-green-50'
+                      : 'text-green-600 border-green-300 hover:bg-green-50'
                   }`}
                 >
-                  所有词汇
+                  基础
+                </button>
+                <button
+                  onClick={() => setSelectedLevel('intermediate')}
+                  className={`px-4 py-1.5 text-sm rounded-full border-2 transition-colors ${
+                    selectedLevel === 'intermediate'
+                      ? 'text-blue-600 border-blue-500 bg-blue-50'
+                      : 'text-blue-600 border-blue-300 hover:bg-blue-50'
+                  }`}
+                >
+                  中级
+                </button>
+                <button
+                  onClick={() => setSelectedLevel('advanced')}
+                  className={`px-4 py-1.5 text-sm rounded-full border-2 transition-colors ${
+                    selectedLevel === 'advanced'
+                      ? 'text-purple-600 border-purple-500 bg-purple-50'
+                      : 'text-purple-600 border-purple-300 hover:bg-purple-50'
+                  }`}
+                >
+                  高级
                 </button>
               </div>
             </div>
 
-            {/* 颜色说明 */}
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg text-xs text-gray-600">
-              <div className="flex items-center gap-4 flex-wrap">
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded bg-green-300"></span>
-                  基础词：淡绿色
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded bg-blue-300"></span>
-                  中级词：淡蓝色
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded bg-purple-300"></span>
-                  高级词：淡紫色
-                </span>
-              </div>
+            <div className="grid grid-cols-2 gap-4">
+              {/* 左侧：所有词汇 */}
+              <div className="border-r border-gray-200 pr-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-700">所有词汇</h3>
             </div>
 
             {/* 词汇列表 */}
@@ -3159,35 +4030,197 @@ export default function YoutubeVideoDetail({
             >
               {displayedVocab.length === 0 ? (
                 <div className="text-center text-gray-400 py-8">
-                  {vocabMode === 'current' 
-                    ? '等待播放歌词...' 
-                    : '暂无词汇数据'}
+                      暂无词汇数据
                 </div>
               ) : (
-                displayedVocab.map((word, idx) => (
+                    displayedVocab.map((word, idx) => {
+                      const wordKey = word.word;
+                      const isStarred = starredWords.has(wordKey);
+                      
+                      return (
                   <div
                     key={idx}
-                    className={`p-4 rounded-lg border-2 ${getVocabColorClass(word.level)} transition-all hover:shadow-md`}
+                          className={`p-3 rounded-lg border-2 ${getVocabColorClass(word.level)} transition-all hover:shadow-md`}
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <div className="font-semibold text-lg">{word.word}</div>
-                      <span className="text-xs px-2 py-1 bg-white bg-opacity-50 rounded">
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className="font-semibold text-base">{word.word}</div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full border ${getLevelColor(word.level)}`}>
                         {getLevelLabel(word.level)}
                       </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {/* 朗读按钮 */}
+                              <TTSButton 
+                                text={word.word} 
+                                className="w-6 h-6 p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                              />
+                              {/* 收藏按钮 */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newStarredWords = new Set(starredWords);
+                                  if (isStarred) {
+                                    newStarredWords.delete(wordKey);
+                                  } else {
+                                    newStarredWords.add(wordKey);
+                                  }
+                                  setStarredWords(newStarredWords);
+                                  localStorage.setItem('starredWords', JSON.stringify(Array.from(newStarredWords)));
+                                }}
+                                className="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                                title={isStarred ? "取消收藏" : "收藏词汇"}
+                              >
+                                <svg 
+                                  className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                            </div>
                     </div>
                     <div className="text-sm mb-1 text-gray-700">{word.pinyin}</div>
-                    <div className="text-sm mb-1">{word.meaning}</div>
-                    {word.meaningKr && (
-                      <div className="text-xs text-gray-600 mb-1">{word.meaningKr}</div>
-                    )}
+                          {/* 显示韩语翻译（替代中文解析） */}
+                          {word.meaningKr ? (
+                            <div className="text-sm mb-2 text-gray-800">{word.meaningKr}</div>
+                          ) : (
+                            <div className="text-sm mb-2 text-gray-500">暂无韩语翻译</div>
+                          )}
+                          {/* 例句 */}
                     {word.example && (
-                      <div className="text-xs text-gray-500 mt-2 italic border-l-2 pl-2 border-gray-300">
-                        {word.example}
+                            <div className="mt-2 space-y-1">
+                              <div className="text-xs text-gray-600 italic border-l-2 pl-2 border-gray-300 flex items-center gap-2">
+                                <span className="flex-1">{word.example}</span>
+                                <TTSButton 
+                                  text={word.example} 
+                                  className="w-5 h-5 p-0.5 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                />
+                              </div>
+                              {/* 例句韩语翻译 */}
+                              {word.exampleKr && (
+                                <div className="text-xs text-gray-500 pl-2">
+                                  {word.exampleKr}
                       </div>
                     )}
                   </div>
-                ))
               )}
+            </div>
+                      );
+                    })
+                  )}
+          </div>
+        </div>
+
+              {/* 右侧：所有句式 */}
+              <div className="pl-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold text-gray-700">所有句式</h3>
+                </div>
+
+                {/* 句式列表 */}
+                <div className="h-[400px] overflow-y-auto space-y-3">
+                  {getAllSentenceStructures.length === 0 ? (
+                    <div className="text-center text-gray-400 py-8">
+                      暂无句式数据
+                    </div>
+                  ) : (
+                    getAllSentenceStructures.map((item, idx) => {
+                      const { sentenceIndex, structure } = item;
+                      const structureKey = `${sentenceIndex}-${structure.structure}`;
+                      const isStarred = starredStructures.has(structureKey);
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className={`p-3 rounded-lg border-2 ${
+                            structure.level === 'beginner' 
+                              ? 'bg-green-50 border-green-200 text-green-700'
+                              : structure.level === 'intermediate'
+                              ? 'bg-blue-50 border-blue-200 text-blue-700'
+                              : 'bg-purple-50 border-purple-200 text-purple-700'
+                          } transition-all hover:shadow-md`}
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className="font-semibold text-base">{structure.structure}</div>
+                              <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                                structure.level === 'beginner' 
+                                  ? 'text-green-500 border-green-500'
+                                  : structure.level === 'intermediate'
+                                  ? 'text-blue-500 border-blue-500'
+                                  : 'text-purple-500 border-purple-500'
+                              }`}>
+                                {structure.level === 'beginner' ? '基础' : structure.level === 'intermediate' ? '中级' : '高级'}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {/* 朗读按钮（朗读句式） */}
+                              <TTSButton 
+                                text={structure.structure} 
+                                className="w-6 h-6 p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                              />
+                              {/* 收藏按钮 */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const newStarredStructures = new Set(starredStructures);
+                                  if (isStarred) {
+                                    newStarredStructures.delete(structureKey);
+                                  } else {
+                                    newStarredStructures.add(structureKey);
+                                  }
+                                  setStarredStructures(newStarredStructures);
+                                  localStorage.setItem('starredStructures', JSON.stringify(Array.from(newStarredStructures)));
+                                }}
+                                className="p-1 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                                title={isStarred ? "取消收藏" : "收藏句式"}
+                              >
+                                <svg 
+                                  className={`w-4 h-4 ${isStarred ? 'text-yellow-500 fill-current' : 'text-gray-400'}`} 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {/* 解释 */}
+                          {structure.explanation && (
+                            <div className="text-xs mb-2 text-gray-600">
+                              {structure.explanation}
+                            </div>
+                          )}
+                          
+                          {/* 例句 */}
+                          {structure.example && (
+                            <div className="mt-2 space-y-1">
+                              <div className="text-xs text-gray-600 italic border-l-2 pl-2 border-gray-300 flex items-center gap-2">
+                                <span className="flex-1">{structure.example}</span>
+                                <TTSButton 
+                                  text={structure.example} 
+                                  className="w-5 h-5 p-0.5 hover:bg-gray-100 rounded transition-colors flex-shrink-0"
+                                />
+                              </div>
+                              {/* 例句韩语翻译 */}
+                              {structure.exampleKr && (
+                                <div className="text-xs text-gray-500 pl-2">
+                                  {structure.exampleKr}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
