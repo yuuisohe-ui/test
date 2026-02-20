@@ -16,3 +16,46 @@ code {
     monospace;
 }
 
+/* 隐藏滚动条但保持滚动功能 */
+.recommend-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.recommend-scroll {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* 印章盒子呼吸光晕动画 */
+@keyframes stampGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0.1); }
+  50% { box-shadow: 0 0 28px 8px rgba(201,168,76,0.25); }
+}
+
+.stamp-box {
+  animation: stampGlow 3s ease-in-out infinite;
+}
+
+/* 淡入动画 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.fade-in-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+

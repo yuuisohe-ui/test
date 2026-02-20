@@ -52,3 +52,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return zhivenKoreanTranslations[sentenceIndex] || '';
 }
 
+

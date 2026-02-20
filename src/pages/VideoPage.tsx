@@ -15,20 +15,20 @@ const sampleVideos: VideoData[] = [
   {
     id: "1",
     title: "中文歌曲 1",
-    thumbnail: "https://img.youtube.com/vi/aWXy974QLCk/maxresdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/aWXy974QLCk/hqdefault.jpg",
     videoId: "aWXy974QLCk",
     lyrics: "햇살은 우릴 위해 내리고\n바람도 서롤 감싸게 했죠\n우리 웃음 속에 계절은 오고 또 갔죠\n바람에 흔들리는 머릿결\n내게 불어오는 그대 향기\n예쁜 두 눈도 웃음소리도\n모두 다 내 것이었죠\n이런 사랑 이런 행복 쉽다 했었죠\n이런 웃음 이런 축복 내게 쉽게 올 리 없죠\n눈물조차 울음조차 닦지 못한 나\n정말로 울면 내가 그댈 보내준 것 같아서\n그대 떠나가는 그 순간도\n나를 걱정했었나요\n무엇도 해줄 수 없는 내 맘 앞에서\n그대 나를 떠나간다고 해도\n난 그댈 보낸 적 없죠\n여전히 그댄 나를 살게 하는 이율 테니\n이런 사랑 이런 행복 쉽다 했었죠\n이런 웃음 이런 축복 내게 쉽게 올 리 없죠\n눈물조차 울음조차 닦지 못한 나\n정말로 울면 내가 그댈 보내준 것 같아서\n그대 떠나가는 그 순간도\n나를 걱정했었나요\n무엇도 해줄 수 없는 내 맘 앞에서\n그대 나를 떠나간다고 해도\n난 그댈 보낸 적 없죠\n기다림으로 다시 시작일 테니\n얼마나 사랑했는지 얼마나 또 울었는지\n그대여 한순간조차 잊지 말아요\n거기 떠나간 그곳에서 늘\n기억하며 기다려요\n하루씩 그대에게 다가가는 나일 테니",
   },
   {
     id: "2",
     title: "中文歌曲 2",
-    thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/maxresdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/jNQXAC9IVRw/hqdefault.jpg",
     videoId: "jNQXAC9IVRw",
   },
   {
     id: "3",
     title: "中文歌曲 3",
-    thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/maxresdefault.jpg",
+    thumbnail: "https://img.youtube.com/vi/9bZkp7q19f0/hqdefault.jpg",
     videoId: "9bZkp7q19f0",
   },
 ];

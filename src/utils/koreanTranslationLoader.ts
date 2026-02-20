@@ -20,6 +20,17 @@ import * as qiasiniKorean from '../data/qiasiniKorean';
 import * as xinbuliaoKorean from '../data/xinbuliaoKorean';
 import * as wohuainianKorean from '../data/wohuainianKorean';
 import * as guangnianKorean from '../data/guangnianKorean';
+import * as haishanghuaKorean from '../data/haishanghuaKorean';
+import * as tongzhuodeniKorean from '../data/tongzhuodeniKorean';
+import * as yongqiKorean from '../data/yongqiKorean';
+import * as buweishuierzuodegeKorean from '../data/buweishuierzuodegeKorean';
+import * as yanhuayilengKorean from '../data/yanhuayilengKorean';
+import * as xiangwozheyangderenKorean from '../data/xiangwozheyangderenKorean';
+import * as xiaochouKorean from '../data/xiaochouKorean';
+import * as huidaoguoquKorean from '../data/huidaoguoquKorean';
+import * as geiwoyishougedeshijianKorean from '../data/geiwoyishougedeshijianKorean';
+import * as qimiaonengligesKorean from '../data/qimiaonengligesKorean';
+import * as niyaodequannazousKorean from '../data/niyaodequannazousKorean';
 
 // 视频ID到韩语翻译模块的映射
 const koreanTranslationModules: Record<string, {
@@ -44,6 +55,17 @@ const koreanTranslationModules: Record<string, {
   'w2_FycTdzVI': qiasiniKorean,  // 恰似你的温柔
   '1hVkS2ldRhw': wohuainianKorean, // 我怀念的
   'HjPGELNH-00': guangnianKorean, // 光年之外
+  'dkak-3Ej6iE': haishanghuaKorean, // 海上花
+  'xqYMWyOpSFI': tongzhuodeniKorean, // 同桌的你
+  'EaJM58fOsSQ': yongqiKorean, // 勇气
+  '5V_aWacv6-Q': buweishuierzuodegeKorean, // 不为谁而作的歌
+  'WqN-zGDV2uw': yanhuayilengKorean, // 烟花易冷
+  'dim33vVuBQ0': xiangwozheyangderenKorean, // 像我这样的人
+  'ZHGN3ViWrns': xiaochouKorean, // 消愁
+  'lt7BhxrUGfY': huidaoguoquKorean, // 回到过去
+  'HtB0Ym9uZXE': geiwoyishougedeshijianKorean, // 给我一首歌的时间
+  'me6-2E1BEbA': qimiaonengligesKorean, // 奇妙能力歌
+  '9HDHnU-Vl0g': niyaodequannazousKorean, // 你要的全拿走
 };
 
 /**

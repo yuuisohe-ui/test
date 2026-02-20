@@ -46,3 +46,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return guangnianKoreanTranslations[sentenceIndex] || "";
 }
 
+

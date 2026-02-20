@@ -3,14 +3,19 @@ import SongPage from "./pages/SongPage";
 import VideoPage from "./pages/VideoPage";
 import WordReviewPage from "./pages/WordReviewPage";
 import YoutubePage from "./pages/YoutubePage";
+import TimelinePage from "./pages/TimelinePage";
+import DynastyDetailPage from "./pages/DynastyDetailPage";
 import { AnalyzePage } from "./components/AnalyzePage";
 import { TeacherHelper } from "./components/TeacherHelper";
 import { sentenceData } from "./data/mockData";
+import { dynastyDetails } from "./data/dynastyDetails";
 
-type View = "song" | "analyze" | "video" | "wordReview" | "youtube";
+type View = "song" | "analyze" | "video" | "wordReview" | "youtube" | "timeline" | "dynastyDetail";
 
 export default function App() {
   const [view, setView] = useState<View>("song");
+  const [selectedDynastyId, setSelectedDynastyId] = useState<string | null>(null);
+  const [expandedDynastyId, setExpandedDynastyId] = useState<string | null>(null);
 
   const topBar = useMemo(
     () => (
@@ -56,6 +61,14 @@ export default function App() {
           >
             Youtube Page
           </button>
+          <button
+            className={`px-3 py-1 rounded-lg border text-sm ${
+              view === "timeline" ? "bg-black text-white" : "bg-white"
+            }`}
+            onClick={() => setView("timeline")}
+          >
+            词韵时间线
+          </button>
           <div className="ml-auto text-xs text-gray-500">
             本地地址以终端 Local 为准
           </div>
@@ -69,7 +82,11 @@ export default function App() {
     <div className="min-h-screen">
       {topBar}
       {/* 全局女老师助手 - 显示在所有页面 */}
-      <TeacherHelper />
+      <TeacherHelper 
+        currentView={view} 
+        expandedDynastyId={expandedDynastyId}
+        selectedDynastyId={selectedDynastyId}
+      />
       <div style={{ display: view === "song" ? "block" : "none" }}>
         <SongPage />
       </div>
@@ -84,6 +101,28 @@ export default function App() {
       </div>
       <div style={{ display: view === "youtube" ? "block" : "none" }}>
         <YoutubePage />
+      </div>
+      <div style={{ display: view === "timeline" ? "block" : "none" }}>
+        <TimelinePage 
+          onNavigateToDetail={(dynastyId: string) => {
+            setSelectedDynastyId(dynastyId);
+            setView("dynastyDetail");
+            setTimeout(() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }, 100);
+          }}
+          onExpandedChange={(dynastyId: string | null) => {
+            setExpandedDynastyId(dynastyId);
+          }}
+        />
+      </div>
+      <div style={{ display: view === "dynastyDetail" ? "block" : "none" }}>
+        {selectedDynastyId && dynastyDetails[selectedDynastyId] && (
+          <DynastyDetailPage 
+            dynasty={dynastyDetails[selectedDynastyId]} 
+            onBack={() => setView("timeline")} 
+          />
+        )}
       </div>
     </div>
   );

@@ -71,3 +71,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return houlaiKoreanTranslations[sentenceIndex] || '';
 }
 
+

@@ -21,6 +21,17 @@ import * as qiasiniPractice from '../data/qiasiniPractice';
 import * as xinbuliaoPractice from '../data/xinbuliaoPractice';
 import * as wohuainianPractice from '../data/wohuainianPractice';
 import * as guangnianPractice from '../data/guangnianPractice';
+import * as haishanghuaPractice from '../data/haishanghuaPractice';
+import * as tongzhuodeniPractice from '../data/tongzhuodeniPractice';
+import * as yongqiPractice from '../data/yongqiPractice';
+import * as buweishuierzuodegePractice from '../data/buweishuierzuodegePractice';
+import * as yanhuayilengPractice from '../data/yanhuayilengPractice';
+import * as xiangwozheyangderenPractice from '../data/xiangwozheyangderenPractice';
+import * as xiaochouPractice from '../data/xiaochouPractice';
+import * as huidaoguoquPractice from '../data/huidaoguoquPractice';
+import * as geiwoyishougedeshijianPractice from '../data/geiwoyishougedeshijianPractice';
+import * as qimiaonengligesPractice from '../data/qimiaonengligesPractice';
+import * as niyaodequannazousPractice from '../data/niyaodequannazousPractice';
 
 // 视频ID到练习题模块的映射
 const practiceModules: Record<string, {
@@ -45,6 +56,17 @@ const practiceModules: Record<string, {
   'w2_FycTdzVI': qiasiniPractice,  // 恰似你的温柔
   '1hVkS2ldRhw': wohuainianPractice, // 我怀念的
   'HjPGELNH-00': guangnianPractice, // 光年之外
+  'dkak-3Ej6iE': haishanghuaPractice, // 海上花
+  'xqYMWyOpSFI': tongzhuodeniPractice, // 同桌的你
+  'EaJM58fOsSQ': yongqiPractice, // 勇气
+  '5V_aWacv6-Q': buweishuierzuodegePractice, // 不为谁而作的歌
+  'WqN-zGDV2uw': yanhuayilengPractice, // 烟花易冷
+  'dim33vVuBQ0': xiangwozheyangderenPractice, // 像我这样的人
+  'ZHGN3ViWrns': xiaochouPractice, // 消愁
+  'lt7BhxrUGfY': huidaoguoquPractice, // 回到过去
+  'HtB0Ym9uZXE': geiwoyishougedeshijianPractice, // 给我一首歌的时间
+  'me6-2E1BEbA': qimiaonengligesPractice, // 奇妙能力歌
+  '9HDHnU-Vl0g': niyaodequannazousPractice, // 你要的全拿走
 };
 
 /**

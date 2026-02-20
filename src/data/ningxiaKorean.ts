@@ -41,3 +41,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return ningxiaKoreanTranslations[sentenceIndex] || '';
 }
 
+

@@ -38,3 +38,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return yueliangKoreanTranslations[sentenceIndex] || '';
 }
 
+

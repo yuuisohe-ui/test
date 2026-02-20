@@ -49,3 +49,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return haizailiulangKoreanTranslations[sentenceIndex] || '';
 }
 
+

@@ -50,3 +50,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return yanhuayilengKoreanTranslations[sentenceIndex] || "";
 }
 
+

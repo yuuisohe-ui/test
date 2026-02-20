@@ -37,3 +37,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
 
 
 
+

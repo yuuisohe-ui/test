@@ -75,3 +75,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return xinbuliaoKoreanTranslations[sentenceIndex] || "";
 }
 
+

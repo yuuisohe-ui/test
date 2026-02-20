@@ -65,3 +65,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return pingfanKoreanTranslations[sentenceIndex] || '';
 }
 
+

@@ -23,3 +23,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return qiasiniKoreanTranslations[sentenceIndex] || "";
 }
 
+

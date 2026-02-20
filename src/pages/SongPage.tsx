@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from "react";
 import { songPageTranslations, translate } from "../i18n/songPageTranslations";
+import SongExample from "../components/SongExample";
 
 /**
  * 将语言代码统一映射为内部格式（与 chatgptApi.ts 中的 normalizeWhisperLanguage 保持一致）
@@ -3693,6 +3694,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   };
 
   const showEmpty = linesAll.length === 0;
+  const [showExample, setShowExample] = useState(true); // 默认显示示例
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -4111,7 +4113,21 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
       {/* 内容区：根据学习模式显示 */}
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        {studyMode === "整段学习" ? (
+        {showEmpty && showExample ? (
+          // 显示示例
+          <SongExample onClose={() => setShowExample(false)} />
+        ) : showEmpty ? (
+          // 空状态提示
+          <div className="bg-white border rounded-2xl p-6 text-center">
+            <p className="text-gray-600 mb-4">请粘贴歌词或拖拽音频文件，然后点击 "开始转写 / 分析" 按钮。</p>
+            <button
+              onClick={() => setShowExample(true)}
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              查看示例
+            </button>
+          </div>
+        ) : studyMode === "整段学习" ? (
           <WholeParagraphView
             linesAll={linesAll}
             audioFile={audioFile}

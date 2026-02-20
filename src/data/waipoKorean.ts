@@ -35,3 +35,4 @@ export function getKoreanTranslation(sentenceIndex: number): string {
   return waipoKoreanTranslations[sentenceIndex] || '';
 }
 
+

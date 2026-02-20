@@ -21,6 +21,17 @@ import * as qiasiniSentenceStructures from '../data/qiasiniSentenceStructures';
 import * as xinbuliaoSentenceStructures from '../data/xinbuliaoSentenceStructures';
 import * as wohuainianSentenceStructures from '../data/wohuainianSentenceStructures';
 import * as guangnianSentenceStructures from '../data/guangnianSentenceStructures';
+import * as haishanghuaSentenceStructures from '../data/haishanghuaSentenceStructures';
+import * as tongzhuodeniSentenceStructures from '../data/tongzhuodeniSentenceStructures';
+import * as yongqiSentenceStructures from '../data/yongqiSentenceStructures';
+import * as buweishuierzuodegeSentenceStructures from '../data/buweishuierzuodegeSentenceStructures';
+import * as yanhuayilengSentenceStructures from '../data/yanhuayilengSentenceStructures';
+import * as xiangwozheyangderenSentenceStructures from '../data/xiangwozheyangderenSentenceStructures';
+import * as xiaochouSentenceStructures from '../data/xiaochouSentenceStructures';
+import * as huidaoguoquSentenceStructures from '../data/huidaoguoquSentenceStructures';
+import * as geiwoyishougedeshijianSentenceStructures from '../data/geiwoyishougedeshijianSentenceStructures';
+import * as qimiaonengligesSentenceStructures from '../data/qimiaonengligesSentenceStructures';
+import * as niyaodequannazousSentenceStructures from '../data/niyaodequannazousSentenceStructures';
 
 // 视频ID到句式结构模块的映射
 const sentenceStructureModules: Record<string, {
@@ -45,6 +56,17 @@ const sentenceStructureModules: Record<string, {
   'w2_FycTdzVI': qiasiniSentenceStructures, // 恰似你的温柔
   '1hVkS2ldRhw': wohuainianSentenceStructures, // 我怀念的
   'HjPGELNH-00': guangnianSentenceStructures, // 光年之外
+  'dkak-3Ej6iE': haishanghuaSentenceStructures, // 海上花
+  'xqYMWyOpSFI': tongzhuodeniSentenceStructures, // 同桌的你
+  'EaJM58fOsSQ': yongqiSentenceStructures, // 勇气
+  '5V_aWacv6-Q': buweishuierzuodegeSentenceStructures, // 不为谁而作的歌
+  'WqN-zGDV2uw': yanhuayilengSentenceStructures, // 烟花易冷
+  'dim33vVuBQ0': xiangwozheyangderenSentenceStructures, // 像我这样的人
+  'ZHGN3ViWrns': xiaochouSentenceStructures, // 消愁
+  'lt7BhxrUGfY': huidaoguoquSentenceStructures, // 回到过去
+  'HtB0Ym9uZXE': geiwoyishougedeshijianSentenceStructures, // 给我一首歌的时间
+  'me6-2E1BEbA': qimiaonengligesSentenceStructures, // 奇妙能力歌
+  '9HDHnU-Vl0g': niyaodequannazousSentenceStructures, // 你要的全拿走
 };
 
 /**

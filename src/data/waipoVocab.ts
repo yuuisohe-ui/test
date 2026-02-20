@@ -486,3 +486,4 @@ export function getAllVocab(): WordAnalysis[] {
   return allVocab;
 }
 
+
