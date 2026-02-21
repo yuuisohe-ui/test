@@ -8,6 +8,18 @@ export interface DynastyDetail {
   // 视频
   videoId: string
 
+  // 视频提示文字
+  videoInstruction?: string
+
+  // 计数器模块
+  counterModule?: {
+    targetWord: string
+    question: string
+    options: number[]
+    correctAnswer: number
+    answerText: string
+  }
+
   // 歌词翻牌卡片
   lyrics: {
     chinese: string

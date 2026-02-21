@@ -19,7 +19,10 @@ export default function App() {
 
   const topBar = useMemo(
     () => (
-      <div className="w-full border-b bg-white/80 backdrop-blur sticky top-0 z-50">
+      <div 
+        className={`w-full ${view === "dynastyDetail" ? "" : "border-b"} bg-white/80 backdrop-blur sticky top-0 z-50`}
+        style={view === "dynastyDetail" ? { borderBottom: 'none' } : {}}
+      >
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2">
           <button
             className={`px-3 py-1 rounded-lg border text-sm ${
@@ -80,7 +83,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      {topBar}
+      {view !== "dynastyDetail" && topBar}
       {/* 全局女老师助手 - 显示在所有页面 */}
       <TeacherHelper 
         currentView={view} 
@@ -120,7 +123,14 @@ export default function App() {
         {selectedDynastyId && dynastyDetails[selectedDynastyId] && (
           <DynastyDetailPage 
             dynasty={dynastyDetails[selectedDynastyId]} 
-            onBack={() => setView("timeline")} 
+            onBack={() => setView("timeline")}
+            onNavigateToDynasty={(dynastyId: string) => {
+              setSelectedDynastyId(dynastyId)
+              setView("dynastyDetail")
+              setTimeout(() => {
+                window.scrollTo({ top: 0, behavior: "smooth" })
+              }, 100)
+            }}
           />
         )}
       </div>

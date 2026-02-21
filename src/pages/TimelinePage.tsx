@@ -30,6 +30,12 @@ const dynasties: Dynasty[] = [
     badge: "甲骨文 · 최초의 문자",
     hook: '"3000년 전 거북이 등껍질에 새긴 글자가 오늘날 한자의 뿌리입니다"',
     backgroundImage: "/images/夏商周甲骨文.jpg",
+    videoId: "bdJLK9TwyZM",
+    lyrics: {
+      chinese: ["执刀为笔，书洪荒宇宙", "以形表意，绘山川河流"],
+      korean: ["칼을 붓 삼아, 태초의 우주를 기록하다", "형태로 뜻을 나타내고, 산과 강을 그리다"],
+    },
+    idioms: ["以形表意"],
     greeting: "夏商周时期，甲骨文的出现标志着中华文明的文字起源。让我们一起探索这个时代的文化瑰宝吧！",
   },
   {
@@ -37,88 +43,118 @@ const dynasties: Dynasty[] = [
     name: "先秦",
     period: "BC 770 – BC 221",
     korName: "선진",
-    badge: "百家爭鳴 · 공자 · 노자",
+    badge: "百家爭鳴 · 荆轲 · 壮士吟",
     hook: '"공자, 노자, 손자 — 2500년 전 이 시대의 사상이 지금도 살아있습니다"',
     backgroundImage: "/images/先秦孔子.jpeg",
-    greeting: "先秦时期，百家争鸣的思想碰撞为中华文明奠定了深厚基础。让我们一起探索这个时代的文化瑰宝吧！",
-  },
-  {
-    id: "3",
-    name: "秦朝",
-    period: "BC 221 – BC 206",
-    korName: "진나라",
-    badge: "만리장성 · 최초 통일 황제",
-    hook: '"진시황이 최초로 중국을 통일했어. 만리장성, 병마용 — 단 15년의 제국이 남긴 것들"',
-    backgroundImage: "https://images.unsplash.com/photo-1508804052814-cd3ba865a116?w=800&h=600&fit=crop&q=80",
     videoId: "nMiZudnF3Os",
     lyrics: {
       chinese: ["风萧萧兮易水寒", "壮士一去啊不归还"],
       korean: ["바람은 쓸쓸하고 역수는 차갑구나", "장사는 한 번 가면 돌아오지 않으리"],
     },
     idioms: ["一去不复返"],
-    greeting: "秦朝虽然短暂，但统一了文字、货币和度量衡，为中华文明奠定了统一的基础。让我们一起探索《壮士吟》这首歌曲吧！",
+    greeting: "先秦时期，荆轲的故事与《壮士吟》让我们看见了那个时代的侠义精神。让我们一起探索吧！",
+  },
+  {
+    id: "3",
+    name: "秦朝",
+    period: "BC 221 – BC 206",
+    korName: "진나라",
+    badge: "🎵 长城谣 · 鄧麗君",
+    hook: '"진시황이 최초로 중국을 통일했어. 만리장성, 병마용 — 단 15년의 제국이 남긴 것들"',
+    backgroundImage: "https://images.unsplash.com/photo-1508804052814-cd3ba865a116?w=800&h=600&fit=crop&q=80",
+    videoId: "e8TMLAZrbCc",
+    lyrics: {
+      chinese: ["长城外面是故乡", "没齿难忘仇和恨，日夜只想回故乡"],
+      korean: ["장성 바깥이 바로 고향이다", "죽을 때까지 잊을 수 없는 원한, 밤낮으로 고향에 돌아가고 싶다"]
+    },
+    idioms: ["没齿难忘"],
+    greeting: "진시황이 세운 최초의 통일 제국, 진나라. 만리장성과 분서갱유의 시대를 《장성요》와 함께 느껴봐.",
   },
   {
     id: "4",
     name: "汉朝",
     period: "BC 206 – AD 220",
     korName: "한나라",
-    badge: "실크로드 · 종이 발명",
+    badge: "🎵 纸上花 · 斯兰",
     hook: '"종이를 발명하고 실크로드를 열었던 시대 — 동서양이 처음 만난 순간"',
     backgroundImage: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?w=800&h=600&fit=crop&q=80",
-    videoId: "mesKsB2VmHE",
+    videoId: "ULU3eyRK-5I",
     lyrics: {
-      chinese: ["天青色等烟雨 而我在等你", "在瓶底书汉隶 仿前朝的飘逸"],
-      korean: ["하늘빛은 안개비를 기다리고, 나는 너를 기다리네", "병 바닥에 한나라 예서를 쓰니, 전조의 표일체를 모방하네"],
+      chinese: ["丹青一卷传天下", "纸寿千年醉美中华"],
+      korean: ["붉고 푸른 그림 한 두루마리가 천하에 전해진다", "종이의 수명은 천 년, 중화의 아름다움에 취한다"],
     },
-    idioms: ["天青色", "在瓶底书汉隶"],
-    greeting: "汉朝是中华文明的重要时期，青花瓷的美丽至今仍让人赞叹。",
+    idioms: ["匠心独运"],
+    greeting: "종이와 실크로드의 시대, 한나라. 채륜의 종이가 세계를 바꾼 이야기를 《纸上花》와 함께 느껴봐.",
   },
   {
     id: "5",
     name: "三国",
     period: "AD 220 – 280",
     korName: "삼국시대",
-    badge: "曹操 · 諸葛亮 · 적벽대전",
+    badge: "🎵 林俊杰 〈曹操〉 · 삼국 핵심",
     hook: '"조조, 유비, 손권 — 한국인이 가장 잘 아는 중국 역사. 삼국지의 그 시대"',
     backgroundImage: "/images/三国诸葛亮.jpg",
-    greeting: "三国时期，英雄辈出，智谋与勇武并存，为后世留下了无数传奇故事。",
+    greeting: "삼국은 '정답'을 외우는 시대가 아니야.\n노래 한 곡으로 권력, 명분, 외로움까지 같이 읽어보자.",
+    videoId: "7uAZXBglaK4",
+    lyrics: {
+      chinese: [
+        "不是英雄 不读三国",
+        "尔虞我诈是三国 说不清对与错",
+      ],
+      korean: [
+        "영웅이 아니라면 삼국을 읽지 않지",
+        "서로 속고 속이는 게 삼국이고 옳고 그름을 말로 다 못 해",
+      ],
+    },
+    idioms: ["尔虞我诈","烽火连天","儿女情长"],
   },
   {
     id: "6",
     name: "魏晋南北朝",
     period: "AD 220 – 589",
     korName: "위진남북조",
-    badge: "서예 · 왕희지 · 竹林七賢",
+    badge: "🎋 죽림칠현의 노래 · 琢光曲",
     hook: '"왕희지의 붓글씨가 완성된 시대. 난정서 한 장이 천 년을 내려왔습니다"',
     backgroundImage: "/images/魏晋南北朝竹林七贤.jpg",
-    greeting: "魏晋南北朝时期，书法艺术达到高峰，王羲之的《兰亭序》成为千古名作。",
+    greeting: "혼란 속에서 피어난 자유의 시대예요. 대나무 숲의 현인들과 함께 위진남북조를 여행해봐요.",
+    videoId: "AV8vn5bb-k4",
+    lyrics: {
+      chinese: ["竹林七贤与荣启期昂轩", "愿归来仍是少年"],
+      korean: ["죽림칠현과 영계기가 당당하게", "돌아올 때도 여전히 소년이기를"]
+    },
+    idioms: ["竹林七贤"],
   },
   {
     id: "7",
     name: "隋朝",
     period: "AD 581 – 618",
     korName: "수나라",
-    badge: "대운하 · 과거제도 시작",
+    badge: "🚤 대운하의 노래 · 大运河",
     hook: '"대운하로 중국을 하나로 연결했어. 단 37년, 하지만 당나라의 토대를 만들었어"',
     backgroundImage: "/images/隋朝大运河.jpeg",
-    greeting: "隋朝虽然短暂，但开凿了大运河，建立了科举制度，为唐朝的繁荣奠定了基础。",
+    videoId: "XmCvT8aGybY",
+    lyrics: {
+      chinese: ["天下粮仓，恩泽神州", "承载着美丽梦想，美丽梦想之舟"],
+      korean: ["천하의 곡식 창고, 온 나라에 은혜를 베풀다", "아름다운 꿈을 싣고 달리는, 아름다운 꿈의 배"]
+    },
+    idioms: ["生生不息"],
+    greeting: "37년의 짧은 왕조, 천 년의 유산을 남긴 시대예요. 대운하의 물결을 따라 수나라를 여행해봐요.",
   },
   {
     id: "8",
     name: "唐朝",
     period: "AD 618 – 907",
     korName: "당나라",
-    badge: "詩의 황금기 · 이백 · 두보",
+    badge: "🍶 음중팔선의 노래 · 饮中八仙歌",
     hook: '"이백과 두보가 살았던 시대. 그들의 시가 지금도 노래가 됩니다"',
     backgroundImage: "/images/唐朝李白.jpg",
-    videoId: "SiMMmjdKbHQ",
+    videoId: "jZBMqeIpLYE",
     lyrics: {
-      chinese: ["人有悲欢离合 月有阴晴圆缺", "此事古难全"],
-      korean: ["사람에게는 슬픔과 기쁨, 이별과 만남이 있고, 달에는 흐리고 맑음, 둥글고 이지러짐이 있네", "이런 일은 예로부터 완벽하기 어렵네"],
+      chinese: ["李白一斗诗百篇，长安市上酒家眠", "天子呼来不上船，自称臣是酒中仙"],
+      korean: ["이백은 한 말 술에 시 백 편을 짓고, 장안 저잣거리 술집에서 잠든다", "천자가 불러도 배에 오르지 않고, 스스로 신은 술 속의 신선이라 칭한다"],
     },
-    idioms: ["人有悲欢离合"],
-    greeting: "唐朝是诗歌的黄金时代，让我们一起感受那个时代的诗意吧！",
+    idioms: ["酒中仙"],
+    greeting: "시와 술과 자유가 넘쳤던 당나라 장안으로 떠나봐요. 이백과 함께 술 속의 신선이 되어볼 시간이에요.",
   },
   {
     id: "9",
@@ -368,6 +404,129 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
       return;
     }
 
+    // 如果是"以形表意"，显示固定消息并朗读
+    if (idiom === "以形表意") {
+      // 朗读"以形表意，绘山川河流"，0.7倍速
+      speakText("以形表意，绘山川河流");
+      
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `以形表意 (yǐ xíng biǎo yì)
+
+한자의 핵심 조자 원리야.
+「山」은 산 모양, 「日」은 태양 모양,
+「木」은 나무 모양에서 시작했어.
+
+'이 원리를 알면 처음 보는 한자도 뜻을 추측할 수 있어' —
+「明」= 日(태양)+月(달) = 밝다. 이렇게 조합으로 이해하는 거야.
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      // 清空之前的消息，只显示固定消息
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "没齿难忘") {
+      speakText("没齿难忘仇和恨，日夜只想回故乡", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `没齿难忘 (mò chǐ nán wàng)
+
+진나라 멸망 후 유랑하는 백성들의 한(恨)에서 비롯된 표현이야. '이가 다 빠질 때까지', 즉 죽을 때까지 잊지 못한다는 뜻이야.
+
+「죽을 때까지 잊을 수 없는 원한」— 은혜에도, 원한에도 모두 쓸 수 있어
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "匠心独运") {
+      speakText("丹青一卷传天下，纸寿千年醉美中华", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `匠心独运 (jiàng xīn dú yùn)
+
+한나라 장인들이 종이·비단·칠기를 만들며 실크로드로 세계에 퍼뜨린 정신에서 비롯된 표현이야. '장인의 마음으로 누구도 생각 못 한 방식을 홀로 펼친다'는 뜻이야.
+
+「장인의 마음으로 독창적으로 만들다」— 기술과 창의성을 동시에 칭찬할 때 써
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "尔虞我诈") {
+      speakText("尔虞我诈是三国 说不清对与错");
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `尔虞我诈 (ěr yú wǒ zhà)
+
+삼국의 권력 싸움은 전투만이 아니라 동맹, 배신, 정보전이 반복되는 '게임'이었어.
+상대가 속일 걸 알면서도, 나도 속일 수밖에 없는 구조가 만들어졌지.
+그래서 이 성어는 '한쪽만 나쁘다'가 아니라 '서로가 서로를 겨냥한다'는 긴장을 담고 있어.
+
+「서로 속고 속이는 권모술수」— 지금도 정치·협상·조직 이야기에서 자주 써.
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "竹林七贤") {
+      speakText("竹林七贤与荣启期昂轩");
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `竹林七贤 (zhú lín qī xián)
+
+위진 시대(3세기), 혼란한 정치를 피해 대나무 숲에 모인 일곱 현인을 가리켜요. 완적·혜강 등이 음악·철학·술로 자신들만의 세계를 만들었어요.
+
+「세속을 거부한 지식인들의 자유로운 공동체」— 동아시아 은일 문화의 원형
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "生生不息") {
+      speak("生生不息地流淌了千年", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `生生不息 (shēng shēng bù xī)
+
+수나라 대운하처럼 끊임없이 흐르며 생명을 이어가는 것을 표현해요. '生生(shēng shēng)'은 계속해서 생겨남, '不息(bù xī)'은 멈추지 않음을 뜻해요.
+
+「영원히 이어지는 생명력」— 역사·자연·문화 모두에 쓰이는 표현
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "酒中仙") {
+      speak("天子呼来不上船，自称臣是酒中仙", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `酒中仙 (jiǔ zhōng xiān)
+
+당나라 시인 이백(李白)에게 붙여진 별호예요. 두보의 《음중팔선가》에서 '천자가 불러도 배에 오르지 않고, 스스로 술 속의 신선이라 칭한다'고 묘사했어요.
+
+「술 속의 신선」— 세속의 규칙을 초월한 자유로운 예술가의 상징
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    }
+
     // 其他成语的原有逻辑
     const newMessage: Message = {
       id: Date.now().toString(),
@@ -453,6 +612,20 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN';
       utterance.rate = 0.7;
+      utterance.pitch = 1.0;
+      utterance.volume = 1;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // TTS朗读功能（支持自定义rate）
+  const speak = (text: string, rate: number = 0.7) => {
+    if ('speechSynthesis' in window) {
+      // 停止之前的朗读
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'zh-CN';
+      utterance.rate = rate;
       utterance.pitch = 1.0;
       utterance.volume = 1;
       window.speechSynthesis.speak(utterance);
@@ -673,12 +846,16 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                         style={{
                           width: "100%",
                           maxWidth: "380px",
-                          marginBottom: "16px",
+                          marginBottom: 0,
+                          marginTop: 0,
                           padding: "16px 20px",
                           backgroundColor: "rgba(201,168,76,0.15)",
                           border: "1px solid rgba(201,168,76,0.3)",
                           borderRadius: "12px",
-                          position: "relative",
+                          position: "absolute",
+                          top: "220px",
+                          right: 0,
+                          zIndex: 10,
                           animation: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                         }}
                       >
@@ -719,6 +896,185 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                         </p>
                       </div>
                     )}
+                    {/* 右侧卡片的AI面板 - 显示在左侧列greeting气泡下面 */}
+                    {!isLeft && isExpanded && (
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: "380px",
+                          position: "absolute",
+                          top: "calc(220px + 98px + 16px)",
+                          right: 0,
+                          zIndex: 10,
+                          background: "rgba(8,7,5,0.95)",
+                          border: "1px solid rgba(201,168,76,0.15)",
+                          padding: "20px 18px",
+                          display: "flex",
+                          flexDirection: "column",
+                          maxHeight: "400px",
+                          borderRadius: "8px",
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {/* AI面板头部 */}
+                        <div 
+                          style={{ marginBottom: "16px", cursor: "pointer" }}
+                        >
+                          <div style={{ 
+                            fontSize: "14px",
+                            color: "#c9a84c",
+                            letterSpacing: "3px", 
+                            marginBottom: "8px", 
+                            fontFamily: "'Noto Serif KR', serif",
+                            fontWeight: "bold"
+                          }}>
+                            학습 도우미
+                          </div>
+                          <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }} />
+                        </div>
+
+                        {/* 消息区域 */}
+                        <div
+                          ref={messagesEndRef}
+                          style={{
+                            flex: 1,
+                            overflowY: "auto",
+                            marginBottom: "16px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "12px",
+                          }}
+                        >
+                          {aiPanelMessages.length === 0 ? (
+                            <div
+                              style={{
+                                fontSize: "12px",
+                                color: "#6b5520",
+                                textAlign: "center",
+                                padding: "20px",
+                                fontFamily: "'Noto Serif KR', serif",
+                              }}
+                            >
+                              금색 단어를 클릭해보세요 ✦
+                            </div>
+                          ) : (
+                            <>
+                              {aiPanelMessages.map((message) => (
+                                <div
+                                  key={message.id}
+                                  style={{
+                                    padding: "14px 16px",
+                                    background:
+                                      message.type === "ai"
+                                        ? "rgba(201,168,76,0.06)"
+                                        : "rgba(201,168,76,0.1)",
+                                    border: "1px solid rgba(201,168,76,0.1)",
+                                    borderRadius: "0 6px 6px 6px",
+                                    fontSize: "12px",
+                                    color: "#c0b8a0",
+                                    lineHeight: 2,
+                                    whiteSpace: "pre-line",
+                                    fontFamily: "'Noto Serif KR', serif",
+                                  }}
+                                >
+                                  {message.content}
+                                </div>
+                              ))}
+                              {/* 快速问题chips */}
+                              {aiPanelMessages.length > 0 &&
+                                aiPanelMessages[0].content.includes("一去不复返") &&
+                                aiPanelMessages.length === 1 && (
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "8px",
+                                      marginTop: "12px",
+                                    }}
+                                  >
+                                    {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map(
+                                      (question) => (
+                                        <button
+                                          key={question}
+                                          onClick={() => handleQuickQuestion(question)}
+                                          style={{
+                                            border: "1px solid rgba(201,168,76,0.2)",
+                                            background: "transparent",
+                                            color: "#6b5520",
+                                            fontSize: "10px",
+                                            padding: "8px 12px",
+                                            cursor: "pointer",
+                                            borderRadius: 0,
+                                            textAlign: "left",
+                                            fontFamily: "'Noto Serif KR', serif",
+                                            transition: "all 0.3s",
+                                          }}
+                                          onMouseEnter={(e) => {
+                                            e.currentTarget.style.color = "#c9a84c";
+                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
+                                          }}
+                                          onMouseLeave={(e) => {
+                                            e.currentTarget.style.color = "#6b5520";
+                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)";
+                                          }}
+                                        >
+                                          {question}
+                                        </button>
+                                      )
+                                    )}
+                                  </div>
+                                )}
+                            </>
+                          )}
+                        </div>
+
+                        {/* 输入区域 */}
+                        <div style={{ display: "flex", gap: "8px" }}>
+                          <input
+                            type="text"
+                            value={aiPanelInput}
+                            onChange={(e) => setAiPanelInput(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                handleSendAIPanelMessage();
+                              }
+                            }}
+                            placeholder="더 물어보세요..."
+                            style={{
+                              flex: 1,
+                              padding: "10px 12px",
+                              background: "rgba(255,255,255,0.03)",
+                              border: "1px solid rgba(201,168,76,0.15)",
+                              borderRadius: 0,
+                              color: "#f0ead8",
+                              fontSize: "12px",
+                              fontFamily: "'Noto Serif KR', serif",
+                            }}
+                          />
+                          <button
+                            onClick={handleSendAIPanelMessage}
+                            style={{
+                              padding: "10px 16px",
+                              background: "transparent",
+                              border: "1px solid rgba(201,168,76,0.15)",
+                              color: "#ffffff",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              borderRadius: 0,
+                              fontFamily: "'Noto Serif KR', serif",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = "rgba(201,168,76,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = "transparent";
+                            }}
+                          >
+                            전송
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     {isLeft && (
                       <div
                         ref={(el) => {
@@ -727,12 +1083,13 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                         style={{
                           width: "100%",
                           maxWidth: "440px",
-                          transition: dynasty.id === "3" 
-                            ? "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)"
-                            : "all 1s cubic-bezier(0.16, 1, 0.3, 1)",
+                          transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                           opacity: isVisible ? 1 : 0,
                           transform: isVisible 
-                            ? (expandedId === "3" && index > 2 ? "translateY(900px)" : "translateY(0)")
+                            ? (expandedId ? (() => {
+                                const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
+                                return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
+                              })() : "translateY(0)")
                             : "translateY(40px)",
                         }}
                       >
@@ -884,7 +1241,7 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                           left: 0,
                           zIndex: 10,
                           display: "grid",
-                          gridTemplateColumns: dynasty.id === "3" ? "1fr" : isMobile ? "1fr" : "1fr 320px",
+                          gridTemplateColumns: "1fr",
                           borderTop: "1px solid rgba(201,168,76,0.08)",
                           borderRadius: 0,
                           overflow: "hidden",
@@ -937,11 +1294,11 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                               </p>
                             </div>
                           )}
-                          {hasContent ? (
-                            <>
-                              {/* YouTube 视频区域 */}
-                              <div style={{ marginBottom: "24px" }}>
-                                {dynasty.videoId && (
+                          {/* 所有朝代都显示视频区域和按钮 */}
+                          <>
+                            {/* YouTube 视频区域 */}
+                            <div style={{ marginBottom: "24px" }}>
+                              {dynasty.videoId ? (
                                   <div
                                     style={{
                                       aspectRatio: "16/9",
@@ -1042,9 +1399,52 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                       </div>
                                     )}
                                   </div>
-                                )}
+                              ) : (
+                                /* 占位区域 - 没有 videoId 时显示 */
+                                <div
+                                  style={{
+                                    aspectRatio: "16/9",
+                                    width: "100%",
+                                    maxHeight: "200px",
+                                    backgroundColor: "#0a0908",
+                                    border: "1px solid rgba(201,168,76,0.1)",
+                                    borderRadius: 0,
+                                    overflow: "hidden",
+                                    position: "relative",
+                                    backgroundImage: dynasty.backgroundImage
+                                      ? `url(${dynasty.backgroundImage})`
+                                      : "none",
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {dynasty.backgroundImage && (
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        backgroundColor: "rgba(0,0,0,0.7)",
+                                      }}
+                                    ></div>
+                                  )}
+                                  <div
+                                    style={{
+                                      position: "relative",
+                                      zIndex: 1,
+                                      textAlign: "center",
+                                      color: "rgba(240,234,216,0.5)",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    준비 중
+                                  </div>
+                                </div>
+                              )}
 
-                                {dynasty.videoIds && (
+                              {dynasty.videoIds && (
                                   <div
                                     style={{
                                       display: "grid",
@@ -1154,9 +1554,9 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                 )}
                               </div>
 
-                              {/* 歌词区域 */}
-                              {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 && (
-                                <div style={{ marginBottom: "24px" }}>
+                              {/* 歌词区域 - 所有朝代都显示 */}
+                              <div style={{ marginBottom: "24px" }}>
+                                {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 ? (
                                   <div
                                     style={{
                                       display: "flex",
@@ -1184,10 +1584,45 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                             fontFamily: "'Noto Serif SC', serif",
                                           }}
                                           dangerouslySetInnerHTML={{
-                                            __html: dynasty.id === "3" && lineIndex === 1
+                                            __html: dynasty.id === "2" && lineIndex === 1
                                               ? line.replace(
                                                   /(一去啊不归还)/g,
                                                   '<span id="idiom-span-一去不复返" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一去不复返">$1</span>'
+                                                )
+                                              : dynasty.id === "1" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(以形表意)/g,
+                                                  '<span id="idiom-span-以形表意" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="以形表意">$1</span>'
+                                                )
+                                              : dynasty.id === "3" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(没齿难忘)/g,
+                                                  '<span id="idiom-span-没齿难忘" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="没齿难忘">$1</span>'
+                                                )
+                                              : dynasty.id === "4" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(丹青)/g,
+                                                  '<span id="idiom-span-匠心独运" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="匠心独运">$1</span>'
+                                                )
+                                              : dynasty.id === "5" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(尔虞我诈)/g,
+                                                  '<span id="idiom-span-尔虞我诈" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="尔虞我诈">$1</span>'
+                                                )
+                                              : dynasty.id === "6" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(竹林七贤)/g,
+                                                  '<span id="idiom-span-竹林七贤" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="竹林七贤">$1</span>'
+                                                )
+                                              : dynasty.id === "7" && lineIndex === 8
+                                              ? line.replace(
+                                                  /(生生不息)/g,
+                                                  '<span id="idiom-span-生生不息" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="生生不息">$1</span>'
+                                                )
+                                              : dynasty.id === "8" && lineIndex === 3
+                                              ? line.replace(
+                                                  /(酒中仙)/g,
+                                                  '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
                                                 )
                                               : highlightIdioms(line, dynasty.idioms || []),
                                           }}
@@ -1216,237 +1651,73 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                       </div>
                                     ))}
                                   </div>
-                                </div>
-                              )}
-
-                              {/* "이 노래 상세히 배우기" 按钮 */}
-                              <button
-                                onClick={(e) => handleLearnMore(e, dynasty.id)}
-                                style={{
-                                  width: "100%",
-                                  padding: "14px",
-                                  marginTop: "20px",
-                                  background: "transparent",
-                                  border: "1px solid rgba(201,168,76,0.25)",
-                                  color: "#c9a84c",
-                                  fontSize: "12px",
-                                  letterSpacing: "2px",
-                                  borderRadius: 0,
-                                  cursor: "pointer",
-                                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
-                                  e.currentTarget.style.color = "#c9a84c";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = "transparent";
-                                  e.currentTarget.style.color = "#c9a84c";
-                                }}
-                              >
-                                ✦ 이 노래 상세히 배우기 →
-                              </button>
-                            </>
-                          ) : (
-                            <div
-                              style={{
-                                textAlign: "center",
-                                padding: "48px 0",
-                                color: "rgba(240,234,216,0.5)",
-                              }}
-                            >
-                              <p style={{ fontSize: "18px", margin: 0 }}>
-                                이 시대의 노래는 준비 중입니다 🎵
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 右侧AI面板 - 秦朝除外，秦朝的AI面板在右侧列 */}
-                        {isExpanded && dynasty.id !== "3" && (
-                          <div
-                            style={{
-                              background: "rgba(8,7,5,0.95)",
-                              borderLeft: isMobile ? "none" : "1px solid rgba(201,168,76,0.15)",
-                              borderTop: isMobile ? "1px solid rgba(201,168,76,0.15)" : "none",
-                              padding: "20px 18px",
-                              display: "flex",
-                              flexDirection: "column",
-                              height: "100%",
-                              maxHeight: isMobile ? "300px" : "none",
-                              marginTop: isMobile ? "0" : "16px",
-                              borderRadius: 0,
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {/* AI面板头部 */}
-                            <div style={{ marginBottom: "16px" }}>
-                              <div
-                                style={{
-                                  fontSize: "9px",
-                                  color: "#c9a84c",
-                                  letterSpacing: "3px",
-                                  marginBottom: "8px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                ✦ 词韵 AI
-                              </div>
-                              <p
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#7a7060",
-                                  marginBottom: "12px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                클릭한 단어를 설명해드릴게요
-                              </p>
-                              <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }}></div>
-                            </div>
-
-                            {/* 消息区域 */}
-                            <div
-                              ref={messagesEndRef}
-                              style={{
-                                flex: 1,
-                                overflowY: "auto",
-                                marginBottom: "16px",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "12px",
-                              }}
-                            >
-                              {aiPanelMessages.length === 0 ? (
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#6b5520",
-                                    textAlign: "center",
-                                    padding: "20px",
-                                    fontFamily: "'Noto Serif KR', serif",
-                                  }}
-                                >
-                                  금색 단어를 클릭해보세요 ✦
-                                </div>
-                              ) : (
-                                <>
-                                  {aiPanelMessages.map((message) => (
-                                    <div
-                                      key={message.id}
-                                      style={{
-                                        padding: "14px 16px",
-                                        background:
-                                          message.type === "ai"
-                                            ? "rgba(201,168,76,0.06)"
-                                            : "rgba(201,168,76,0.1)",
-                                        border: "1px solid rgba(201,168,76,0.1)",
-                                        borderRadius: "0 6px 6px 6px",
-                                        fontSize: "12px",
-                                        color: "#c0b8a0",
-                                        lineHeight: 2,
-                                        whiteSpace: "pre-line",
-                                        fontFamily: "'Noto Serif KR', serif",
-                                      }}
-                                    >
-                                      {message.content}
-                                    </div>
-                                  ))}
-                                  {/* 快速问题chips */}
-                                  {aiPanelMessages.length > 0 &&
-                                    aiPanelMessages[0].content.includes("一去不复返") &&
-                                    aiPanelMessages.length === 1 && (
-                                      <div
+                                ) : (
+                                  /* 歌词占位区域 - 没有歌词数据时显示 */
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "16px",
+                                    }}
+                                  >
+                                    <div>
+                                      <p
                                         style={{
-                                          display: "flex",
-                                          flexDirection: "column",
-                                          gap: "8px",
-                                          marginTop: "12px",
+                                          fontSize: "18px",
+                                          letterSpacing: "3px",
+                                          color: "rgba(240,234,216,0.3)",
+                                          margin: 0,
+                                          marginBottom: "4px",
+                                          fontFamily: "'Noto Serif SC', serif",
                                         }}
                                       >
-                                        {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map(
-                                          (question) => (
-                                            <button
-                                              key={question}
-                                              onClick={() => handleQuickQuestion(question)}
-                                              style={{
-                                                border: "1px solid rgba(201,168,76,0.2)",
-                                                background: "transparent",
-                                                color: "#6b5520",
-                                                fontSize: "10px",
-                                                padding: "8px 12px",
-                                                cursor: "pointer",
-                                                borderRadius: 0,
-                                                textAlign: "left",
-                                                fontFamily: "'Noto Serif KR', serif",
-                                                transition: "all 0.3s",
-                                              }}
-                                              onMouseEnter={(e) => {
-                                                e.currentTarget.style.color = "#c9a84c";
-                                                e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
-                                              }}
-                                              onMouseLeave={(e) => {
-                                                e.currentTarget.style.color = "#6b5520";
-                                                e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)";
-                                              }}
-                                            >
-                                              {question}
-                                            </button>
-                                          )
-                                        )}
-                                      </div>
-                                    )}
-                                </>
-                              )}
-                            </div>
+                                        准备中...
+                                      </p>
+                                      <p
+                                        style={{
+                                          fontSize: "12px",
+                                          color: "rgba(122,112,96,0.3)",
+                                          marginTop: "6px",
+                                          margin: 0,
+                                        }}
+                                      >
+                                        준비 중...
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
 
-                            {/* 输入区域 */}
-                            <div style={{ display: "flex", gap: "8px" }}>
-                              <input
-                                type="text"
-                                value={aiPanelInput}
-                                onChange={(e) => setAiPanelInput(e.target.value)}
-                                onKeyPress={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleSendAIPanelMessage();
-                                  }
-                                }}
-                                placeholder="더 물어보세요..."
-                                style={{
-                                  flex: 1,
-                                  padding: "10px 12px",
-                                  background: "rgba(255,255,255,0.03)",
-                                  border: "1px solid rgba(201,168,76,0.15)",
-                                  borderRadius: 0,
-                                  color: "#f0ead8",
-                                  fontSize: "12px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              />
-                              <button
-                                onClick={handleSendAIPanelMessage}
-                                style={{
-                                  padding: "10px 16px",
-                                  background: "transparent",
-                                  border: "1px solid rgba(201,168,76,0.15)",
-                                  color: "#c9a84c",
-                                  cursor: "pointer",
-                                  fontSize: "12px",
-                                  borderRadius: 0,
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "rgba(201,168,76,0.15)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = "transparent";
-                                }}
-                              >
-                                发送
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                            {/* "이 노래 상세히 배우기" 按钮 - 所有朝代都显示 */}
+                            <button
+                              onClick={(e) => handleLearnMore(e, dynasty.id)}
+                              style={{
+                                width: "100%",
+                                padding: "14px",
+                                marginTop: "20px",
+                                background: "transparent",
+                                border: "1px solid rgba(201,168,76,0.25)",
+                                color: "#c9a84c",
+                                fontSize: "12px",
+                                letterSpacing: "2px",
+                                borderRadius: 0,
+                                cursor: "pointer",
+                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
+                                e.currentTarget.style.color = "#c9a84c";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "#c9a84c";
+                              }}
+                            >
+                              ✦ 이 노래 상세히 배우기 →
+                            </button>
+                          </>
+                        </div>
+
                       </div>
                     )}
                   </div>
@@ -1460,6 +1731,14 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                       paddingTop: "32px",
                       position: "relative",
                       zIndex: 2,
+                      transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                      opacity: isVisible ? 1 : 0,
+                      transform: isVisible 
+                        ? (expandedId ? (() => {
+                            const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
+                            return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
+                          })() : "translateY(0)")
+                        : "translateY(40px)",
                     }}
                   >
                     <div
@@ -1501,16 +1780,16 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                         style={{
                           width: "100%",
                           maxWidth: "380px",
-                          marginBottom: dynasty.id === "3" ? 0 : "16px",
-                          marginTop: dynasty.id === "3" ? 0 : "24px",
+                          marginBottom: 0,
+                          marginTop: 0,
                           padding: "16px 20px",
                           backgroundColor: "rgba(201,168,76,0.15)",
                           border: "1px solid rgba(201,168,76,0.3)",
                           borderRadius: "12px",
-                          position: dynasty.id === "3" ? "absolute" : "relative",
-                          top: dynasty.id === "3" ? "220px" : "auto",
-                          left: dynasty.id === "3" ? 0 : "auto",
-                          zIndex: dynasty.id === "3" ? 10 : "auto",
+                          position: "absolute",
+                          top: "220px",
+                          left: 0,
+                          zIndex: 10,
                           animation: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
                         }}
                       >
@@ -1551,8 +1830,8 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                         </p>
                       </div>
                     )}
-                    {/* 秦朝的AI面板 - 显示在右侧列greeting气泡下面 */}
-                    {isLeft && dynasty.id === "3" && isExpanded && (
+                    {/* 左侧卡片的AI面板 - 显示在右侧列greeting气泡下面 */}
+                    {isLeft && isExpanded && (
                       <div
                         style={{
                           width: "100%",
@@ -1741,7 +2020,10 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                           transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                           opacity: isVisible ? 1 : 0,
                           transform: isVisible 
-                            ? (expandedId === "3" && index > 2 ? "translateY(900px)" : "translateY(0)")
+                            ? (expandedId ? (() => {
+                                const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
+                                return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
+                              })() : "translateY(0)")
                             : "translateY(40px)",
                         }}
                       >
@@ -1893,7 +2175,7 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                           right: 0,
                           zIndex: 10,
                           display: "grid",
-                          gridTemplateColumns: isMobile ? "1fr" : "1fr 320px",
+                          gridTemplateColumns: "1fr",
                           borderTop: "1px solid rgba(201,168,76,0.08)",
                           borderRadius: 0,
                           overflow: "hidden",
@@ -1946,11 +2228,11 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                               </p>
                             </div>
                           )}
-                          {hasContent ? (
-                            <>
-                              {/* YouTube 视频区域 */}
-                              <div style={{ marginBottom: "24px" }}>
-                                {dynasty.videoId && (
+                          {/* 所有朝代都显示视频区域和按钮 */}
+                          <>
+                            {/* YouTube 视频区域 */}
+                            <div style={{ marginBottom: "24px" }}>
+                              {dynasty.videoId ? (
                                   <div
                                     style={{
                                       aspectRatio: "16/9",
@@ -2051,9 +2333,52 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                       </div>
                                     )}
                                   </div>
-                                )}
+                              ) : (
+                                /* 占位区域 - 没有 videoId 时显示 */
+                                <div
+                                  style={{
+                                    aspectRatio: "16/9",
+                                    width: "100%",
+                                    maxHeight: "200px",
+                                    backgroundColor: "#0a0908",
+                                    border: "1px solid rgba(201,168,76,0.1)",
+                                    borderRadius: 0,
+                                    overflow: "hidden",
+                                    position: "relative",
+                                    backgroundImage: dynasty.backgroundImage
+                                      ? `url(${dynasty.backgroundImage})`
+                                      : "none",
+                                    backgroundSize: "cover",
+                                    backgroundPosition: "center",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {dynasty.backgroundImage && (
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        inset: 0,
+                                        backgroundColor: "rgba(0,0,0,0.7)",
+                                      }}
+                                    ></div>
+                                  )}
+                                  <div
+                                    style={{
+                                      position: "relative",
+                                      zIndex: 1,
+                                      textAlign: "center",
+                                      color: "rgba(240,234,216,0.5)",
+                                      fontSize: "14px",
+                                    }}
+                                  >
+                                    준비 중
+                                  </div>
+                                </div>
+                              )}
 
-                                {dynasty.videoIds && (
+                              {dynasty.videoIds && (
                                   <div
                                     style={{
                                       display: "grid",
@@ -2163,9 +2488,9 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                 )}
                               </div>
 
-                              {/* 歌词区域 */}
-                              {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 && (
-                                <div style={{ marginBottom: "24px" }}>
+                              {/* 歌词区域 - 所有朝代都显示 */}
+                              <div style={{ marginBottom: "24px" }}>
+                                {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 ? (
                                   <div
                                     style={{
                                       display: "flex",
@@ -2193,10 +2518,45 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                             fontFamily: "'Noto Serif SC', serif",
                                           }}
                                           dangerouslySetInnerHTML={{
-                                            __html: dynasty.id === "3" && lineIndex === 1
+                                            __html: dynasty.id === "2" && lineIndex === 1
                                               ? line.replace(
                                                   /(一去啊不归还)/g,
                                                   '<span id="idiom-span-一去不复返" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一去不复返">$1</span>'
+                                                )
+                                              : dynasty.id === "1" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(以形表意)/g,
+                                                  '<span id="idiom-span-以形表意" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="以形表意">$1</span>'
+                                                )
+                                              : dynasty.id === "3" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(没齿难忘)/g,
+                                                  '<span id="idiom-span-没齿难忘" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="没齿难忘">$1</span>'
+                                                )
+                                              : dynasty.id === "4" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(丹青)/g,
+                                                  '<span id="idiom-span-匠心独运" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="匠心独运">$1</span>'
+                                                )
+                                              : dynasty.id === "5" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(尔虞我诈)/g,
+                                                  '<span id="idiom-span-尔虞我诈" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="尔虞我诈">$1</span>'
+                                                )
+                                              : dynasty.id === "6" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(竹林七贤)/g,
+                                                  '<span id="idiom-span-竹林七贤" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="竹林七贤">$1</span>'
+                                                )
+                                              : dynasty.id === "7" && lineIndex === 8
+                                              ? line.replace(
+                                                  /(生生不息)/g,
+                                                  '<span id="idiom-span-生生不息" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="生生不息">$1</span>'
+                                                )
+                                              : dynasty.id === "8" && lineIndex === 3
+                                              ? line.replace(
+                                                  /(酒中仙)/g,
+                                                  '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
                                                 )
                                               : highlightIdioms(line, dynasty.idioms || []),
                                           }}
@@ -2225,237 +2585,72 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                       </div>
                                     ))}
                                   </div>
-                                </div>
-                              )}
-
-                              {/* "이 노래 상세히 배우기" 按钮 */}
-                              <button
-                                onClick={(e) => handleLearnMore(e, dynasty.id)}
-                                style={{
-                                  width: "100%",
-                                  padding: "14px",
-                                  marginTop: "20px",
-                                  background: "transparent",
-                                  border: "1px solid rgba(201,168,76,0.25)",
-                                  color: "#c9a84c",
-                                  fontSize: "12px",
-                                  letterSpacing: "2px",
-                                  borderRadius: 0,
-                                  cursor: "pointer",
-                                  transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
-                                  e.currentTarget.style.color = "#c9a84c";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.backgroundColor = "transparent";
-                                  e.currentTarget.style.color = "#c9a84c";
-                                }}
-                              >
-                                ✦ 이 노래 상세히 배우기 →
-                              </button>
-                            </>
-                          ) : (
-                            <div
-                              style={{
-                                textAlign: "center",
-                                padding: "48px 0",
-                                color: "rgba(240,234,216,0.5)",
-                              }}
-                            >
-                              <p style={{ fontSize: "18px", margin: 0 }}>
-                                이 시대의 노래는 준비 중입니다 🎵
-                              </p>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 右侧AI面板 */}
-                        {isExpanded && (
-                          <div
-                            style={{
-                              background: "rgba(8,7,5,0.95)",
-                              borderLeft: isMobile ? "none" : "1px solid rgba(201,168,76,0.15)",
-                              borderTop: isMobile ? "1px solid rgba(201,168,76,0.15)" : "none",
-                              padding: "20px 18px",
-                              display: "flex",
-                              flexDirection: "column",
-                              height: "100%",
-                              maxHeight: isMobile ? "300px" : "none",
-                              marginTop: isMobile ? "0" : "16px",
-                              borderRadius: 0,
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {/* AI面板头部 */}
-                            <div style={{ marginBottom: "16px" }}>
-                              <div
-                                style={{
-                                  fontSize: "9px",
-                                  color: "#c9a84c",
-                                  letterSpacing: "3px",
-                                  marginBottom: "8px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                ✦ 词韵 AI
-                              </div>
-                              <p
-                                style={{
-                                  fontSize: "11px",
-                                  color: "#7a7060",
-                                  marginBottom: "12px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                클릭한 단어를 설명해드릴게요
-                              </p>
-                              <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }}></div>
-                            </div>
-
-                            {/* 消息区域 */}
-                            <div
-                              ref={messagesEndRef}
-                              style={{
-                                flex: 1,
-                                overflowY: "auto",
-                                marginBottom: "16px",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: "12px",
-                              }}
-                            >
-                              {aiPanelMessages.length === 0 ? (
-                                <div
-                                  style={{
-                                    fontSize: "12px",
-                                    color: "#6b5520",
-                                    textAlign: "center",
-                                    padding: "20px",
-                                    fontFamily: "'Noto Serif KR', serif",
-                                  }}
-                                >
-                                  금색 단어를 클릭해보세요 ✦
-                                </div>
-                              ) : (
-                                <>
-                                  {aiPanelMessages.map((message) => (
-                                    <div
-                                      key={message.id}
-                                      style={{
-                                        padding: "14px 16px",
-                                        background:
-                                          message.type === "ai"
-                                            ? "rgba(201,168,76,0.06)"
-                                            : "rgba(201,168,76,0.1)",
-                                        border: "1px solid rgba(201,168,76,0.1)",
-                                        borderRadius: "0 6px 6px 6px",
-                                        fontSize: "12px",
-                                        color: "#c0b8a0",
-                                        lineHeight: 2,
-                                        whiteSpace: "pre-line",
-                                        fontFamily: "'Noto Serif KR', serif",
-                                      }}
-                                    >
-                                      {message.content}
-                                    </div>
-                                  ))}
-                                  {/* 快速问题chips */}
-                                  {aiPanelMessages.length > 0 &&
-                                    aiPanelMessages[0].content.includes("一去不复返") &&
-                                    aiPanelMessages.length === 1 && (
-                                      <div
+                                ) : (
+                                  /* 歌词占位区域 - 没有歌词数据时显示 */
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexDirection: "column",
+                                      gap: "16px",
+                                    }}
+                                  >
+                                    <div>
+                                      <p
                                         style={{
-                                          display: "flex",
-                                          flexDirection: "column",
-                                          gap: "8px",
-                                          marginTop: "12px",
+                                          fontSize: "18px",
+                                          letterSpacing: "3px",
+                                          color: "rgba(240,234,216,0.3)",
+                                          margin: 0,
+                                          marginBottom: "4px",
+                                          fontFamily: "'Noto Serif SC', serif",
                                         }}
                                       >
-                                        {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map(
-                                          (question) => (
-                                            <button
-                                              key={question}
-                                              onClick={() => handleQuickQuestion(question)}
-                                              style={{
-                                                border: "1px solid rgba(201,168,76,0.2)",
-                                                background: "transparent",
-                                                color: "#6b5520",
-                                                fontSize: "10px",
-                                                padding: "8px 12px",
-                                                cursor: "pointer",
-                                                borderRadius: 0,
-                                                textAlign: "left",
-                                                fontFamily: "'Noto Serif KR', serif",
-                                                transition: "all 0.3s",
-                                              }}
-                                              onMouseEnter={(e) => {
-                                                e.currentTarget.style.color = "#c9a84c";
-                                                e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
-                                              }}
-                                              onMouseLeave={(e) => {
-                                                e.currentTarget.style.color = "#6b5520";
-                                                e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)";
-                                              }}
-                                            >
-                                              {question}
-                                            </button>
-                                          )
-                                        )}
-                                      </div>
-                                    )}
-                                </>
-                              )}
-                            </div>
+                                        准备中...
+                                      </p>
+                                      <p
+                                        style={{
+                                          fontSize: "12px",
+                                          color: "rgba(122,112,96,0.3)",
+                                          marginTop: "6px",
+                                          margin: 0,
+                                        }}
+                                      >
+                                        준비 중...
+                                      </p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
 
-                            {/* 输入区域 */}
-                            <div style={{ display: "flex", gap: "8px" }}>
-                              <input
-                                type="text"
-                                value={aiPanelInput}
-                                onChange={(e) => setAiPanelInput(e.target.value)}
-                                onKeyPress={(e) => {
-                                  if (e.key === "Enter") {
-                                    handleSendAIPanelMessage();
-                                  }
-                                }}
-                                placeholder="더 물어보세요..."
-                                style={{
-                                  flex: 1,
-                                  padding: "10px 12px",
-                                  background: "rgba(255,255,255,0.03)",
-                                  border: "1px solid rgba(201,168,76,0.15)",
-                                  borderRadius: 0,
-                                  color: "#f0ead8",
-                                  fontSize: "12px",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              />
-                              <button
-                                onClick={handleSendAIPanelMessage}
-                                style={{
-                                  padding: "10px 16px",
-                                  background: "transparent",
-                                  border: "1px solid rgba(201,168,76,0.15)",
-                                  color: "#c9a84c",
-                                  cursor: "pointer",
-                                  fontSize: "12px",
-                                  borderRadius: 0,
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                                onMouseEnter={(e) => {
-                                  e.currentTarget.style.background = "rgba(201,168,76,0.15)";
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = "transparent";
-                                }}
-                              >
-                                发送
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                            {/* "이 노래 상세히 배우기" 按钮 - 所有朝代都显示 */}
+                            <button
+                              onClick={(e) => handleLearnMore(e, dynasty.id)}
+                              style={{
+                                width: "100%",
+                                padding: "14px",
+                                marginTop: "20px",
+                                background: "transparent",
+                                border: "1px solid rgba(201,168,76,0.25)",
+                                color: "#c9a84c",
+                                fontSize: "12px",
+                                letterSpacing: "2px",
+                                borderRadius: 0,
+                                cursor: "pointer",
+                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
+                                e.currentTarget.style.color = "#c9a84c";
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = "transparent";
+                                e.currentTarget.style.color = "#c9a84c";
+                              }}
+                            >
+                              ✦ 이 노래 상세히 배우기 →
+                            </button>
+                          </>
+                        </div>
                       </div>
                     )}
                   </div>
