@@ -171,36 +171,48 @@ const dynasties: Dynasty[] = [
     name: "宋朝",
     period: "AD 960 – 1279",
     korName: "송나라",
-    badge: "汝窑 청자 · 인쇄술 발명",
+    badge: "🎨 청명상하도의 노래 · 清明上河图",
     hook: '"비 갠 뒤의 하늘색을 도자기에 담았던 시대 — 천청색의 비밀"',
     backgroundImage: "/images/宋朝.jpg",
-    videoIds: ["mesKsB2VmHE", "hs95KBpRHCU"],
+    videoId: "jWwaKthZtyY",
     lyrics: {
-      chinese: ["行云流水 忘了岁月忘了时间", "兰亭临帖 行书如行云流水"],
-      korean: ["구름처럼 흐르고 물처럼 흐르니, 세월을 잊고 시간을 잊네", "난정에서 글씨를 모사하니 행서가 구름처럼 흐르고 물처럼 흐르네"],
+      chinese: ["多少能人将相书画三千里，上河图雕琢的意义", "绫罗飘起遮住日落西，奏一回断肠的古曲"],
+      korean: ["얼마나 많은 인재와 장수들이 삼천 리에 걸쳐 글과 그림을 남겼나, 청명상하도에 새겨진 의미", "비단이 날려 서쪽으로 지는 해를 가리고, 한 번 더 애끊는 옛 곡조를 연주한다"],
     },
-    idioms: ["行云流水"],
-    greeting: "宋朝的书法艺术达到了巅峰，行云流水的笔触至今仍让人着迷。",
+    idioms: ["雕琢"],
+    greeting: "천 년 전 개봉의 거리를 담은 그림 한 장이 송나라를 기억하게 해요. 청명상하도와 함께 송나라를 걸어봐요.",
   },
   {
     id: "11",
     name: "元朝",
     period: "AD 1271 – 1368",
     korName: "원나라",
-    badge: "몽골제국 · 마르코 폴로",
+    badge: "🏺 청화백자의 노래 · 青花瓷",
     hook: '"칭기즈칸의 후손이 세운 제국 — 동서양 교류의 최정점"',
     backgroundImage: "/images/元朝.jpg",
-    greeting: "元朝时期的文化融合，为中华文明增添了新的色彩。",
+    videoId: "Z8Mqw0b9ADs",
+    lyrics: {
+      chinese: ["天青色等烟雨，而我在等你", "如传世的青花瓷，自顾自美丽"],
+      korean: ["하늘빛 청자색은 연기비를 기다리고, 나는 너를 기다린다", "전세에 전해지는 청화백자처럼, 스스로 아름답다"]
+    },
+    idioms: ["天青色"],
+    greeting: "기다림 끝에 완성되는 청화백자처럼, 원나라의 이야기를 천천히 들어봐요. 《청화자》와 함께 원나라를 여행해봐요.",
   },
   {
     id: "12",
     name: "明朝",
     period: "AD 1368 – 1644",
     korName: "명나라",
-    badge: "자금성 · 정화의 대항해",
+    badge: "🌿 본초강목의 노래 · 本草纲目",
     hook: '"세계 최대의 궁전 자금성과, 콜럼버스보다 먼저 세계를 항해한 정화"',
     backgroundImage: "/images/明朝.jpg",
-    greeting: "明朝是中华文明的又一个高峰，让我们一起探索这个时代。",
+    videoId: "blC92W4RdlU",
+    lyrics: {
+      chinese: ["快翻开本草纲目，多看一些善本书", "已扎根千年的汉方，有别人不知道的力量"],
+      korean: ["어서 본초강목을 펼쳐봐, 좋은 원본 책들을 더 많이 읽어봐", "이미 천 년을 뿌리내린 한방에는, 다른 사람들이 모르는 힘이 있다"]
+    },
+    idioms: ["本草纲目"],
+    greeting: "27년의 집념으로 동아시아 의학을 바꾼 이시진의 시대예요. 《본초강목》과 함께 명나라를 탐험해봐요.",
   },
   {
     id: "13",
@@ -519,6 +531,54 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
 당나라 시인 이백(李白)에게 붙여진 별호예요. 두보의 《음중팔선가》에서 '천자가 불러도 배에 오르지 않고, 스스로 술 속의 신선이라 칭한다'고 묘사했어요.
 
 「술 속의 신선」— 세속의 규칙을 초월한 자유로운 예술가의 상징
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "雕琢") {
+      speak("多少能人将相书画三千里，上河图雕琢的意义", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `雕琢 (diāo zuó)
+
+원래는 옥(玉)이나 돌을 조각하고 다듬는 행위를 뜻했지만, 점차 예술 작품이나 글을 정성스럽게 완성하는 것을 가리키게 되었어요. 청명상하도처럼 800명이 넘는 인물을 세밀하게 담아낸 작품이야말로 雕琢의 정수예요.
+
+「정성껏 갈고 닦아 완성하다」— 장인 정신과 예술적 완성도를 표현할 때 사용
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "天青色") {
+      speak("天青色等烟雨，而我在等你", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `天青色 (tiān qīng sè)
+
+청화백자의 유약 색깔로, 비 오는 날 구름 사이로 보이는 하늘빛을 닮아야 가장 아름답게 발색돼요. 즉 청자가 완성되려면 비가 와야 한다는 뜻이에요. 원나라 경덕진 도공들은 이 완벽한 빛깔을 얻기 위해 날씨까지 기다렸어요.
+
+「기다림 끝에 완성되는 하늘빛」— 완성을 위해 때를 기다리는 인내의 상징
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "本草纲目") {
+      speak("快翻开本草纲目，多看一些善本书", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `本草纲目 (běn cǎo gāng mù)
+
+명나라 의학자 이시진(李時珍)이 27년간 전국을 돌아다니며 완성한 약학 백과사전이에요. 총 52권에 1,892종의 약재와 11,000여 개의 처방이 담겨 있고, 찰스 다윈도 참고한 동아시아 최대 과학 고전이에요.
+
+「약초의 모든 것을 담은 집념의 기록」— 한 사람의 27년이 천 년의 의학을 바꾼다
 
 더 궁금한 게 있어? 아래에 물어봐!`,
         timestamp: new Date(),
@@ -1624,6 +1684,21 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                                   /(酒中仙)/g,
                                                   '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
                                                 )
+                                              : dynasty.id === "10" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(雕琢)/g,
+                                                  '<span id="idiom-span-雕琢" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="雕琢">$1</span>'
+                                                )
+                                              : dynasty.id === "11" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(天青色)/g,
+                                                  '<span id="idiom-span-天青色" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="天青色">$1</span>'
+                                                )
+                                              : dynasty.id === "12" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(本草纲目)/g,
+                                                  '<span id="idiom-span-本草纲目" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="本草纲目">$1</span>'
+                                                )
                                               : highlightIdioms(line, dynasty.idioms || []),
                                           }}
                                           onClick={(e) => {
@@ -2557,6 +2632,21 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                                               ? line.replace(
                                                   /(酒中仙)/g,
                                                   '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
+                                                )
+                                              : dynasty.id === "10" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(雕琢)/g,
+                                                  '<span id="idiom-span-雕琢" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="雕琢">$1</span>'
+                                                )
+                                              : dynasty.id === "11" && lineIndex === 0
+                                              ? line.replace(
+                                                  /(天青色)/g,
+                                                  '<span id="idiom-span-天青色" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="天青色">$1</span>'
+                                                )
+                                              : dynasty.id === "12" && lineIndex === 1
+                                              ? line.replace(
+                                                  /(本草纲目)/g,
+                                                  '<span id="idiom-span-本草纲目" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="本草纲目">$1</span>'
                                                 )
                                               : highlightIdioms(line, dynasty.idioms || []),
                                           }}
