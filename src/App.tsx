@@ -1,89 +1,23 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import SongPage from "./pages/SongPage";
-import VideoPage from "./pages/VideoPage";
 import WordReviewPage from "./pages/WordReviewPage";
 import YoutubePage from "./pages/YoutubePage";
 import TimelinePage from "./pages/TimelinePage";
 import DynastyDetailPage from "./pages/DynastyDetailPage";
-import { AnalyzePage } from "./components/AnalyzePage";
+import HomePage from "./pages/HomePage";
+import DashboardPage from "./pages/DashboardPage";
 import { TeacherHelper } from "./components/TeacherHelper";
-import { sentenceData } from "./data/mockData";
 import { dynastyDetails } from "./data/dynastyDetails";
 
-type View = "song" | "analyze" | "video" | "wordReview" | "youtube" | "timeline" | "dynastyDetail";
+type View = "home" | "song" | "wordReview" | "youtube" | "timeline" | "dynastyDetail" | "dashboard";
 
 export default function App() {
-  const [view, setView] = useState<View>("song");
+  const [view, setView] = useState<View>("home");
   const [selectedDynastyId, setSelectedDynastyId] = useState<string | null>(null);
   const [expandedDynastyId, setExpandedDynastyId] = useState<string | null>(null);
 
-  const topBar = useMemo(
-    () => (
-      <div 
-        className={`w-full ${view === "dynastyDetail" ? "" : "border-b"} bg-white/80 backdrop-blur sticky top-0 z-50`}
-        style={view === "dynastyDetail" ? { borderBottom: 'none' } : {}}
-      >
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-2">
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "song" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("song")}
-          >
-            Song Page
-          </button>
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "analyze" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("analyze")}
-          >
-            Analyze Demo
-          </button>
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "video" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("video")}
-          >
-            Video Page
-          </button>
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "wordReview" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("wordReview")}
-          >
-            单词复习
-          </button>
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "youtube" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("youtube")}
-          >
-            Youtube Page
-          </button>
-          <button
-            className={`px-3 py-1 rounded-lg border text-sm ${
-              view === "timeline" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => setView("timeline")}
-          >
-            词韵时间线
-          </button>
-          <div className="ml-auto text-xs text-gray-500">
-            本地地址以终端 Local 为准
-          </div>
-        </div>
-      </div>
-    ),
-    [view]
-  );
-
   return (
-    <div className="min-h-screen">
-      {view !== "dynastyDetail" && topBar}
+    <div className="min-h-screen" style={{ backgroundColor: "#0c0b08" }}>
       {/* 全局女老师助手 - 显示在所有页面 */}
       <TeacherHelper 
         currentView={view} 
@@ -91,21 +25,27 @@ export default function App() {
         selectedDynastyId={selectedDynastyId}
       />
       <div style={{ display: view === "song" ? "block" : "none" }}>
+        <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
+          <button onClick={() => setView("home")} style={{ background: "none", border: "1px solid #e2cdb8", borderRadius: 8, padding: "6px 16px", fontSize: 13, color: "#9c7b60", cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>← 홈</button>
+        </div>
         <SongPage />
       </div>
-      <div style={{ display: view === "analyze" ? "block" : "none" }}>
-        <AnalyzePage data={sentenceData} />
-      </div>
-      <div style={{ display: view === "video" ? "block" : "none" }}>
-        <VideoPage />
-      </div>
       <div style={{ display: view === "wordReview" ? "block" : "none" }}>
+        <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
+          <button onClick={() => setView("home")} style={{ background: "none", border: "1px solid #e2cdb8", borderRadius: 8, padding: "6px 16px", fontSize: 13, color: "#9c7b60", cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>← 홈</button>
+        </div>
         <WordReviewPage />
       </div>
       <div style={{ display: view === "youtube" ? "block" : "none" }}>
+        <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
+          <button onClick={() => setView("home")} style={{ background: "none", border: "1px solid #e2cdb8", borderRadius: 8, padding: "6px 16px", fontSize: 13, color: "#9c7b60", cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>← 홈</button>
+        </div>
         <YoutubePage />
       </div>
       <div style={{ display: view === "timeline" ? "block" : "none" }}>
+        <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
+          <button onClick={() => setView("home")} style={{ background: "none", border: "1px solid #e2cdb8", borderRadius: 8, padding: "6px 16px", fontSize: 13, color: "#9c7b60", cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>← 홈</button>
+        </div>
         <TimelinePage 
           onNavigateToDetail={(dynastyId: string) => {
             setSelectedDynastyId(dynastyId);
@@ -133,6 +73,12 @@ export default function App() {
             }}
           />
         )}
+      </div>
+      <div style={{ display: view === "home" ? "block" : "none" }}>
+        <HomePage onNavigate={(v) => setView(v)} />
+      </div>
+      <div style={{ display: view === "dashboard" ? "block" : "none" }}>
+        <DashboardPage onBack={() => setView("home")} />
       </div>
     </div>
   );

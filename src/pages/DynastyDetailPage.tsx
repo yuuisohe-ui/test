@@ -528,6 +528,108 @@ const WORD_DICT: Record<string, {
     type: "전적",
     typeKr: "전적",
     desc: "조선 허준이 1613년 완성한 의학 백과사전. 《본초강목》의 영향을 받아 편찬된 한국 의학의 최고 고전이에요."
+  },
+  "毛澤東": {
+    pinyin: "máo zé dōng",
+    type: "인명",
+    typeKr: "인명",
+    desc: "중화인민공화국 건국의 아버지. 1949년 천안문 광장에서 건국을 선포하고 초대 국가주석을 역임했어요."
+  },
+  "鄧小平": {
+    pinyin: "dèng xiǎo píng",
+    type: "인명",
+    typeKr: "인명",
+    desc: "개혁개방 정책을 이끈 중국의 최고 지도자. '흑묘백묘론'으로 시장경제를 도입해 중국 경제 기적의 토대를 닦았어요."
+  },
+  "習近平": {
+    pinyin: "xí jìn píng",
+    type: "인명",
+    typeKr: "인명",
+    desc: "현 중국 국가주석. 2013년부터 집권하며 일대일로 구상을 추진하고 중국의 세계 영향력을 확대하고 있어요."
+  },
+  "天安門": {
+    pinyin: "tiān ān mén",
+    type: "지명",
+    typeKr: "지명",
+    desc: "베이징 중심부의 역사적 성문. 1949년 건국 선포와 1989년 민주화 시위 진압 등 현대 중국의 상징적 공간이에요."
+  },
+  "改革開放": {
+    pinyin: "gǎi gé kāi fàng",
+    type: "역사용어",
+    typeKr: "역사용어",
+    desc: "1978년 덩샤오핑이 시작한 시장경제 도입 정책. 중국을 40년 만에 세계 2위 경제대국으로 이끈 역사적 전환점이에요."
+  },
+  "一帶一路": {
+    pinyin: "yī dài yī lù",
+    type: "역사용어",
+    typeKr: "역사용어",
+    desc: "2013년 시진핑이 제안한 현대판 실크로드 구상. 아시아·아프리카·유럽을 연결하는 인프라 투자 프로젝트예요."
+  },
+  "深圳": {
+    pinyin: "shēn zhèn",
+    type: "지명",
+    typeKr: "지명",
+    desc: "개혁개방 후 설치된 중국 최초의 경제특구. 작은 어촌에서 40년 만에 인구 1,800만의 첨단도시로 성장했어요."
+  },
+  "盤古": {
+    pinyin: "pán gǔ",
+    type: "인명",
+    typeKr: "신화인물",
+    desc: "중국 창세 신화의 거인. 혼돈의 알을 깨고 하늘과 땅을 만들었으며, '开天辟地' 성어의 주인공이에요."
+  },
+  "汉朝": {
+    pinyin: "hàn cháo",
+    type: "国名",
+    typeKr: "나라 이름",
+    desc: "기원전 206년 유방이 세운 왕조로, 한자·한족·한문의 어원이 된 중국 역사의 핵심 왕조."
+  },
+  "刘邦": {
+    pinyin: "liú bāng",
+    type: "人名",
+    typeKr: "인물 이름",
+    desc: "한나라를 세운 초대 황제. 평민 출신으로 항우를 꺾고 천하를 통일했어."
+  },
+  "蔡伦": {
+    pinyin: "cài lún",
+    type: "人名",
+    typeKr: "인물 이름",
+    desc: "한나라의 관리로, 종이 제조법을 획기적으로 개량해 인류 문명에 큰 영향을 줬어."
+  },
+  "张骞": {
+    pinyin: "zhāng qiān",
+    type: "人名",
+    typeKr: "인물 이름",
+    desc: "한 무제의 명으로 서역을 탐험해 실크로드를 개척한 외교관이자 탐험가."
+  },
+  "丝绸之路": {
+    pinyin: "sī chóu zhī lù",
+    type: "地名",
+    typeKr: "지명·경로",
+    desc: "한나라와 서역을 연결한 무역로. 비단·종이·도자기가 서쪽으로, 불교·포도·호두가 동쪽으로 전해졌어."
+  },
+  "竹简": {
+    pinyin: "zhú jiǎn",
+    type: "典籍",
+    typeKr: "기록 매체",
+    desc: "종이가 보급되기 전 대나무를 얇게 쪼개 글을 쓰던 도구. 무겁고 불편해서 종이로 대체됐어."
+  },
+  "说文解字": {
+    pinyin: "shuō wén jiě zì",
+    type: "典籍",
+    typeKr: "문헌·책 이름",
+    desc: "한나라 허신이 편찬한 최초의 체계적 한자 사전. 9,353자를 수록했어."
+  },
+  "汉武帝": {
+    pinyin: "hàn wǔ dì",
+    type: "称谓",
+    typeKr: "칭호·인물",
+    desc: "한나라 최전성기를 이끈 황제. 실크로드 개척과 유교 국교화로 유명해."
+  },
+  "宣纸": {
+    pinyin: "xuān zhǐ",
+    type: "典籍",
+    typeKr: "공예·재료",
+    desc: "중국 전통 종이. 청단나무를 원료로 만들며 '지수천년(纸寿千年)'이라 불릴 만큼 보존력이 뛰어나."
   }
 }
 
@@ -1367,251 +1469,245 @@ export default function DynastyDetailPage({ dynasty, onBack, onNavigateToDynasty
           </div>
         )}
 
-        {/* 6. 모듈3: SVG 역사 지도 */}
-        <div
-          ref={(el) => elementRefs.current.set('map', el)}
-          className="fade-in"
-          style={{ marginBottom: '80px' }}
-        >
-          {dynasty.id === '2' ? (
-            <div>
-              <h2 style={{ fontSize: '24px', color: C.gold, marginBottom: '32px', fontFamily: "'Ma Shan Zheng', serif" }}>
-                역사 지도
-              </h2>
-              <div style={{ backgroundColor: C.ink2, border: `1px solid rgba(201,168,76,0.3)`, borderRadius: '8px', padding: '32px', position: 'relative' }}>
-                <svg width="100%" height="420" viewBox="0 0 700 420" style={{ maxWidth: '700px', margin: '0 auto', display: 'block' }}>
-                  <defs>
-                    <style>{`
-                      @keyframes drawPath {
-                        from {
-                          stroke-dashoffset: 300;
-                        }
-                        to {
-                          stroke-dashoffset: 0;
-                        }
+        {/* 6. 모듈3: SVG 역사 지도 - 先秦(id=2)만 표시 */}
+        {dynasty.id === '2' && (
+          <div
+            ref={(el) => elementRefs.current.set('map', el)}
+            className="fade-in"
+            style={{ marginBottom: '80px' }}
+          >
+            <h2 style={{ fontSize: '24px', color: C.gold, marginBottom: '32px', fontFamily: "'Ma Shan Zheng', serif" }}>
+              역사 지도
+            </h2>
+            <div style={{ backgroundColor: C.ink2, border: `1px solid rgba(201,168,76,0.3)`, borderRadius: '8px', padding: '32px', position: 'relative' }}>
+              <svg width="100%" height="420" viewBox="0 0 700 420" style={{ maxWidth: '700px', margin: '0 auto', display: 'block' }}>
+                <defs>
+                  <style>{`
+                    @keyframes drawPath {
+                      from {
+                        stroke-dashoffset: 300;
                       }
-                      .jingke-path {
-                        animation: drawPath 3s ease forwards;
+                      to {
+                        stroke-dashoffset: 0;
                       }
-                    `}</style>
-                  </defs>
-                  
-                  {/* 背景 */}
-                  <rect width="700" height="420" fill="#0a0908" />
-                  
-                  {/* 地图外框 */}
-                  <rect width="700" height="420" fill="none" stroke="rgba(201,168,76,0.08)" strokeWidth="1" />
-                  
-                  {/* 国家领土区域 */}
-                  {/* 燕国 */}
-                  <ellipse cx="185" cy="130" rx="85" ry="75" fill="rgba(58,95,138,0.08)" stroke="rgba(58,95,138,0.25)" strokeWidth="1.5" strokeDasharray="4,3" />
-                  
-                  {/* 秦国 */}
-                  <ellipse cx="510" cy="215" rx="100" ry="105" fill="rgba(120,40,40,0.08)" stroke="rgba(140,50,50,0.25)" strokeWidth="1.5" strokeDasharray="4,3" />
-                  
-                  {/* 赵国 */}
-                  <ellipse cx="330" cy="310" rx="85" ry="65" fill="rgba(60,90,50,0.06)" stroke="rgba(70,100,60,0.2)" strokeWidth="1.5" strokeDasharray="4,3" />
-                  
-                  {/* 河流 */}
-                  {/* 易水 */}
-                  <path d="M 80 155 C 150 162, 220 178, 295 193" stroke="rgba(58,95,138,0.45)" strokeWidth="1.5" fill="none" />
-                  
-                  {/* 荆轲路线 */}
-                  <path 
-                    d="M 185 120 C 235 148, 268 168, 295 192 C 362 218, 442 213, 518 210" 
-                    stroke="#c9a84c" 
-                    strokeWidth="2" 
-                    fill="none" 
-                    strokeDasharray="6,4"
-                    className="jingke-path"
-                  />
-                  
-                  {/* 路线箭头 */}
-                  <path d="M 510 210 L 518 206 L 516 210 L 518 214 Z" fill="#c9a84c" />
-                  
-                  {/* 国家名称文字 */}
-                  <text x="185" y="108" fontSize="15" fill="rgba(201,168,76,0.65)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">燕</text>
-                  <text x="530" y="195" fontSize="15" fill="rgba(180,60,60,0.65)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">秦</text>
-                  <text x="310" y="278" fontSize="13" fill="rgba(100,130,80,0.5)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">赵</text>
-                  
-                  {/* 易水文字标注 */}
-                  <text x="175" y="148" fontSize="9" fill="rgba(58,95,138,0.7)" fontFamily="'Noto Serif KR', serif" style={{ letterSpacing: '2px' }}>易水</text>
-                  
-                  {/* 路线方向说明文字 */}
-                  <text x="370" y="155" fontSize="9" fill="rgba(201,168,76,0.4)" fontFamily="'Noto Serif KR', serif">荆轲의 여정 →</text>
-                  
-                  {/* 可点击的圆点 */}
-                  {/* 燕国 */}
-                  <circle 
-                    cx="185" 
-                    cy="120" 
-                    r="8" 
-                    fill="rgba(201,168,76,0.15)" 
-                    stroke="#c9a84c" 
-                    strokeWidth="1.5"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.setAttribute('r', '10')
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.setAttribute('r', '8')
-                    }}
-                    onClick={(e) => {
-                      const svg = e.currentTarget.ownerSVGElement
-                      if (svg) {
-                        const rect = svg.getBoundingClientRect()
-                        setMapTooltip({
-                          x: e.clientX - rect.left,
-                          y: e.clientY - rect.top,
-                          title: '燕나라',
-                          text: '燕나라 수도 薊 — 지금의 베이징 근처. 荆轲의 출발점.'
-                        })
-                      }
-                    }}
-                  />
-                  
-                  {/* 易水 */}
-                  <circle 
-                    cx="295" 
-                    cy="193" 
-                    r="6" 
-                    fill="rgba(58,95,138,0.2)" 
-                    stroke="#3a5f8a" 
-                    strokeWidth="1.5"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.setAttribute('r', '8')
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.setAttribute('r', '6')
-                    }}
-                    onClick={(e) => {
-                      const svg = e.currentTarget.ownerSVGElement
-                      if (svg) {
-                        const rect = svg.getBoundingClientRect()
-                        setMapTooltip({
-                          x: e.clientX - rect.left,
-                          y: e.clientY - rect.top,
-                          title: '易水河',
-                          text: '易水河 — BC 227년 겨울, 마지막 노래를 부른 강.'
-                        })
-                      }
-                    }}
-                  />
-                  
-                  {/* 赵国 */}
-                  <circle 
-                    cx="310" 
-                    cy="295" 
-                    r="6" 
-                    fill="rgba(80,120,60,0.15)" 
-                    stroke="rgba(80,120,60,0.4)" 
-                    strokeWidth="1"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.setAttribute('r', '8')
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.setAttribute('r', '6')
-                    }}
-                    onClick={(e) => {
-                      const svg = e.currentTarget.ownerSVGElement
-                      if (svg) {
-                        const rect = svg.getBoundingClientRect()
-                        setMapTooltip({
-                          x: e.clientX - rect.left,
-                          y: e.clientY - rect.top,
-                          title: '赵나라',
-                          text: '赵나라 — 이미 秦에 멸망. 燕도 다음 차례임을 알고 있었어.'
-                        })
-                      }
-                    }}
-                  />
-                  
-                  {/* 秦国 */}
-                  <circle 
-                    cx="518" 
-                    cy="210" 
-                    r="8" 
-                    fill="rgba(140,40,40,0.2)" 
-                    stroke="#b44040" 
-                    strokeWidth="1.5"
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.setAttribute('r', '10')
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.setAttribute('r', '8')
-                    }}
-                    onClick={(e) => {
-                      const svg = e.currentTarget.ownerSVGElement
-                      if (svg) {
-                        const rect = svg.getBoundingClientRect()
-                        setMapTooltip({
-                          x: e.clientX - rect.left,
-                          y: e.clientY - rect.top,
-                          title: '秦나라',
-                          text: '秦나라 수도 咸陽 — 荆轲의 목적지. 실패한 곳.'
-                        })
-                      }
-                    }}
-                  />
-                </svg>
+                    }
+                    .jingke-path {
+                      animation: drawPath 3s ease forwards;
+                    }
+                  `}</style>
+                </defs>
                 
-                {/* 地图下方图例 */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '24px', flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1.5px solid #c9a84c' }}></div>
-                    <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>클릭 가능</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(58,95,138,0.2)', border: '1.5px solid #3a5f8a' }}></div>
-                    <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>易水</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(140,40,40,0.2)', border: '1.5px solid #b44040' }}></div>
-                    <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>秦나라</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <div style={{ width: '40px', height: '2px', background: 'repeating-linear-gradient(to right, #c9a84c 0, #c9a84c 6px, transparent 6px, transparent 10px)' }}></div>
-                    <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>荆轲 경로</span>
-                  </div>
+                {/* 背景 */}
+                <rect width="700" height="420" fill="#0a0908" />
+                
+                {/* 地图外框 */}
+                <rect width="700" height="420" fill="none" stroke="rgba(201,168,76,0.08)" strokeWidth="1" />
+                
+                {/* 国家领土区域 */}
+                {/* 燕国 */}
+                <ellipse cx="185" cy="130" rx="85" ry="75" fill="rgba(58,95,138,0.08)" stroke="rgba(58,95,138,0.25)" strokeWidth="1.5" strokeDasharray="4,3" />
+                
+                {/* 秦国 */}
+                <ellipse cx="510" cy="215" rx="100" ry="105" fill="rgba(120,40,40,0.08)" stroke="rgba(140,50,50,0.25)" strokeWidth="1.5" strokeDasharray="4,3" />
+                
+                {/* 赵国 */}
+                <ellipse cx="330" cy="310" rx="85" ry="65" fill="rgba(60,90,50,0.06)" stroke="rgba(70,100,60,0.2)" strokeWidth="1.5" strokeDasharray="4,3" />
+                
+                {/* 河流 */}
+                {/* 易水 */}
+                <path d="M 80 155 C 150 162, 220 178, 295 193" stroke="rgba(58,95,138,0.45)" strokeWidth="1.5" fill="none" />
+                
+                {/* 荆轲路线 */}
+                <path 
+                  d="M 185 120 C 235 148, 268 168, 295 192 C 362 218, 442 213, 518 210" 
+                  stroke="#c9a84c" 
+                  strokeWidth="2" 
+                  fill="none" 
+                  strokeDasharray="6,4"
+                  className="jingke-path"
+                />
+                
+                {/* 路线箭头 */}
+                <path d="M 510 210 L 518 206 L 516 210 L 518 214 Z" fill="#c9a84c" />
+                
+                {/* 国家名称文字 */}
+                <text x="185" y="108" fontSize="15" fill="rgba(201,168,76,0.65)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">燕</text>
+                <text x="530" y="195" fontSize="15" fill="rgba(180,60,60,0.65)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">秦</text>
+                <text x="310" y="278" fontSize="13" fill="rgba(100,130,80,0.5)" fontFamily="'Ma Shan Zheng', serif" textAnchor="middle">赵</text>
+                
+                {/* 易水文字标注 */}
+                <text x="175" y="148" fontSize="9" fill="rgba(58,95,138,0.7)" fontFamily="'Noto Serif KR', serif" style={{ letterSpacing: '2px' }}>易水</text>
+                
+                {/* 路线方向说明文字 */}
+                <text x="370" y="155" fontSize="9" fill="rgba(201,168,76,0.4)" fontFamily="'Noto Serif KR', serif">荆轲의 여정 →</text>
+                
+                {/* 可点击的圆点 */}
+                {/* 燕国 */}
+                <circle 
+                  cx="185" 
+                  cy="120" 
+                  r="8" 
+                  fill="rgba(201,168,76,0.15)" 
+                  stroke="#c9a84c" 
+                  strokeWidth="1.5"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.setAttribute('r', '10')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.setAttribute('r', '8')
+                  }}
+                  onClick={(e) => {
+                    const svg = e.currentTarget.ownerSVGElement
+                    if (svg) {
+                      const rect = svg.getBoundingClientRect()
+                      setMapTooltip({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        title: '燕나라',
+                        text: '燕나라 수도 薊 — 지금의 베이징 근처. 荆轲의 출발점.'
+                      })
+                    }
+                  }}
+                />
+                
+                {/* 易水 */}
+                <circle 
+                  cx="295" 
+                  cy="193" 
+                  r="6" 
+                  fill="rgba(58,95,138,0.2)" 
+                  stroke="#3a5f8a" 
+                  strokeWidth="1.5"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.setAttribute('r', '8')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.setAttribute('r', '6')
+                  }}
+                  onClick={(e) => {
+                    const svg = e.currentTarget.ownerSVGElement
+                    if (svg) {
+                      const rect = svg.getBoundingClientRect()
+                      setMapTooltip({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        title: '易水河',
+                        text: '易水河 — BC 227년 겨울, 마지막 노래를 부른 강.'
+                      })
+                    }
+                  }}
+                />
+                
+                {/* 赵国 */}
+                <circle 
+                  cx="310" 
+                  cy="295" 
+                  r="6" 
+                  fill="rgba(80,120,60,0.15)" 
+                  stroke="rgba(80,120,60,0.4)" 
+                  strokeWidth="1"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.setAttribute('r', '8')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.setAttribute('r', '6')
+                  }}
+                  onClick={(e) => {
+                    const svg = e.currentTarget.ownerSVGElement
+                    if (svg) {
+                      const rect = svg.getBoundingClientRect()
+                      setMapTooltip({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        title: '赵나라',
+                        text: '赵나라 — 이미 秦에 멸망. 燕도 다음 차례임을 알고 있었어.'
+                      })
+                    }
+                  }}
+                />
+                
+                {/* 秦国 */}
+                <circle 
+                  cx="518" 
+                  cy="210" 
+                  r="8" 
+                  fill="rgba(140,40,40,0.2)" 
+                  stroke="#b44040" 
+                  strokeWidth="1.5"
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.setAttribute('r', '10')
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.setAttribute('r', '8')
+                  }}
+                  onClick={(e) => {
+                    const svg = e.currentTarget.ownerSVGElement
+                    if (svg) {
+                      const rect = svg.getBoundingClientRect()
+                      setMapTooltip({
+                        x: e.clientX - rect.left,
+                        y: e.clientY - rect.top,
+                        title: '秦나라',
+                        text: '秦나라 수도 咸陽 — 荆轲의 목적지. 실패한 곳.'
+                      })
+                    }
+                  }}
+                />
+              </svg>
+              
+              {/* 地图下方图例 */}
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginTop: '24px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1.5px solid #c9a84c' }}></div>
+                  <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>클릭 가능</span>
                 </div>
-                
-                {/* 点击提示框 */}
-                {mapTooltip && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      left: `${mapTooltip.x + 20}px`,
-                      top: `${mapTooltip.y - 10}px`,
-                      background: '#141210',
-                      border: '1px solid rgba(201,168,76,0.3)',
-                      padding: '10px 14px',
-                      fontSize: '12px',
-                      color: '#b8ad98',
-                      fontFamily: "'Noto Serif KR', serif",
-                      lineHeight: 1.6,
-                      maxWidth: '280px',
-                      zIndex: 100,
-                      borderRadius: '4px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
-                    }}
-                  >
-                    <div style={{ fontSize: '13px', color: '#c9a84c', fontWeight: 'bold', marginBottom: '6px' }}>
-                      {mapTooltip.title}
-                    </div>
-                    <div>{mapTooltip.text}</div>
-                  </div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(58,95,138,0.2)', border: '1.5px solid #3a5f8a' }}></div>
+                  <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>易水</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '12px', height: '12px', borderRadius: '50%', background: 'rgba(140,40,40,0.2)', border: '1.5px solid #b44040' }}></div>
+                  <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>秦나라</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ width: '40px', height: '2px', background: 'repeating-linear-gradient(to right, #c9a84c 0, #c9a84c 6px, transparent 6px, transparent 10px)' }}></div>
+                  <span style={{ fontSize: '11px', color: C.paper2, fontFamily: "'Noto Serif KR', serif" }}>荆轲 경로</span>
+                </div>
               </div>
+              
+              {/* 点击提示框 */}
+              {mapTooltip && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: `${mapTooltip.x + 20}px`,
+                    top: `${mapTooltip.y - 10}px`,
+                    background: '#141210',
+                    border: '1px solid rgba(201,168,76,0.3)',
+                    padding: '10px 14px',
+                    fontSize: '12px',
+                    color: '#b8ad98',
+                    fontFamily: "'Noto Serif KR', serif",
+                    lineHeight: 1.6,
+                    maxWidth: '280px',
+                    zIndex: 100,
+                    borderRadius: '4px',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                  }}
+                >
+                  <div style={{ fontSize: '13px', color: '#c9a84c', fontWeight: 'bold', marginBottom: '6px' }}>
+                    {mapTooltip.title}
+                  </div>
+                  <div>{mapTooltip.text}</div>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '64px', color: C.muted2 }}>
-              <p style={{ fontSize: '16px', fontFamily: "'Noto Serif KR', serif" }}>준비 중</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* 7. 모듈4: 荆轲 이야기 타임라인 */}
         {dynasty.storyTimeline && dynasty.storyTimeline.length > 0 && (

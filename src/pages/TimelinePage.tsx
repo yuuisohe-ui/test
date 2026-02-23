@@ -36,7 +36,7 @@ const dynasties: Dynasty[] = [
       korean: ["칼을 붓 삼아, 태초의 우주를 기록하다", "형태로 뜻을 나타내고, 산과 강을 그리다"],
     },
     idioms: ["以形表意"],
-    greeting: "夏商周时期，甲骨文的出现标志着中华文明的文字起源。让我们一起探索这个时代的文化瑰宝吧！",
+    greeting: "하·상·주 시대에 갑골문의 등장은 중화 문명의 문자 기원을 상징합니다. 함께 이 시대의 문화적 보물을 탐험해 봅시다!",
   },
   {
     id: "2",
@@ -52,7 +52,7 @@ const dynasties: Dynasty[] = [
       korean: ["바람은 쓸쓸하고 역수는 차갑구나", "장사는 한 번 가면 돌아오지 않으리"],
     },
     idioms: ["一去不复返"],
-    greeting: "先秦时期，荆轲的故事与《壮士吟》让我们看见了那个时代的侠义精神。让我们一起探索吧！",
+    greeting: "선진 시대에 형가의 이야기와 《장사음》은 그 시대의 협의(侠义) 정신을 보여줍니다. 함께 탐험해 봅시다!",
   },
   {
     id: "3",
@@ -161,10 +161,16 @@ const dynasties: Dynasty[] = [
     name: "五代十国",
     period: "AD 907 – 979",
     korName: "오대십국",
-    badge: "분열의 시대 · 72년간 5개 왕조",
-    hook: '"당나라가 무너진 후 72년간 5개 왕조가 교체됐어. 혼란 속에서도 문화는 살아남았어"',
+    badge: "📜 망국 황제의 노래 · 几多愁",
+    hook: '"당나라가 무너진 후 72년간 5개 왕조가 교체됐어. 나라를 잃은 황제가 남긴 시름은 봄 강물처럼 흘러가"',
     backgroundImage: "/images/五代十国.jpeg",
-    greeting: "五代十国时期，虽然政治分裂，但文化依然在传承和发展。",
+    videoId: "RPmHMzEqUMc",
+    lyrics: {
+      chinese: ["问君能有几多愁，恰似一江春水向东流", "春花秋月何时了，往事知多少"],
+      korean: ["그대에게 묻노니 시름이 얼마나 되느냐, 마치 봄 강물이 동쪽으로 흘러가는 것과 같구나", "봄꽃과 가을 달은 언제 끝나려나, 지난 일들을 얼마나 알겠는가"],
+    },
+    idioms: ["一江春水"],
+    greeting: "나라를 잃은 황제가 남긴 천 년의 시 — 이욱과 함께 망국의 시름을 느껴봐요. 《几多愁》와 함께 오대십국을 여행해봐요.",
   },
   {
     id: "10",
@@ -219,30 +225,48 @@ const dynasties: Dynasty[] = [
     name: "清朝",
     period: "AD 1644 – 1912",
     korName: "청나라",
-    badge: "마지막 황제 · 경극",
-    hook: '"만주족이 세운 마지막 왕조 — 경극과 전통문화의 집대성"',
+    badge: "🏮 원명원의 노래 · 我曾",
+    hook: '"만원지원 원명원의 영광과 치욕 — 옥이 부서지던 그날을 기억한다"',
     backgroundImage: "/images/清朝.jpg",
-    greeting: "清朝时期的文化传承，为我们留下了丰富的文化遗产。",
+    videoId: "-R_7J4TGaCE",
+    lyrics: {
+      chinese: ["万园成一，天移地缩", "君不见当年旧亭阁，玉碎珠沉零落"],
+      korean: ["만 개의 정원이 하나로 모이고, 하늘과 땅이 옮겨져 축소되었다", "그대는 보지 못했는가, 당년의 옛 누각들이, 옥이 부서지고 구슬이 가라앉듯 흩어져버린 것을"],
+    },
+    idioms: ["玉碎珠沉"],
+    greeting: "만원지원 원명원의 영광과 치욕 — 《我曾》과 함께 청나라를 여행해봐요.",
   },
   {
     id: "14",
     name: "民国",
     period: "AD 1912 – 1949",
     korName: "중화민국",
-    badge: "상하이 황금시대 · 재즈",
+    badge: "🌸 야래향의 노래 · 夜来香",
     hook: '"1930년대 상하이 — 동양의 파리라 불리던 그 시대의 노래들"',
     backgroundImage: "https://images.unsplash.com/photo-1474181487882-5abf3f0ba6c2?w=800&h=600&fit=crop&q=80",
-    greeting: "民国时期是文化转型的重要阶段，新文化运动影响深远。",
+    greeting: "전쟁과 혼란의 시대, 상하이의 밤을 밝힌 향기예요. 등려군의 목소리로 민국 시대를 느껴봐요.",
+    videoId: "L9yCjitoguo",
+    lyrics: {
+      chinese: ["月下的花儿都入梦，只有那夜来香吐露着芬芳", "夜来香，我为你歌唱，夜来香，我为你思量"],
+      korean: ["달빛 아래 꽃들은 모두 꿈속으로 들어가고, 오직 저 야래향만이 향기를 내뿜는다", "야래향이여, 나는 너를 위해 노래하고, 야래향이여, 나는 너를 위해 그리워한다"]
+    },
+    idioms: ["夜来香"],
   },
   {
     id: "15",
     name: "现代",
     period: "AD 1949 – 현재",
     korName: "현대 중국",
-    badge: "현대 중화권 팝 · C-POP",
+    badge: "🏅 베이징 올림픽의 노래 · 北京欢迎你",
     hook: '"덩리쥔부터 주걸륜까지 — 현대 중국어 팝의 모든 것"',
     backgroundImage: "https://images.unsplash.com/photo-1536431311719-398b6704d4cc?w=800&h=600&fit=crop&q=80",
-    greeting: "现代中国，传统文化与现代文明交相辉映。",
+    greeting: "2008년 베이징 올림픽, 중국이 세계에 문을 활짝 열었어요. 《北京欢迎你》와 함께 현대 중국을 만나봐요.",
+    videoId: "T6gsbI35SH4",
+    lyrics: {
+      chinese: ["北京欢迎你，为你开天辟地", "有梦想谁都了不起，有勇气就会有奇迹"],
+      korean: ["베이징이 너를 환영한다, 너를 위해 천지를 열어젖힌다", "꿈이 있으면 누구나 대단하고, 용기가 있으면 기적이 생긴다"]
+    },
+    idioms: ["开天辟地"],
   },
 ];
 
@@ -261,7 +285,7 @@ interface TimelinePageProps {
 
 export default function TimelinePage({ onNavigateToDetail, onExpandedChange }: TimelinePageProps) {
   const [showIntro, setShowIntro] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [aiPanelMessages, setAiPanelMessages] = useState<Message[]>([]); // 右侧AI面板消息
   const [aiPanelInput, setAiPanelInput] = useState(""); // 右侧AI面板输入
@@ -340,14 +364,18 @@ export default function TimelinePage({ onNavigateToDetail, onExpandedChange }: T
     }
   }, [showIntro]);
 
-  // 切换展开状态（手风琴效果）
+  // 切换展开状态（多卡片同时展开）
   const toggleExpand = (id: string) => {
-    const isCurrentlyExpanded = expandedId === id;
-    const newExpandedId = isCurrentlyExpanded ? null : id;
-    setExpandedId(newExpandedId);
-    onExpandedChange?.(newExpandedId);
+    const isCurrentlyExpanded = expandedIds.has(id);
+    setExpandedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      onExpandedChange?.(next.size > 0 ? id : null);
+      return next;
+    });
     setPlayingVideoId(null);
-    
+
     // 展开新卡片时清空AI面板消息
     if (!isCurrentlyExpanded) {
       setAiPanelMessages([]);
@@ -471,6 +499,38 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
       };
       setAiPanelMessages([fixedMessage]);
       return;
+    } else if (idiom === "丹青") {
+      speak("丹青一卷传天下", 0.7);
+      const fixedMessage_dq: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `丹青 (dān qīng)
+
+'丹(단)'은 붉은색, '青(청)'은 푸른색 안료를 뜻해. 이 두 색이 그림의 기본 재료였기 때문에 '그림·회화' 전체를 가리키는 말이 됐어.
+
+한국 궁궐과 사찰의 화려한 채색 장식 '단청'이 바로 이 단어에서 온 거야 — 한자도 발음도 거의 같아
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage_dq]);
+      return;
+    } else if (idiom === "纸寿千年") {
+      speak("纸寿千年醉美中华", 0.7);
+      const fixedMessage_zs: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `纸寿千年 (zhǐ shòu qiān nián)
+
+한나라 채륜이 개량한 전통 종이(선지·한지)는 잘 보관하면 천 년이 지나도 글씨와 그림이 보존될 수 있어. 그래서 '종이의 수명은 천 년'이라는 표현이 생겼어.
+
+한국의 전통 한지도 이 기술이 실크로드를 통해 전해진 거야 — 천 년을 버티는 종이가 두 나라의 문화를 연결하고 있어
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage_zs]);
+      return;
     } else if (idiom === "尔虞我诈") {
       speakText("尔虞我诈是三国 说不清对与错");
       const fixedMessage: Message = {
@@ -579,6 +639,82 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
 명나라 의학자 이시진(李時珍)이 27년간 전국을 돌아다니며 완성한 약학 백과사전이에요. 총 52권에 1,892종의 약재와 11,000여 개의 처방이 담겨 있고, 찰스 다윈도 참고한 동아시아 최대 과학 고전이에요.
 
 「약초의 모든 것을 담은 집념의 기록」— 한 사람의 27년이 천 년의 의학을 바꾼다
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "一江春水") {
+      speak("问君能有几多愁，恰似一江春水向东流", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `一江春水 (yī jiāng chūn shuǐ)
+
+남당(南唐) 마지막 황제 이욱(李煜)이 나라를 잃고 포로가 된 후 지은 사(詞)의 명구예요.
+
+「问君能有几多愁，恰似一江春水向东流」
+— 그대에게 묻노니 시름이 얼마나 되느냐, 마치 봄 강물이 동쪽으로 흘러가는 것과 같구나
+
+봄 강물이 끝없이 동쪽으로 흘러 바다로 사라지듯, 되돌릴 수 없는 상실의 슬픔을 표현했어요.
+한국어 '수심(愁心)'의 愁가 바로 이 시의 핵심 글자예요.
+
+「시인은 망했지만 시는 천 년을 살았다」
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "玉碎珠沉") {
+      speak("君不见当年旧亭阁，玉碎珠沉零落", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `玉碎珠沉 (yù suì zhū chén)
+
+옥이 부서지고 구슬이 가라앉는다 — 귀하고 아름다운 것이 완전히 파괴되는 것을 뜻해요.
+
+「君不见当年旧亭阁，玉碎珠沉零落」
+— 그대는 보지 못했는가, 당년의 옛 누각들이, 옥이 부서지고 구슬이 가라앉듯 흩어져버린 것을
+
+1860년 영불연합군이 원명원(圓明園)을 3일간 약탈하고 불태운 사건을 가리켜요.
+세계 최대의 황실 정원이 재가 된 그날은 지금도 중국인들에게 국치(國恥)의 상징이에요.
+
+「만원지원이 사라진 날, 우리는 무엇을 잃었는가」
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "夜来香") {
+      speak("月下的花儿都入梦，只有那夜来香吐露着芬芳", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `夜来香 (yè lái xiāng)
+
+밤에만 향기를 내뿜는 꽃이에요. 1944년 상하이에서 작곡된 이 노래는 일본 점령 하의 혼란 속에서도 피어난 아름다움을 담았어요. 훗날 등려군이 다시 불러 아시아 전역에서 사랑받게 되었고, 민국 시대 상하이를 상징하는 노래가 되었어요.
+
+「밤이 되면 찾아오는 향기」— 어둠 속에서 더 빛나는 아름다움을 표현할 때 사용
+
+더 궁금한 게 있어? 아래에 물어봐!`,
+        timestamp: new Date(),
+      };
+      setAiPanelMessages([fixedMessage]);
+      return;
+    } else if (idiom === "开天辟地") {
+      speak("北京欢迎你，为你开天辟地", 0.7);
+      const fixedMessage: Message = {
+        id: Date.now().toString(),
+        type: "ai",
+        content: `开天辟地 (kāi tiān pì dì)
+
+중국 창세 신화의 거인 반고(盤古)가 혼돈의 알을 깨고 하늘과 땅을 만들었다는 이야기에서 유래한 성어예요. 2008년 베이징 올림픽 노래에서 '너를 위해 천지를 열어젖힌다'는 표현으로 쓰이며, 중국이 세계에 완전히 새로운 모습으로 문을 연다는 의미를 담았어요. 한국어 '개벽(開闢)'이 바로 이 성어에서 온 표현이에요.
+
+「전례 없는 완전히 새로운 시작」— 역사적 전환점이나 획기적인 변화를 표현할 때 사용
 
 더 궁금한 게 있어? 아래에 물어봐!`,
         timestamp: new Date(),
@@ -718,37 +854,6 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "32px" }}>
-            <div
-              style={{
-                opacity: introElementsVisible.square ? 1 : 0,
-                transform: introElementsVisible.square ? "translateY(0)" : "translateY(16px)",
-                transition: "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
-            >
-              <div
-                className="stamp-box"
-                style={{
-                  width: "110px",
-                  height: "110px",
-                  border: "1.5px solid #c9a84c",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  position: "relative",
-                }}
-              >
-                <span
-                  style={{
-                    fontFamily: "'Ma Shan Zheng', serif",
-                    fontSize: "54px",
-                    color: "#c9a84c",
-                  }}
-                >
-                  词
-                </span>
-              </div>
-            </div>
-
             <h1
               style={{
                 fontFamily: "'Ma Shan Zheng', serif",
@@ -875,1872 +980,549 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
           {/* 朝代行 */}
           {dynasties.map((dynasty, index) => {
             const isLeft = index % 2 === 0;
-            const isExpanded = expandedId === dynasty.id;
+            const isExpanded = expandedIds.has(dynasty.id);
             const isVisible = visibleCards.has(index);
-            const hasContent = dynasty.videoId || dynasty.videoIds;
 
-            return (
-              <div key={dynasty.id} style={{ marginBottom: "48px", position: "relative" }}>
-                {/* 朝代行 - Grid布局 */}
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 60px 1fr",
-                    position: "relative",
-                  }}
-                >
-                  {/* 左侧列 */}
-                  <div
-                    style={{
-                      paddingRight: "24px",
-                      display: "flex",
-                      justifyContent: "flex-end",
-                      flexDirection: "column",
-                      alignItems: "flex-end",
-                      position: "relative",
-                    }}
-                  >
-                    {/* 对话气泡 - 当右侧卡片被点击时显示在左侧 */}
-                    {!isLeft && speechBubbleId === dynasty.id && dynasty.greeting && (
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          marginBottom: 0,
-                          marginTop: 0,
-                          padding: "16px 20px",
-                          backgroundColor: "rgba(201,168,76,0.15)",
-                          border: "1px solid rgba(201,168,76,0.3)",
-                          borderRadius: "12px",
-                          position: "absolute",
-                          top: "220px",
-                          right: 0,
-                          zIndex: 10,
-                          animation: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                        }}
-                      >
-                        {/* 气泡尾巴 - 指向右侧 */}
+            // ── 共用：朝代卡片 ──────────────────────────────
+            const dynastyCard = (
+              <div
+                onClick={() => toggleExpand(dynasty.id)}
+                style={{
+                  width: "100%",
+                  height: dynasty.id === "1" ? "300px" : "220px",
+                  position: "relative",
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  border: isExpanded
+                    ? "1px solid rgba(201,168,76,0.4)"
+                    : dynasty.id === "1"
+                    ? "1px solid rgba(201,168,76,0.25)"
+                    : "1px solid rgba(201,168,76,0.15)",
+                  transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(201,168,76,0.4)";
+                  const img = e.currentTarget.querySelector("img");
+                  if (img) img.style.filter = "grayscale(0%) brightness(0.6)";
+                }}
+                onMouseLeave={(e) => {
+                  if (!isExpanded) {
+                    e.currentTarget.style.borderColor =
+                      dynasty.id === "1" ? "rgba(201,168,76,0.25)" : "rgba(201,168,76,0.15)";
+                    const img = e.currentTarget.querySelector("img");
+                    if (img) img.style.filter = "grayscale(20%) brightness(0.45)";
+                  }
+                }}
+              >
+                {dynasty.backgroundImage && (
+                  <>
+                    <img
+                      src={dynasty.backgroundImage}
+                      alt={dynasty.name}
+                      style={{
+                        position: "absolute", inset: 0, width: "100%", height: "100%",
+                        objectFit: "cover", filter: "grayscale(20%) brightness(0.45)",
+                        transition: "filter 0.6s ease",
+                      }}
+                      onError={(e) => {
+                        if (dynasty.id === "1") {
+                          (e.target as HTMLImageElement).src =
+                            "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=60";
+                        }
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute", inset: 0,
+                        background: dynasty.id === "1"
+                          ? "linear-gradient(160deg, rgba(12,11,8,0.9) 0%, rgba(12,11,8,0.3) 60%, transparent)"
+                          : "linear-gradient(160deg, rgba(12,11,8,0.85) 0%, rgba(12,11,8,0.15) 70%, transparent)",
+                      }}
+                    />
+                  </>
+                )}
+                {dynasty.badge && (
+                  <div style={{ position: "absolute", top: "14px", right: "14px" }}>
+                    <span style={{
+                      padding: "5px 12px", backgroundColor: "rgba(12,11,8,0.7)",
+                      backdropFilter: "blur(4px)", border: "1px solid rgba(201,168,76,0.3)",
+                      borderRadius: "0", fontSize: "10px", color: "#c9a84c",
+                      letterSpacing: "1px", whiteSpace: "nowrap",
+                    }}>
+                      {dynasty.badge}
+                    </span>
+                  </div>
+                )}
+                <div style={{ position: "absolute", bottom: "20px", left: "22px" }}>
+                  <h2 style={{
+                    fontFamily: "'Ma Shan Zheng', serif",
+                    fontSize: dynasty.id === "1" ? "60px" : "48px",
+                    color: "#c9a84c", textShadow: "0 2px 16px rgba(0,0,0,0.9)",
+                    margin: 0, lineHeight: 1,
+                  }}>
+                    {dynasty.name}
+                  </h2>
+                  {dynasty.korName && (
+                    <p style={{
+                      fontSize: "11px", color: "rgba(240,234,216,0.5)",
+                      letterSpacing: "3px", margin: "4px 0 0 0",
+                      fontFamily: "'Noto Serif KR', serif",
+                    }}>
+                      {dynasty.korName}
+                    </p>
+                  )}
+                  <p style={{ fontSize: "9px", color: "#b8ad98", margin: "4px 0 0 0" }}>
+                    {dynasty.period}
+                  </p>
+                </div>
+              </div>
+            );
+
+            // ── 공유：展开内容（hook + 영상 + 가사 + 버튼） ─────
+            const expandedContent = (
+              <div
+                style={{ padding: "28px 32px", background: "#0e0d0a", borderTop: "1px solid rgba(201,168,76,0.08)" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {dynasty.hook && (
+                  <div style={{
+                    marginBottom: "20px", padding: "16px 20px",
+                    background: "rgba(201,168,76,0.08)", border: "1px solid rgba(201,168,76,0.2)",
+                  }}>
+                    <p style={{
+                      fontSize: "13px", color: "#c9a84c", lineHeight: 1.8,
+                      margin: 0, fontFamily: "'Noto Serif KR', serif", fontStyle: "italic",
+                    }}>
+                      {dynasty.hook}
+                    </p>
+                  </div>
+                )}
+                {/* 영상 */}
+                <div style={{ marginBottom: "24px" }}>
+                  {dynasty.videoId ? (
+                    <div style={{
+                      aspectRatio: "16/9", width: "100%", maxHeight: "200px",
+                      backgroundColor: "#0a0908", border: "1px solid rgba(201,168,76,0.1)",
+                      overflow: "hidden", position: "relative",
+                      backgroundImage: dynasty.id === "1" && dynasty.videoId
+                        ? `url(https://img.youtube.com/vi/${dynasty.videoId}/hqdefault.jpg)`
+                        : dynasty.backgroundImage ? `url(${dynasty.backgroundImage})` : "none",
+                      backgroundSize: "cover", backgroundPosition: "center",
+                    }}>
+                      {dynasty.backgroundImage && (
+                        <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.6)" }} />
+                      )}
+                      {playingVideoId === dynasty.videoId ? (
+                        <iframe
+                          src={`https://www.youtube.com/embed/${dynasty.videoId}?autoplay=1`}
+                          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+                          allow="autoplay;fullscreen" allowFullScreen
+                        />
+                      ) : (
                         <div
                           style={{
-                            position: "absolute",
-                            right: "-8px",
-                            top: "24px",
-                            width: 0,
-                            height: 0,
-                            borderTop: "8px solid transparent",
-                            borderBottom: "8px solid transparent",
-                            borderLeft: "8px solid rgba(201,168,76,0.3)",
+                            position: "absolute", inset: 0, display: "flex",
+                            alignItems: "center", justifyContent: "center",
+                            cursor: "pointer", backgroundColor: "rgba(0,0,0,0.5)",
                           }}
-                        ></div>
-                        <div
-                          style={{
-                            position: "absolute",
-                            right: "-7px",
-                            top: "24px",
-                            width: 0,
-                            height: 0,
-                            borderTop: "7px solid transparent",
-                            borderBottom: "7px solid transparent",
-                            borderLeft: "7px solid rgba(201,168,76,0.15)",
-                          }}
-                        ></div>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            color: "#f0ead8",
-                            lineHeight: 1.6,
-                            margin: 0,
-                          }}
+                          onClick={(e) => handlePlayClick(dynasty.videoId!, e)}
+                          onMouseEnter={() => setPlayButtonHovered((prev) => ({ ...prev, [dynasty.videoId!]: true }))}
+                          onMouseLeave={() => setPlayButtonHovered((prev) => ({ ...prev, [dynasty.videoId!]: false }))}
                         >
-                          {dynasty.greeting}
-                        </p>
-                      </div>
-                    )}
-                    {/* 右侧卡片的AI面板 - 显示在左侧列greeting气泡下面 */}
-                    {!isLeft && isExpanded && (
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          position: "absolute",
-                          top: "calc(220px + 98px + 16px)",
-                          right: 0,
-                          zIndex: 10,
-                          background: "rgba(8,7,5,0.95)",
-                          border: "1px solid rgba(201,168,76,0.15)",
-                          padding: "20px 18px",
-                          display: "flex",
-                          flexDirection: "column",
-                          maxHeight: "400px",
-                          borderRadius: "8px",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* AI面板头部 */}
-                        <div 
-                          style={{ marginBottom: "16px", cursor: "pointer" }}
-                        >
-                          <div style={{ 
-                            fontSize: "14px",
-                            color: "#c9a84c",
-                            letterSpacing: "3px", 
-                            marginBottom: "8px", 
-                            fontFamily: "'Noto Serif KR', serif",
-                            fontWeight: "bold"
+                          <div style={{
+                            width: "64px", height: "64px", borderRadius: "50%",
+                            border: "1.5px solid #c9a84c",
+                            backgroundColor: playButtonHovered[dynasty.videoId!] ? "#c9a84c" : "transparent",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+                            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
                           }}>
-                            학습 도우미
+                            <svg style={{
+                              width: "32px", height: "32px", marginLeft: "4px",
+                              fill: playButtonHovered[dynasty.videoId!] ? "#0c0b08" : "#c9a84c",
+                              transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                            }} viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
                           </div>
-                          <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }} />
                         </div>
-
-                        {/* 消息区域 */}
-                        <div
-                          ref={messagesEndRef}
-                          style={{
-                            flex: 1,
-                            overflowY: "auto",
-                            marginBottom: "16px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "12px",
-                          }}
-                        >
-                          {aiPanelMessages.length === 0 ? (
+                      )}
+                    </div>
+                  ) : dynasty.videoIds ? (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "16px" }}>
+                      {dynasty.videoIds.map((videoId, vidIndex) => (
+                        <div key={vidIndex} style={{
+                          aspectRatio: "16/9", width: "100%", backgroundColor: "#000",
+                          borderRadius: "8px", overflow: "hidden", position: "relative",
+                          backgroundImage: dynasty.backgroundImage ? `url(${dynasty.backgroundImage})` : "none",
+                          backgroundSize: "cover", backgroundPosition: "center",
+                        }}>
+                          {dynasty.backgroundImage && (
+                            <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.6)" }} />
+                          )}
+                          {playingVideoId === videoId ? (
+                            <iframe
+                              src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+                              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: "none" }}
+                              allow="autoplay;fullscreen" allowFullScreen
+                            />
+                          ) : (
                             <div
                               style={{
-                                fontSize: "12px",
-                                color: "#6b5520",
-                                textAlign: "center",
-                                padding: "20px",
-                                fontFamily: "'Noto Serif KR', serif",
+                                position: "absolute", inset: 0, display: "flex",
+                                alignItems: "center", justifyContent: "center", cursor: "pointer",
                               }}
+                              onClick={(e) => handlePlayClick(videoId, e)}
+                              onMouseEnter={() => setPlayButtonHovered((prev) => ({ ...prev, [videoId]: true }))}
+                              onMouseLeave={() => setPlayButtonHovered((prev) => ({ ...prev, [videoId]: false }))}
                             >
-                              금색 단어를 클릭해보세요 ✦
+                              <div style={{
+                                width: "56px", height: "56px", borderRadius: "50%",
+                                border: "1.5px solid #c9a84c",
+                                backgroundColor: playButtonHovered[videoId] ? "#c9a84c" : "transparent",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
+                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                              }}>
+                                <svg style={{
+                                  width: "28px", height: "28px", marginLeft: "4px",
+                                  fill: playButtonHovered[videoId] ? "#0c0b08" : "#c9a84c",
+                                  transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                                }} viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z" />
+                                </svg>
+                              </div>
                             </div>
-                          ) : (
-                            <>
-                              {aiPanelMessages.map((message) => (
-                                <div
-                                  key={message.id}
-                                  style={{
-                                    padding: "14px 16px",
-                                    background:
-                                      message.type === "ai"
-                                        ? "rgba(201,168,76,0.06)"
-                                        : "rgba(201,168,76,0.1)",
-                                    border: "1px solid rgba(201,168,76,0.1)",
-                                    borderRadius: "0 6px 6px 6px",
-                                    fontSize: "12px",
-                                    color: "#c0b8a0",
-                                    lineHeight: 2,
-                                    whiteSpace: "pre-line",
-                                    fontFamily: "'Noto Serif KR', serif",
-                                  }}
-                                >
-                                  {message.content}
-                                </div>
-                              ))}
-                              {/* 快速问题chips */}
-                              {aiPanelMessages.length > 0 &&
-                                aiPanelMessages[0].content.includes("一去不复返") &&
-                                aiPanelMessages.length === 1 && (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "8px",
-                                      marginTop: "12px",
-                                    }}
-                                  >
-                                    {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map(
-                                      (question) => (
-                                        <button
-                                          key={question}
-                                          onClick={() => handleQuickQuestion(question)}
-                                          style={{
-                                            border: "1px solid rgba(201,168,76,0.2)",
-                                            background: "transparent",
-                                            color: "#6b5520",
-                                            fontSize: "10px",
-                                            padding: "8px 12px",
-                                            cursor: "pointer",
-                                            borderRadius: 0,
-                                            textAlign: "left",
-                                            fontFamily: "'Noto Serif KR', serif",
-                                            transition: "all 0.3s",
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            e.currentTarget.style.color = "#c9a84c";
-                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.currentTarget.style.color = "#6b5520";
-                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)";
-                                          }}
-                                        >
-                                          {question}
-                                        </button>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-                            </>
                           )}
                         </div>
-
-                        {/* 输入区域 */}
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            type="text"
-                            value={aiPanelInput}
-                            onChange={(e) => setAiPanelInput(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                handleSendAIPanelMessage();
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{
+                      aspectRatio: "16/9", width: "100%", maxHeight: "200px",
+                      backgroundColor: "#0a0908", border: "1px solid rgba(201,168,76,0.1)",
+                      overflow: "hidden", position: "relative",
+                      backgroundImage: dynasty.backgroundImage ? `url(${dynasty.backgroundImage})` : "none",
+                      backgroundSize: "cover", backgroundPosition: "center",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      {dynasty.backgroundImage && (
+                        <div style={{ position: "absolute", inset: 0, backgroundColor: "rgba(0,0,0,0.7)" }} />
+                      )}
+                      <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "rgba(240,234,216,0.5)", fontSize: "14px" }}>
+                        준비 중
+                      </div>
+                    </div>
+                  )}
+                </div>
+                {/* 가사 */}
+                <div style={{ marginBottom: "24px" }}>
+                  {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 ? (
+                    <div
+                      style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName === "SPAN" && target.getAttribute("data-idiom")) {
+                          handleIdiomClick(target.getAttribute("data-idiom") || "", dynasty.id);
+                        }
+                      }}
+                    >
+                      {dynasty.lyrics.chinese.map((line, lineIndex) => (
+                        <div key={lineIndex}>
+                          <p
+                            style={{
+                              fontSize: "18px", letterSpacing: "3px", color: "#f0ead8",
+                              margin: 0, marginBottom: "4px", fontFamily: "'Noto Serif SC', serif",
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html:
+                                dynasty.id === "2" && lineIndex === 1
+                                  ? line.replace(/(一去啊不归还)/g, '<span id="idiom-span-一去不复返" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一去不复返">$1</span>')
+                                  : dynasty.id === "1" && lineIndex === 1
+                                  ? line.replace(/(以形表意)/g, '<span id="idiom-span-以形表意" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="以形表意">$1</span>')
+                                  : dynasty.id === "3" && lineIndex === 1
+                                  ? line.replace(/(没齿难忘)/g, '<span id="idiom-span-没齿难忘" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="没齿难忘">$1</span>')
+                                  : dynasty.id === "4" && lineIndex === 0
+                                  ? line.replace(/(丹青)/g, '<span id="idiom-span-丹青" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="丹青">$1</span>')
+                                  : dynasty.id === "4" && lineIndex === 1
+                                  ? line.replace(/(纸寿千年)/g, '<span id="idiom-span-纸寿千年" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="纸寿千年">$1</span>')
+                                  : dynasty.id === "5" && lineIndex === 1
+                                  ? line.replace(/(尔虞我诈)/g, '<span id="idiom-span-尔虞我诈" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="尔虞我诈">$1</span>')
+                                  : dynasty.id === "6" && lineIndex === 0
+                                  ? line.replace(/(竹林七贤)/g, '<span id="idiom-span-竹林七贤" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="竹林七贤">$1</span>')
+                                  : dynasty.id === "7" && lineIndex === 8
+                                  ? line.replace(/(生生不息)/g, '<span id="idiom-span-生生不息" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="生生不息">$1</span>')
+                                  : dynasty.id === "8" && lineIndex === 3
+                                  ? line.replace(/(酒中仙)/g, '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>')
+                                  : dynasty.id === "10" && lineIndex === 0
+                                  ? line.replace(/(雕琢)/g, '<span id="idiom-span-雕琢" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="雕琢">$1</span>')
+                                  : dynasty.id === "11" && lineIndex === 0
+                                  ? line.replace(/(天青色)/g, '<span id="idiom-span-天青色" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="天青色">$1</span>')
+                                  : dynasty.id === "12" && lineIndex === 1
+                                  ? line.replace(/(本草纲目)/g, '<span id="idiom-span-本草纲目" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="本草纲目">$1</span>')
+                                  : dynasty.id === "9" && lineIndex === 0
+                                  ? line.replace(/(一江春水)/g, '<span id="idiom-span-一江春水" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一江春水">$1</span>')
+                                  : dynasty.id === "13" && lineIndex === 1
+                                  ? line.replace(/(玉碎珠沉)/g, '<span id="idiom-span-玉碎珠沉" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="玉碎珠沉">$1</span>')
+                                  : dynasty.id === "14" && lineIndex === 1
+                                  ? line.replace(/(夜来香)/g, '<span id="idiom-span-夜来香" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="夜来香">$1</span>')
+                                  : dynasty.id === "15" && lineIndex === 0
+                                  ? line.replace(/(开天辟地)/g, '<span id="idiom-span-开天辟地" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="开天辟地">$1</span>')
+                                  : highlightIdioms(line, dynasty.idioms || []),
+                            }}
+                            onClick={(e) => {
+                              const target = e.target as HTMLElement;
+                              if (target.tagName === "SPAN" && target.getAttribute("data-idiom")) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleIdiomClick(target.getAttribute("data-idiom") || "", dynasty.id);
                               }
                             }}
-                            placeholder="더 물어보세요..."
-                            style={{
-                              flex: 1,
-                              padding: "10px 12px",
-                              background: "rgba(255,255,255,0.03)",
-                              border: "1px solid rgba(201,168,76,0.15)",
-                              borderRadius: 0,
-                              color: "#f0ead8",
-                              fontSize: "12px",
-                              fontFamily: "'Noto Serif KR', serif",
-                            }}
                           />
-                          <button
-                            onClick={handleSendAIPanelMessage}
-                            style={{
-                              padding: "10px 16px",
-                              background: "transparent",
-                              border: "1px solid rgba(201,168,76,0.15)",
-                              color: "#ffffff",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              borderRadius: 0,
-                              fontFamily: "'Noto Serif KR', serif",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "rgba(201,168,76,0.15)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "transparent";
-                            }}
-                          >
-                            전송
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {isLeft && (
-                      <div
-                        ref={(el) => {
-                          cardRefs.current[index] = el;
-                        }}
-                        style={{
-                          width: "100%",
-                          maxWidth: "440px",
-                          transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                          opacity: isVisible ? 1 : 0,
-                          transform: isVisible 
-                            ? (expandedId ? (() => {
-                                const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
-                                return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
-                              })() : "translateY(0)")
-                            : "translateY(40px)",
-                        }}
-                      >
-                        {/* 朝代卡片 */}
-                        <div
-                          onClick={() => toggleExpand(dynasty.id)}
-                          style={{
-                            width: "100%",
-                            height: dynasty.id === "1" ? "300px" : "220px",
-                            position: "relative",
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            border: isExpanded
-                              ? "1px solid rgba(201,168,76,0.4)"
-                              : dynasty.id === "1"
-                              ? "1px solid rgba(201,168,76,0.25)"
-                              : "1px solid rgba(201,168,76,0.15)",
-                            transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.4)";
-                            const img = e.currentTarget.querySelector("img");
-                            if (img) img.style.filter = "grayscale(0%) brightness(0.6)";
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isExpanded) {
-                              e.currentTarget.style.borderColor = dynasty.id === "1" ? "rgba(201,168,76,0.25)" : "rgba(201,168,76,0.15)";
-                              const img = e.currentTarget.querySelector("img");
-                              if (img) img.style.filter = "grayscale(20%) brightness(0.45)";
-                            }
-                          }}
-                        >
-                          {/* 背景图片 */}
-                          {dynasty.backgroundImage && (
-                            <>
-                              <img
-                                src={dynasty.backgroundImage}
-                                alt={dynasty.name}
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  filter: "grayscale(20%) brightness(0.45)",
-                                  transition: "filter 0.6s ease",
-                                }}
-                                onError={(e) => {
-                                  if (dynasty.id === "1") {
-                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=60";
-                                  }
-                                }}
-                              />
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  background:
-                                    dynasty.id === "1"
-                                      ? "linear-gradient(160deg, rgba(12,11,8,0.9) 0%, rgba(12,11,8,0.3) 60%, transparent)"
-                                      : "linear-gradient(160deg, rgba(12,11,8,0.85) 0%, rgba(12,11,8,0.15) 70%, transparent)",
-                                }}
-                              ></div>
-                            </>
-                          )}
-
-                          {/* 右上角badge */}
-                          {dynasty.badge && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "14px",
-                                right: "14px",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  padding: "5px 12px",
-                                  backgroundColor: "rgba(12,11,8,0.7)",
-                                  backdropFilter: "blur(4px)",
-                                  border: "1px solid rgba(201,168,76,0.3)",
-                                  borderRadius: "0",
-                                  fontSize: "10px",
-                                  color: "#c9a84c",
-                                  letterSpacing: "1px",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {dynasty.badge}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* 朝代名称和年代 - 左下角 */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              bottom: "20px",
-                              left: "22px",
-                            }}
-                          >
-                            <h2
-                              style={{
-                                fontFamily: "'Ma Shan Zheng', serif",
-                                fontSize: dynasty.id === "1" ? "60px" : "48px",
-                                color: "#c9a84c",
-                                textShadow: "0 2px 16px rgba(0,0,0,0.9)",
-                                margin: 0,
-                                lineHeight: 1,
-                              }}
-                            >
-                              {dynasty.name}
-                            </h2>
-                            {dynasty.korName && (
-                              <p
-                                style={{
-                                  fontSize: "11px",
-                                  color: "rgba(240,234,216,0.5)",
-                                  letterSpacing: "3px",
-                                  margin: "4px 0 0 0",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                {dynasty.korName}
-                              </p>
-                            )}
-                            <p
-                              style={{
-                                fontSize: "9px",
-                                color: "#b8ad98",
-                                margin: "4px 0 0 0",
-                              }}
-                            >
-                              {dynasty.period}
+                          {dynasty.lyrics?.korean[lineIndex] && (
+                            <p style={{ fontSize: "12px", color: "#7a7060", marginTop: "6px", margin: 0 }}>
+                              {dynasty.lyrics.korean[lineIndex]}
                             </p>
-                          </div>
+                          )}
                         </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                      <div>
+                        <p style={{ fontSize: "18px", letterSpacing: "3px", color: "rgba(240,234,216,0.3)", margin: 0, marginBottom: "4px", fontFamily: "'Noto Serif SC', serif" }}>
+                          准备中...
+                        </p>
+                        <p style={{ fontSize: "12px", color: "rgba(122,112,96,0.3)", marginTop: "6px", margin: 0 }}>
+                          준비 중...
+                        </p>
                       </div>
-                    )}
-                    {/* 展开内容 - 在对应列内（左侧） */}
+                    </div>
+                  )}
+                </div>
+                {/* 상세히 배우기 버튼 */}
+                <button
+                  onClick={(e) => handleLearnMore(e, dynasty.id)}
+                  style={{
+                    width: "100%", padding: "14px", marginTop: "20px",
+                    background: "transparent", border: "1px solid rgba(201,168,76,0.25)",
+                    color: "#c9a84c", fontSize: "12px", letterSpacing: "2px",
+                    borderRadius: 0, cursor: "pointer",
+                    transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                >
+                  ✦ 이 노래 상세히 배우기 →
+                </button>
+              </div>
+            );
+
+            // ── 共用：会话气泡 ──────────────────────────────────
+            const speechBubble = speechBubbleId === dynasty.id && dynasty.greeting ? (
+              <div style={{
+                padding: "16px 20px",
+                backgroundColor: "rgba(201,168,76,0.15)",
+                border: "1px solid rgba(201,168,76,0.3)",
+                borderRadius: "12px",
+                marginBottom: "16px",
+                animation: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+              }}>
+                <p style={{ fontSize: "13px", color: "#f0ead8", lineHeight: 1.6, margin: 0 }}>
+                  {dynasty.greeting}
+                </p>
+              </div>
+            ) : null;
+
+            // ── 共用：AI 면 패널 ────────────────────────────────
+            const aiPanel = (
+              <div
+                style={{
+                  background: "rgba(8,7,5,0.95)",
+                  border: "1px solid rgba(201,168,76,0.15)",
+                  padding: "20px 18px",
+                  display: "flex",
+                  flexDirection: "column",
+                  maxHeight: "400px",
+                  borderRadius: "8px",
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{
+                    fontSize: "14px", color: "#c9a84c", letterSpacing: "3px",
+                    marginBottom: "8px", fontFamily: "'Noto Serif KR', serif", fontWeight: "bold",
+                  }}>
+                    학습 도우미
+                  </div>
+                  <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }} />
+                </div>
+                <div
+                  ref={messagesEndRef}
+                  style={{ flex: 1, overflowY: "auto", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "12px" }}
+                >
+                  {aiPanelMessages.length === 0 ? (
+                    <div style={{ fontSize: "12px", color: "#6b5520", textAlign: "center", padding: "20px", fontFamily: "'Noto Serif KR', serif" }}>
+                      금색 단어를 클릭해보세요 ✦
+                    </div>
+                  ) : (
+                    <>
+                      {aiPanelMessages.map((message) => (
+                        <div key={message.id} style={{
+                          padding: "14px 16px",
+                          background: message.type === "ai" ? "rgba(201,168,76,0.06)" : "rgba(201,168,76,0.1)",
+                          border: "1px solid rgba(201,168,76,0.1)",
+                          borderRadius: "0 6px 6px 6px",
+                          fontSize: "12px", color: "#c0b8a0", lineHeight: 2,
+                          whiteSpace: "pre-line", fontFamily: "'Noto Serif KR', serif",
+                        }}>
+                          {message.content}
+                        </div>
+                      ))}
+                      {aiPanelMessages.length > 0 &&
+                        aiPanelMessages[0].content.includes("一去不复返") &&
+                        aiPanelMessages.length === 1 && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
+                            {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map((question) => (
+                              <button
+                                key={question}
+                                onClick={() => handleQuickQuestion(question)}
+                                style={{
+                                  border: "1px solid rgba(201,168,76,0.2)", background: "transparent",
+                                  color: "#6b5520", fontSize: "10px", padding: "8px 12px",
+                                  cursor: "pointer", borderRadius: 0, textAlign: "left",
+                                  fontFamily: "'Noto Serif KR', serif", transition: "all 0.3s",
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a84c"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.color = "#6b5520"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; }}
+                              >
+                                {question}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                    </>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <input
+                    type="text"
+                    value={aiPanelInput}
+                    onChange={(e) => setAiPanelInput(e.target.value)}
+                    onKeyPress={(e) => { if (e.key === "Enter") handleSendAIPanelMessage(); }}
+                    placeholder="더 물어보세요..."
+                    style={{
+                      flex: 1, padding: "10px 12px",
+                      background: "rgba(255,255,255,0.03)",
+                      border: "1px solid rgba(201,168,76,0.15)",
+                      borderRadius: 0, color: "#f0ead8", fontSize: "12px",
+                      fontFamily: "'Noto Serif KR', serif",
+                    }}
+                  />
+                  <button
+                    onClick={handleSendAIPanelMessage}
+                    style={{
+                      padding: "10px 16px", background: "transparent",
+                      border: "1px solid rgba(201,168,76,0.15)",
+                      color: "#c9a84c", cursor: "pointer", fontSize: "12px",
+                      borderRadius: 0, fontFamily: "'Noto Serif KR', serif",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(201,168,76,0.15)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    전송
+                  </button>
+                </div>
+              </div>
+            );
+
+            return (
+              <div key={dynasty.id} style={{ marginBottom: "48px" }}>
+                {/* Row 1: 카드 행 */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 60px 1fr", position: "relative" }}>
+                  {/* 左侧列 */}
+                  <div style={{ paddingRight: "24px", display: "flex", justifyContent: "flex-end", alignItems: "flex-start" }}>
                     {isLeft && (
                       <div
+                        ref={(el) => { cardRefs.current[index] = el; }}
                         style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          marginLeft: "auto",
-                          position: "absolute",
-                          top: "100%",
-                          left: 0,
-                          zIndex: 10,
-                          display: "grid",
-                          gridTemplateColumns: "1fr",
-                          borderTop: "1px solid rgba(201,168,76,0.08)",
-                          borderRadius: 0,
-                          overflow: "hidden",
-                          maxHeight: isExpanded ? "900px" : "0",
-                          opacity: isExpanded ? 1 : 0,
-                          visibility: isExpanded ? "visible" : "hidden",
-                          transition: isExpanded 
-                            ? "max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1) 0.4s, visibility 0s"
-                            : "max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.2s cubic-bezier(0.16,1,0.3,1), visibility 0s linear 0.6s",
-                          pointerEvents: isExpanded ? "auto" : "none",
-                          willChange: "max-height, opacity",
-                          transform: "translateZ(0)",
-                          backfaceVisibility: "hidden",
-                          WebkitBackfaceVisibility: "hidden",
+                          width: "100%", maxWidth: "440px",
+                          opacity: isVisible ? 1 : 0,
+                          transform: isVisible ? "translateY(0)" : "translateY(40px)",
+                          transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                         }}
                       >
-                        {/* 左侧内容区域 */}
-                        <div
-                          style={{
-                            padding: "28px 32px",
-                            background: "#0e0d0a",
-                            borderRadius: 0,
-                            marginTop: 0,
-                            borderRight: "1px solid rgba(201,168,76,0.08)",
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {/* Hook文句 - 所有朝代都显示 */}
-                          {dynasty.hook && (
-                            <div
-                              style={{
-                                marginBottom: "20px",
-                                padding: "16px 20px",
-                                background: "rgba(201,168,76,0.08)",
-                                border: "1px solid rgba(201,168,76,0.2)",
-                                borderRadius: "0",
-                              }}
-                            >
-                              <p
-                                style={{
-                                  fontSize: "13px",
-                                  color: "#c9a84c",
-                                  lineHeight: 1.8,
-                                  margin: 0,
-                                  fontFamily: "'Noto Serif KR', serif",
-                                  fontStyle: "italic",
-                                }}
-                              >
-                                {dynasty.hook}
-                              </p>
-                            </div>
-                          )}
-                          {/* 所有朝代都显示视频区域和按钮 */}
-                          <>
-                            {/* YouTube 视频区域 */}
-                            <div style={{ marginBottom: "24px" }}>
-                              {dynasty.videoId ? (
-                                  <div
-                                    style={{
-                                      aspectRatio: "16/9",
-                                      width: "100%",
-                                      maxHeight: "200px",
-                                      backgroundColor: "#0a0908",
-                                      border: "1px solid rgba(201,168,76,0.1)",
-                                      borderRadius: 0,
-                                      overflow: "hidden",
-                                      position: "relative",
-                                      backgroundImage: dynasty.id === "1" && dynasty.videoId
-                                        ? `url(https://img.youtube.com/vi/${dynasty.videoId}/hqdefault.jpg)`
-                                        : dynasty.backgroundImage
-                                        ? `url(${dynasty.backgroundImage})`
-                                        : "none",
-                                      backgroundSize: "cover",
-                                      backgroundPosition: "center",
-                                    }}
-                                  >
-                                    {dynasty.backgroundImage && (
-                                      <div
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          backgroundColor: "rgba(0,0,0,0.6)",
-                                        }}
-                                      ></div>
-                                    )}
-                                    {playingVideoId === dynasty.videoId ? (
-                                      <iframe
-                                        src={`https://www.youtube.com/embed/${dynasty.videoId}?autoplay=1`}
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          width: "100%",
-                                          height: "100%",
-                                          border: "none",
-                                        }}
-                                        allow="autoplay;fullscreen"
-                                        allowFullScreen
-                                      ></iframe>
-                                    ) : (
-                                      <div
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          display: "flex",
-                                          alignItems: "center",
-                                          justifyContent: "center",
-                                          cursor: "pointer",
-                                          backgroundColor: "rgba(0,0,0,0.5)",
-                                        }}
-                                        onClick={(e) => handlePlayClick(dynasty.videoId!, e)}
-                                        onMouseEnter={() =>
-                                          setPlayButtonHovered((prev) => ({
-                                            ...prev,
-                                            [dynasty.videoId!]: true,
-                                          }))
-                                        }
-                                        onMouseLeave={() =>
-                                          setPlayButtonHovered((prev) => ({
-                                            ...prev,
-                                            [dynasty.videoId!]: false,
-                                          }))
-                                        }
-                                      >
-                                        <div
-                                          style={{
-                                            width: "64px",
-                                            height: "64px",
-                                            borderRadius: "50%",
-                                            border: "1.5px solid #c9a84c",
-                                            backgroundColor: playButtonHovered[dynasty.videoId!]
-                                              ? "#c9a84c"
-                                              : "transparent",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-                                            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                          }}
-                                        >
-                                          <svg
-                                            style={{
-                                              width: "32px",
-                                              height: "32px",
-                                              marginLeft: "4px",
-                                              fill: playButtonHovered[dynasty.videoId!]
-                                                ? "#0c0b08"
-                                                : "#c9a84c",
-                                              transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                            }}
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path d="M8 5v14l11-7z" />
-                                          </svg>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                              ) : (
-                                /* 占位区域 - 没有 videoId 时显示 */
-                                <div
-                                  style={{
-                                    aspectRatio: "16/9",
-                                    width: "100%",
-                                    maxHeight: "200px",
-                                    backgroundColor: "#0a0908",
-                                    border: "1px solid rgba(201,168,76,0.1)",
-                                    borderRadius: 0,
-                                    overflow: "hidden",
-                                    position: "relative",
-                                    backgroundImage: dynasty.backgroundImage
-                                      ? `url(${dynasty.backgroundImage})`
-                                      : "none",
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {dynasty.backgroundImage && (
-                                    <div
-                                      style={{
-                                        position: "absolute",
-                                        inset: 0,
-                                        backgroundColor: "rgba(0,0,0,0.7)",
-                                      }}
-                                    ></div>
-                                  )}
-                                  <div
-                                    style={{
-                                      position: "relative",
-                                      zIndex: 1,
-                                      textAlign: "center",
-                                      color: "rgba(240,234,216,0.5)",
-                                      fontSize: "14px",
-                                    }}
-                                  >
-                                    준비 중
-                                  </div>
-                                </div>
-                              )}
-
-                              {dynasty.videoIds && (
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                                      gap: "16px",
-                                    }}
-                                  >
-                                    {dynasty.videoIds.map((videoId, vidIndex) => (
-                                      <div
-                                        key={vidIndex}
-                                        style={{
-                                          aspectRatio: "16/9",
-                                          width: "100%",
-                                          backgroundColor: "#000",
-                                          borderRadius: "8px",
-                                          overflow: "hidden",
-                                          position: "relative",
-                                          backgroundImage: dynasty.backgroundImage
-                                            ? `url(${dynasty.backgroundImage})`
-                                            : "none",
-                                          backgroundSize: "cover",
-                                          backgroundPosition: "center",
-                                        }}
-                                      >
-                                        {dynasty.backgroundImage && (
-                                          <div
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              backgroundColor: "rgba(0,0,0,0.6)",
-                                            }}
-                                          ></div>
-                                        )}
-                                        {playingVideoId === videoId ? (
-                                          <iframe
-                                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              width: "100%",
-                                              height: "100%",
-                                              border: "none",
-                                            }}
-                                            allow="autoplay;fullscreen"
-                                            allowFullScreen
-                                          ></iframe>
-                                        ) : (
-                                          <div
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                              cursor: "pointer",
-                                            }}
-                                            onClick={(e) => handlePlayClick(videoId, e)}
-                                            onMouseEnter={() =>
-                                              setPlayButtonHovered((prev) => ({
-                                                ...prev,
-                                                [videoId]: true,
-                                              }))
-                                            }
-                                            onMouseLeave={() =>
-                                              setPlayButtonHovered((prev) => ({
-                                                ...prev,
-                                                [videoId]: false,
-                                              }))
-                                            }
-                                          >
-                                            <div
-                                              style={{
-                                                width: "56px",
-                                                height: "56px",
-                                                borderRadius: "50%",
-                                                border: "1.5px solid #c9a84c",
-                                                backgroundColor: playButtonHovered[videoId]
-                                                  ? "#c9a84c"
-                                                  : "transparent",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-                                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                              }}
-                                            >
-                                              <svg
-                                                style={{
-                                                  width: "28px",
-                                                  height: "28px",
-                                                  marginLeft: "4px",
-                                                  fill: playButtonHovered[videoId]
-                                                    ? "#0c0b08"
-                                                    : "#c9a84c",
-                                                  transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                                }}
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path d="M8 5v14l11-7z" />
-                                              </svg>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* 歌词区域 - 所有朝代都显示 */}
-                              <div style={{ marginBottom: "24px" }}>
-                                {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 ? (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "16px",
-                                    }}
-                                    onClick={(e) => {
-                                      // 检查是否点击了成语
-                                      const target = e.target as HTMLElement;
-                                      if (target.tagName === "SPAN" && target.style.color === "rgb(201, 168, 76)") {
-                                        const idiom = target.textContent || "";
-                                        handleIdiomClick(idiom, dynasty.id);
-                                      }
-                                    }}
-                                  >
-                                    {dynasty.lyrics.chinese.map((line, lineIndex) => (
-                                      <div key={lineIndex}>
-                                        <p
-                                          style={{
-                                            fontSize: "18px",
-                                            letterSpacing: "3px",
-                                            color: "#f0ead8",
-                                            margin: 0,
-                                            marginBottom: "4px",
-                                            fontFamily: "'Noto Serif SC', serif",
-                                          }}
-                                          dangerouslySetInnerHTML={{
-                                            __html: dynasty.id === "2" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(一去啊不归还)/g,
-                                                  '<span id="idiom-span-一去不复返" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一去不复返">$1</span>'
-                                                )
-                                              : dynasty.id === "1" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(以形表意)/g,
-                                                  '<span id="idiom-span-以形表意" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="以形表意">$1</span>'
-                                                )
-                                              : dynasty.id === "3" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(没齿难忘)/g,
-                                                  '<span id="idiom-span-没齿难忘" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="没齿难忘">$1</span>'
-                                                )
-                                              : dynasty.id === "4" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(丹青)/g,
-                                                  '<span id="idiom-span-匠心独运" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="匠心独运">$1</span>'
-                                                )
-                                              : dynasty.id === "5" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(尔虞我诈)/g,
-                                                  '<span id="idiom-span-尔虞我诈" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="尔虞我诈">$1</span>'
-                                                )
-                                              : dynasty.id === "6" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(竹林七贤)/g,
-                                                  '<span id="idiom-span-竹林七贤" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="竹林七贤">$1</span>'
-                                                )
-                                              : dynasty.id === "7" && lineIndex === 8
-                                              ? line.replace(
-                                                  /(生生不息)/g,
-                                                  '<span id="idiom-span-生生不息" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="生生不息">$1</span>'
-                                                )
-                                              : dynasty.id === "8" && lineIndex === 3
-                                              ? line.replace(
-                                                  /(酒中仙)/g,
-                                                  '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
-                                                )
-                                              : dynasty.id === "10" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(雕琢)/g,
-                                                  '<span id="idiom-span-雕琢" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="雕琢">$1</span>'
-                                                )
-                                              : dynasty.id === "11" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(天青色)/g,
-                                                  '<span id="idiom-span-天青色" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="天青色">$1</span>'
-                                                )
-                                              : dynasty.id === "12" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(本草纲目)/g,
-                                                  '<span id="idiom-span-本草纲目" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="本草纲目">$1</span>'
-                                                )
-                                              : highlightIdioms(line, dynasty.idioms || []),
-                                          }}
-                                          onClick={(e) => {
-                                            const target = e.target as HTMLElement;
-                                            if (target.tagName === "SPAN" && target.getAttribute("data-idiom")) {
-                                              e.preventDefault();
-                                              e.stopPropagation();
-                                              const idiom = target.getAttribute("data-idiom") || "";
-                                              handleIdiomClick(idiom, dynasty.id);
-                                            }
-                                          }}
-                                        ></p>
-                                        {dynasty.lyrics?.korean[lineIndex] && (
-                                          <p
-                                            style={{
-                                              fontSize: "12px",
-                                              color: "#7a7060",
-                                              marginTop: "6px",
-                                              margin: 0,
-                                            }}
-                                          >
-                                            {dynasty.lyrics.korean[lineIndex]}
-                                          </p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  /* 歌词占位区域 - 没有歌词数据时显示 */
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "16px",
-                                    }}
-                                  >
-                                    <div>
-                                      <p
-                                        style={{
-                                          fontSize: "18px",
-                                          letterSpacing: "3px",
-                                          color: "rgba(240,234,216,0.3)",
-                                          margin: 0,
-                                          marginBottom: "4px",
-                                          fontFamily: "'Noto Serif SC', serif",
-                                        }}
-                                      >
-                                        准备中...
-                                      </p>
-                                      <p
-                                        style={{
-                                          fontSize: "12px",
-                                          color: "rgba(122,112,96,0.3)",
-                                          marginTop: "6px",
-                                          margin: 0,
-                                        }}
-                                      >
-                                        준비 중...
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                            {/* "이 노래 상세히 배우기" 按钮 - 所有朝代都显示 */}
-                            <button
-                              onClick={(e) => handleLearnMore(e, dynasty.id)}
-                              style={{
-                                width: "100%",
-                                padding: "14px",
-                                marginTop: "20px",
-                                background: "transparent",
-                                border: "1px solid rgba(201,168,76,0.25)",
-                                color: "#c9a84c",
-                                fontSize: "12px",
-                                letterSpacing: "2px",
-                                borderRadius: 0,
-                                cursor: "pointer",
-                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
-                                e.currentTarget.style.color = "#c9a84c";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = "#c9a84c";
-                              }}
-                            >
-                              ✦ 이 노래 상세히 배우기 →
-                            </button>
-                          </>
-                        </div>
-
+                        {dynastyCard}
                       </div>
                     )}
                   </div>
 
-                  {/* 中间列 - 圆点和年代 */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      paddingTop: "32px",
-                      position: "relative",
-                      zIndex: 2,
-                      transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
-                      opacity: isVisible ? 1 : 0,
-                      transform: isVisible 
-                        ? (expandedId ? (() => {
-                            const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
-                            return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
-                          })() : "translateY(0)")
-                        : "translateY(40px)",
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "50%",
-                        border: "2px solid #6b5520",
-                        backgroundColor: isExpanded ? "#c9a84c" : "transparent",
-                        transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                      }}
-                    ></div>
-                    <p
-                      style={{
-                        fontSize: "9px",
-                        color: "#6b5520",
-                        whiteSpace: "nowrap",
-                        margin: "8px 0 0 0",
-                      }}
-                    >
+                  {/* 中间列 - 圆点 */}
+                  <div style={{
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    paddingTop: "32px", position: "relative", zIndex: 2,
+                    opacity: isVisible ? 1 : 0,
+                    transform: isVisible ? "translateY(0)" : "translateY(40px)",
+                    transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}>
+                    <div style={{
+                      width: "20px", height: "20px", borderRadius: "50%",
+                      border: "2px solid #6b5520",
+                      backgroundColor: isExpanded ? "#c9a84c" : "transparent",
+                      transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                    }} />
+                    <p style={{ fontSize: "9px", color: "#6b5520", whiteSpace: "nowrap", margin: "8px 0 0 0" }}>
                       {dynasty.period}
                     </p>
                   </div>
 
                   {/* 右侧列 */}
-                  <div
-                    style={{
-                      paddingLeft: "24px",
-                      display: "flex",
-                      justifyContent: "flex-start",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      position: "relative",
-                    }}
-                  >
-                    {/* 对话气泡 - 当左侧卡片被点击时显示在右侧 */}
-                    {isLeft && speechBubbleId === dynasty.id && dynasty.greeting && (
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          marginBottom: 0,
-                          marginTop: 0,
-                          padding: "16px 20px",
-                          backgroundColor: "rgba(201,168,76,0.15)",
-                          border: "1px solid rgba(201,168,76,0.3)",
-                          borderRadius: "12px",
-                          position: "absolute",
-                          top: "220px",
-                          left: 0,
-                          zIndex: 10,
-                          animation: "fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                        }}
-                      >
-                        {/* 气泡尾巴 - 指向左侧 */}
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: "-8px",
-                            top: "24px",
-                            width: 0,
-                            height: 0,
-                            borderTop: "8px solid transparent",
-                            borderBottom: "8px solid transparent",
-                            borderRight: "8px solid rgba(201,168,76,0.3)",
-                          }}
-                        ></div>
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: "-7px",
-                            top: "24px",
-                            width: 0,
-                            height: 0,
-                            borderTop: "7px solid transparent",
-                            borderBottom: "7px solid transparent",
-                            borderRight: "7px solid rgba(201,168,76,0.15)",
-                          }}
-                        ></div>
-                        <p
-                          style={{
-                            fontSize: "13px",
-                            color: "#f0ead8",
-                            lineHeight: 1.6,
-                            margin: 0,
-                          }}
-                        >
-                          {dynasty.greeting}
-                        </p>
-                      </div>
-                    )}
-                    {/* 左侧卡片的AI面板 - 显示在右侧列greeting气泡下面 */}
-                    {isLeft && isExpanded && (
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          position: "absolute",
-                          top: "calc(220px + 98px + 16px)",
-                          left: 0,
-                          zIndex: 10,
-                          background: "rgba(8,7,5,0.95)",
-                          border: "1px solid rgba(201,168,76,0.15)",
-                          padding: "20px 18px",
-                          display: "flex",
-                          flexDirection: "column",
-                          maxHeight: "400px",
-                          borderRadius: "8px",
-                        }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {/* AI面板头部 - 可点击收起/展开 */}
-                        <div 
-                          style={{ marginBottom: "16px", cursor: "pointer" }}
-                        >
-                          <div style={{ 
-                            fontSize: "14px",
-                            color: "#c9a84c",
-                            letterSpacing: "3px", 
-                            marginBottom: "8px", 
-                            fontFamily: "'Noto Serif KR', serif",
-                            fontWeight: "bold"
-                          }}>
-                            학습 도우미
-                          </div>
-                          <div style={{ height: "1px", background: "rgba(201,168,76,0.15)" }} />
-                        </div>
-
-                        {/* 消息区域 */}
-                        <div
-                          ref={messagesEndRef}
-                          style={{
-                            flex: 1,
-                            overflowY: "auto",
-                            marginBottom: "16px",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: "12px",
-                          }}
-                        >
-                          {aiPanelMessages.length === 0 ? (
-                            <div
-                              style={{
-                                fontSize: "12px",
-                                color: "#6b5520",
-                                textAlign: "center",
-                                padding: "20px",
-                                fontFamily: "'Noto Serif KR', serif",
-                              }}
-                            >
-                              금색 단어를 클릭해보세요 ✦
-                            </div>
-                          ) : (
-                            <>
-                              {aiPanelMessages.map((message) => (
-                                <div
-                                  key={message.id}
-                                  style={{
-                                    padding: "14px 16px",
-                                    background:
-                                      message.type === "ai"
-                                        ? "rgba(201,168,76,0.06)"
-                                        : "rgba(201,168,76,0.1)",
-                                    border: "1px solid rgba(201,168,76,0.1)",
-                                    borderRadius: "0 6px 6px 6px",
-                                    fontSize: "12px",
-                                    color: "#c0b8a0",
-                                    lineHeight: 2,
-                                    whiteSpace: "pre-line",
-                                    fontFamily: "'Noto Serif KR', serif",
-                                  }}
-                                >
-                                  {message.content}
-                                </div>
-                              ))}
-                              {/* 快速问题chips */}
-                              {aiPanelMessages.length > 0 &&
-                                aiPanelMessages[0].content.includes("一去不复返") &&
-                                aiPanelMessages.length === 1 && (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "8px",
-                                      marginTop: "12px",
-                                    }}
-                                  >
-                                    {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map(
-                                      (question) => (
-                                        <button
-                                          key={question}
-                                          onClick={() => handleQuickQuestion(question)}
-                                          style={{
-                                            border: "1px solid rgba(201,168,76,0.2)",
-                                            background: "transparent",
-                                            color: "#6b5520",
-                                            fontSize: "10px",
-                                            padding: "8px 12px",
-                                            cursor: "pointer",
-                                            borderRadius: 0,
-                                            textAlign: "left",
-                                            fontFamily: "'Noto Serif KR', serif",
-                                            transition: "all 0.3s",
-                                          }}
-                                          onMouseEnter={(e) => {
-                                            e.currentTarget.style.color = "#c9a84c";
-                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)";
-                                          }}
-                                          onMouseLeave={(e) => {
-                                            e.currentTarget.style.color = "#6b5520";
-                                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)";
-                                          }}
-                                        >
-                                          {question}
-                                        </button>
-                                      )
-                                    )}
-                                  </div>
-                                )}
-                            </>
-                          )}
-                        </div>
-
-                        {/* 输入区域 */}
-                        <div style={{ display: "flex", gap: "8px" }}>
-                          <input
-                            type="text"
-                            value={aiPanelInput}
-                            onChange={(e) => setAiPanelInput(e.target.value)}
-                            onKeyPress={(e) => {
-                              if (e.key === "Enter") {
-                                handleSendAIPanelMessage();
-                              }
-                            }}
-                            placeholder="더 물어보세요..."
-                            style={{
-                              flex: 1,
-                              padding: "10px 12px",
-                              background: "rgba(255,255,255,0.03)",
-                              border: "1px solid rgba(201,168,76,0.15)",
-                              borderRadius: 0,
-                              color: "#f0ead8",
-                              fontSize: "12px",
-                              fontFamily: "'Noto Serif KR', serif",
-                            }}
-                          />
-                          <button
-                            onClick={handleSendAIPanelMessage}
-                            style={{
-                              padding: "10px 16px",
-                              background: "transparent",
-                              border: "1px solid rgba(201,168,76,0.15)",
-                              color: "#c9a84c",
-                              cursor: "pointer",
-                              fontSize: "12px",
-                              borderRadius: 0,
-                              fontFamily: "'Noto Serif KR', serif",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.background = "rgba(201,168,76,0.15)";
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.background = "transparent";
-                            }}
-                          >
-                            전송
-                          </button>
-                        </div>
-                      </div>
-                    )}
+                  <div style={{ paddingLeft: "24px", display: "flex", justifyContent: "flex-start", alignItems: "flex-start" }}>
                     {!isLeft && (
                       <div
-                        ref={(el) => {
-                          cardRefs.current[index] = el;
-                        }}
+                        ref={(el) => { cardRefs.current[index] = el; }}
                         style={{
-                          width: "100%",
-                          maxWidth: "440px",
-                          transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
+                          width: "100%", maxWidth: "440px",
                           opacity: isVisible ? 1 : 0,
-                          transform: isVisible 
-                            ? (expandedId ? (() => {
-                                const expandedIndex = dynasties.findIndex(d => d.id === expandedId);
-                                return expandedIndex >= 0 && index > expandedIndex ? "translateY(900px)" : "translateY(0)";
-                              })() : "translateY(0)")
-                            : "translateY(40px)",
+                          transform: isVisible ? "translateY(0)" : "translateY(40px)",
+                          transition: "opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)",
                         }}
                       >
-                        {/* 朝代卡片 */}
-                        <div
-                          onClick={() => toggleExpand(dynasty.id)}
-                          style={{
-                            width: "100%",
-                            height: dynasty.id === "1" ? "300px" : "220px",
-                            position: "relative",
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            border: isExpanded
-                              ? "1px solid rgba(201,168,76,0.4)"
-                              : dynasty.id === "1"
-                              ? "1px solid rgba(201,168,76,0.25)"
-                              : "1px solid rgba(201,168,76,0.15)",
-                            transition: "all 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.borderColor = "rgba(201,168,76,0.4)";
-                            const img = e.currentTarget.querySelector("img");
-                            if (img) img.style.filter = "grayscale(0%) brightness(0.6)";
-                          }}
-                          onMouseLeave={(e) => {
-                            if (!isExpanded) {
-                              e.currentTarget.style.borderColor = dynasty.id === "1" ? "rgba(201,168,76,0.25)" : "rgba(201,168,76,0.15)";
-                              const img = e.currentTarget.querySelector("img");
-                              if (img) img.style.filter = "grayscale(20%) brightness(0.45)";
-                            }
-                          }}
-                        >
-                          {/* 背景图片 */}
-                          {dynasty.backgroundImage && (
-                            <>
-                              <img
-                                src={dynasty.backgroundImage}
-                                alt={dynasty.name}
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  filter: "grayscale(20%) brightness(0.45)",
-                                  transition: "filter 0.6s ease",
-                                }}
-                                onError={(e) => {
-                                  if (dynasty.id === "1") {
-                                    (e.target as HTMLImageElement).src = "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&q=60";
-                                  }
-                                }}
-                              />
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  inset: 0,
-                                  background:
-                                    dynasty.id === "1"
-                                      ? "linear-gradient(160deg, rgba(12,11,8,0.9) 0%, rgba(12,11,8,0.3) 60%, transparent)"
-                                      : "linear-gradient(160deg, rgba(12,11,8,0.85) 0%, rgba(12,11,8,0.15) 70%, transparent)",
-                                }}
-                              ></div>
-                            </>
-                          )}
-
-                          {/* 右上角badge */}
-                          {dynasty.badge && (
-                            <div
-                              style={{
-                                position: "absolute",
-                                top: "14px",
-                                right: "14px",
-                              }}
-                            >
-                              <span
-                                style={{
-                                  padding: "5px 12px",
-                                  backgroundColor: "rgba(12,11,8,0.7)",
-                                  backdropFilter: "blur(4px)",
-                                  border: "1px solid rgba(201,168,76,0.3)",
-                                  borderRadius: "0",
-                                  fontSize: "10px",
-                                  color: "#c9a84c",
-                                  letterSpacing: "1px",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                {dynasty.badge}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* 朝代名称和年代 - 左下角 */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              bottom: "20px",
-                              left: "22px",
-                            }}
-                          >
-                            <h2
-                              style={{
-                                fontFamily: "'Ma Shan Zheng', serif",
-                                fontSize: dynasty.id === "1" ? "60px" : "48px",
-                                color: "#c9a84c",
-                                textShadow: "0 2px 16px rgba(0,0,0,0.9)",
-                                margin: 0,
-                                lineHeight: 1,
-                              }}
-                            >
-                              {dynasty.name}
-                            </h2>
-                            {dynasty.korName && (
-                              <p
-                                style={{
-                                  fontSize: "11px",
-                                  color: "rgba(240,234,216,0.5)",
-                                  letterSpacing: "3px",
-                                  margin: "4px 0 0 0",
-                                  fontFamily: "'Noto Serif KR', serif",
-                                }}
-                              >
-                                {dynasty.korName}
-                              </p>
-                            )}
-                            <p
-                              style={{
-                                fontSize: "9px",
-                                color: "#b8ad98",
-                                margin: "4px 0 0 0",
-                              }}
-                            >
-                              {dynasty.period}
-                            </p>
-                          </div>
-                        </div>
+                        {dynastyCard}
                       </div>
                     )}
-                    {/* 展开内容 - 在对应列内（右侧） */}
-                    {!isLeft && (
-                      <div
-                        style={{
-                          width: "100%",
-                          maxWidth: "380px",
-                          marginRight: "auto",
-                          position: "absolute",
-                          top: "100%",
-                          right: 0,
-                          zIndex: 10,
-                          display: "grid",
-                          gridTemplateColumns: "1fr",
-                          borderTop: "1px solid rgba(201,168,76,0.08)",
-                          borderRadius: 0,
-                          overflow: "hidden",
-                          maxHeight: isExpanded ? "900px" : "0",
-                          opacity: isExpanded ? 1 : 0,
-                          visibility: isExpanded ? "visible" : "hidden",
-                          transition: isExpanded 
-                            ? "max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1) 0.4s, visibility 0s"
-                            : "max-height 0.6s cubic-bezier(0.16,1,0.3,1), opacity 0.2s cubic-bezier(0.16,1,0.3,1), visibility 0s linear 0.6s",
-                          pointerEvents: isExpanded ? "auto" : "none",
-                          willChange: "max-height, opacity",
-                          transform: "translateZ(0)",
-                          backfaceVisibility: "hidden",
-                          WebkitBackfaceVisibility: "hidden",
-                        }}
-                      >
-                        {/* 左侧内容区域 */}
-                        <div
-                          style={{
-                            padding: "28px 32px",
-                            background: "#0e0d0a",
-                            borderRadius: 0,
-                            marginTop: 0,
-                            borderRight: "1px solid rgba(201,168,76,0.08)",
-                          }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {/* Hook文句 - 所有朝代都显示 */}
-                          {dynasty.hook && (
-                            <div
-                              style={{
-                                marginBottom: "20px",
-                                padding: "16px 20px",
-                                background: "rgba(201,168,76,0.08)",
-                                border: "1px solid rgba(201,168,76,0.2)",
-                                borderRadius: "0",
-                              }}
-                            >
-                              <p
-                                style={{
-                                  fontSize: "13px",
-                                  color: "#c9a84c",
-                                  lineHeight: 1.8,
-                                  margin: 0,
-                                  fontFamily: "'Noto Serif KR', serif",
-                                  fontStyle: "italic",
-                                }}
-                              >
-                                {dynasty.hook}
-                              </p>
-                            </div>
-                          )}
-                          {/* 所有朝代都显示视频区域和按钮 */}
-                          <>
-                            {/* YouTube 视频区域 */}
-                            <div style={{ marginBottom: "24px" }}>
-                              {dynasty.videoId ? (
-                                  <div
-                                    style={{
-                                      aspectRatio: "16/9",
-                                      width: "100%",
-                                      maxHeight: "200px",
-                                      backgroundColor: "#0a0908",
-                                      border: "1px solid rgba(201,168,76,0.1)",
-                                      borderRadius: 0,
-                                      overflow: "hidden",
-                                      position: "relative",
-                                      backgroundImage: dynasty.id === "1" && dynasty.videoId
-                                        ? `url(https://img.youtube.com/vi/${dynasty.videoId}/hqdefault.jpg)`
-                                        : dynasty.backgroundImage
-                                        ? `url(${dynasty.backgroundImage})`
-                                        : "none",
-                                      backgroundSize: "cover",
-                                      backgroundPosition: "center",
-                                    }}
-                                  >
-                                    {dynasty.backgroundImage && (
-                                      <div
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          backgroundColor: "rgba(0,0,0,0.6)",
-                                        }}
-                                      ></div>
-                                    )}
-                                    {playingVideoId === dynasty.videoId ? (
-                                      <iframe
-                                        src={`https://www.youtube.com/embed/${dynasty.videoId}?autoplay=1`}
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          width: "100%",
-                                          height: "100%",
-                                          border: "none",
-                                        }}
-                                        allow="autoplay;fullscreen"
-                                        allowFullScreen
-                                      ></iframe>
-                                    ) : (
-                                      <div
-                                        style={{
-                                          position: "absolute",
-                                          inset: 0,
-                                          display: "flex",
-                                          alignItems: "center",
-                                          justifyContent: "center",
-                                          cursor: "pointer",
-                                          backgroundColor: "rgba(0,0,0,0.5)",
-                                        }}
-                                        onClick={(e) => handlePlayClick(dynasty.videoId!, e)}
-                                        onMouseEnter={() =>
-                                          setPlayButtonHovered((prev) => ({
-                                            ...prev,
-                                            [dynasty.videoId!]: true,
-                                          }))
-                                        }
-                                        onMouseLeave={() =>
-                                          setPlayButtonHovered((prev) => ({
-                                            ...prev,
-                                            [dynasty.videoId!]: false,
-                                          }))
-                                        }
-                                      >
-                                        <div
-                                          style={{
-                                            width: "64px",
-                                            height: "64px",
-                                            borderRadius: "50%",
-                                            border: "1.5px solid #c9a84c",
-                                            backgroundColor: playButtonHovered[dynasty.videoId!]
-                                              ? "#c9a84c"
-                                              : "transparent",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                            boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-                                            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                          }}
-                                        >
-                                          <svg
-                                            style={{
-                                              width: "32px",
-                                              height: "32px",
-                                              marginLeft: "4px",
-                                              fill: playButtonHovered[dynasty.videoId!]
-                                                ? "#0c0b08"
-                                                : "#c9a84c",
-                                              transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                            }}
-                                            viewBox="0 0 24 24"
-                                          >
-                                            <path d="M8 5v14l11-7z" />
-                                          </svg>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                              ) : (
-                                /* 占位区域 - 没有 videoId 时显示 */
-                                <div
-                                  style={{
-                                    aspectRatio: "16/9",
-                                    width: "100%",
-                                    maxHeight: "200px",
-                                    backgroundColor: "#0a0908",
-                                    border: "1px solid rgba(201,168,76,0.1)",
-                                    borderRadius: 0,
-                                    overflow: "hidden",
-                                    position: "relative",
-                                    backgroundImage: dynasty.backgroundImage
-                                      ? `url(${dynasty.backgroundImage})`
-                                      : "none",
-                                    backgroundSize: "cover",
-                                    backgroundPosition: "center",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                  }}
-                                >
-                                  {dynasty.backgroundImage && (
-                                    <div
-                                      style={{
-                                        position: "absolute",
-                                        inset: 0,
-                                        backgroundColor: "rgba(0,0,0,0.7)",
-                                      }}
-                                    ></div>
-                                  )}
-                                  <div
-                                    style={{
-                                      position: "relative",
-                                      zIndex: 1,
-                                      textAlign: "center",
-                                      color: "rgba(240,234,216,0.5)",
-                                      fontSize: "14px",
-                                    }}
-                                  >
-                                    준비 중
-                                  </div>
-                                </div>
-                              )}
+                  </div>
+                </div>
 
-                              {dynasty.videoIds && (
-                                  <div
-                                    style={{
-                                      display: "grid",
-                                      gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
-                                      gap: "16px",
-                                    }}
-                                  >
-                                    {dynasty.videoIds.map((videoId, vidIndex) => (
-                                      <div
-                                        key={vidIndex}
-                                        style={{
-                                          aspectRatio: "16/9",
-                                          width: "100%",
-                                          backgroundColor: "#000",
-                                          borderRadius: "8px",
-                                          overflow: "hidden",
-                                          position: "relative",
-                                          backgroundImage: dynasty.backgroundImage
-                                            ? `url(${dynasty.backgroundImage})`
-                                            : "none",
-                                          backgroundSize: "cover",
-                                          backgroundPosition: "center",
-                                        }}
-                                      >
-                                        {dynasty.backgroundImage && (
-                                          <div
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              backgroundColor: "rgba(0,0,0,0.6)",
-                                            }}
-                                          ></div>
-                                        )}
-                                        {playingVideoId === videoId ? (
-                                          <iframe
-                                            src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              width: "100%",
-                                              height: "100%",
-                                              border: "none",
-                                            }}
-                                            allow="autoplay;fullscreen"
-                                            allowFullScreen
-                                          ></iframe>
-                                        ) : (
-                                          <div
-                                            style={{
-                                              position: "absolute",
-                                              inset: 0,
-                                              display: "flex",
-                                              alignItems: "center",
-                                              justifyContent: "center",
-                                              cursor: "pointer",
-                                            }}
-                                            onClick={(e) => handlePlayClick(videoId, e)}
-                                            onMouseEnter={() =>
-                                              setPlayButtonHovered((prev) => ({
-                                                ...prev,
-                                                [videoId]: true,
-                                              }))
-                                            }
-                                            onMouseLeave={() =>
-                                              setPlayButtonHovered((prev) => ({
-                                                ...prev,
-                                                [videoId]: false,
-                                              }))
-                                            }
-                                          >
-                                            <div
-                                              style={{
-                                                width: "56px",
-                                                height: "56px",
-                                                borderRadius: "50%",
-                                                border: "1.5px solid #c9a84c",
-                                                backgroundColor: playButtonHovered[videoId]
-                                                  ? "#c9a84c"
-                                                  : "transparent",
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                boxShadow: "0 4px 6px rgba(0,0,0,0.3)",
-                                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                              }}
-                                            >
-                                              <svg
-                                                style={{
-                                                  width: "28px",
-                                                  height: "28px",
-                                                  marginLeft: "4px",
-                                                  fill: playButtonHovered[videoId]
-                                                    ? "#0c0b08"
-                                                    : "#c9a84c",
-                                                  transition: "fill 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                                                }}
-                                                viewBox="0 0 24 24"
-                                              >
-                                                <path d="M8 5v14l11-7z" />
-                                              </svg>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* 歌词区域 - 所有朝代都显示 */}
-                              <div style={{ marginBottom: "24px" }}>
-                                {dynasty.lyrics && dynasty.lyrics.chinese && dynasty.lyrics.chinese.length > 0 ? (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "16px",
-                                    }}
-                                    onClick={(e) => {
-                                      // 检查是否点击了成语
-                                      const target = e.target as HTMLElement;
-                                      if (target.tagName === "SPAN" && target.style.color === "rgb(201, 168, 76)") {
-                                        const idiom = target.textContent || "";
-                                        handleIdiomClick(idiom, dynasty.id);
-                                      }
-                                    }}
-                                  >
-                                    {dynasty.lyrics.chinese.map((line, lineIndex) => (
-                                      <div key={lineIndex}>
-                                        <p
-                                          style={{
-                                            fontSize: "18px",
-                                            letterSpacing: "3px",
-                                            color: "#f0ead8",
-                                            margin: 0,
-                                            marginBottom: "4px",
-                                            fontFamily: "'Noto Serif SC', serif",
-                                          }}
-                                          dangerouslySetInnerHTML={{
-                                            __html: dynasty.id === "2" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(一去啊不归还)/g,
-                                                  '<span id="idiom-span-一去不复返" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="一去不复返">$1</span>'
-                                                )
-                                              : dynasty.id === "1" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(以形表意)/g,
-                                                  '<span id="idiom-span-以形表意" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="以形表意">$1</span>'
-                                                )
-                                              : dynasty.id === "3" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(没齿难忘)/g,
-                                                  '<span id="idiom-span-没齿难忘" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="没齿难忘">$1</span>'
-                                                )
-                                              : dynasty.id === "4" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(丹青)/g,
-                                                  '<span id="idiom-span-匠心独运" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="匠心独运">$1</span>'
-                                                )
-                                              : dynasty.id === "5" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(尔虞我诈)/g,
-                                                  '<span id="idiom-span-尔虞我诈" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="尔虞我诈">$1</span>'
-                                                )
-                                              : dynasty.id === "6" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(竹林七贤)/g,
-                                                  '<span id="idiom-span-竹林七贤" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="竹林七贤">$1</span>'
-                                                )
-                                              : dynasty.id === "7" && lineIndex === 8
-                                              ? line.replace(
-                                                  /(生生不息)/g,
-                                                  '<span id="idiom-span-生生不息" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="生生不息">$1</span>'
-                                                )
-                                              : dynasty.id === "8" && lineIndex === 3
-                                              ? line.replace(
-                                                  /(酒中仙)/g,
-                                                  '<span id="idiom-span-酒中仙" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="酒中仙">$1</span>'
-                                                )
-                                              : dynasty.id === "10" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(雕琢)/g,
-                                                  '<span id="idiom-span-雕琢" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="雕琢">$1</span>'
-                                                )
-                                              : dynasty.id === "11" && lineIndex === 0
-                                              ? line.replace(
-                                                  /(天青色)/g,
-                                                  '<span id="idiom-span-天青色" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="天青色">$1</span>'
-                                                )
-                                              : dynasty.id === "12" && lineIndex === 1
-                                              ? line.replace(
-                                                  /(本草纲目)/g,
-                                                  '<span id="idiom-span-本草纲目" style="color: #c9a84c; border-bottom: 1px solid rgba(201,168,76,0.5); cursor: pointer;" data-idiom="本草纲目">$1</span>'
-                                                )
-                                              : highlightIdioms(line, dynasty.idioms || []),
-                                          }}
-                                          onClick={(e) => {
-                                            const target = e.target as HTMLElement;
-                                            if (target.tagName === "SPAN" && target.getAttribute("data-idiom")) {
-                                              e.preventDefault();
-                                              e.stopPropagation();
-                                              const idiom = target.getAttribute("data-idiom") || "";
-                                              handleIdiomClick(idiom, dynasty.id);
-                                            }
-                                          }}
-                                        ></p>
-                                        {dynasty.lyrics?.korean[lineIndex] && (
-                                          <p
-                                            style={{
-                                              fontSize: "12px",
-                                              color: "#7a7060",
-                                              marginTop: "6px",
-                                              margin: 0,
-                                            }}
-                                          >
-                                            {dynasty.lyrics.korean[lineIndex]}
-                                          </p>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                ) : (
-                                  /* 歌词占位区域 - 没有歌词数据时显示 */
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexDirection: "column",
-                                      gap: "16px",
-                                    }}
-                                  >
-                                    <div>
-                                      <p
-                                        style={{
-                                          fontSize: "18px",
-                                          letterSpacing: "3px",
-                                          color: "rgba(240,234,216,0.3)",
-                                          margin: 0,
-                                          marginBottom: "4px",
-                                          fontFamily: "'Noto Serif SC', serif",
-                                        }}
-                                      >
-                                        准备中...
-                                      </p>
-                                      <p
-                                        style={{
-                                          fontSize: "12px",
-                                          color: "rgba(122,112,96,0.3)",
-                                          marginTop: "6px",
-                                          margin: 0,
-                                        }}
-                                      >
-                                        준비 중...
-                                      </p>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-
-                            {/* "이 노래 상세히 배우기" 按钮 - 所有朝代都显示 */}
-                            <button
-                              onClick={(e) => handleLearnMore(e, dynasty.id)}
-                              style={{
-                                width: "100%",
-                                padding: "14px",
-                                marginTop: "20px",
-                                background: "transparent",
-                                border: "1px solid rgba(201,168,76,0.25)",
-                                color: "#c9a84c",
-                                fontSize: "12px",
-                                letterSpacing: "2px",
-                                borderRadius: 0,
-                                cursor: "pointer",
-                                transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = "rgba(201,168,76,0.08)";
-                                e.currentTarget.style.color = "#c9a84c";
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = "transparent";
-                                e.currentTarget.style.color = "#c9a84c";
-                              }}
-                            >
-                              ✦ 이 노래 상세히 배우기 →
-                            </button>
-                          </>
-                        </div>
+                {/* Row 2: 展开内容行 - 正常文档流，자동으로 아래를 밀어냄 */}
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 60px 1fr",
+                  maxHeight: isExpanded ? "1000px" : "0",
+                  overflow: "hidden",
+                  opacity: isExpanded ? 1 : 0,
+                  transition: isExpanded
+                    ? "max-height 0.7s cubic-bezier(0.16,1,0.3,1), opacity 0.4s cubic-bezier(0.16,1,0.3,1) 0.1s"
+                    : "max-height 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.2s cubic-bezier(0.16,1,0.3,1)",
+                  pointerEvents: isExpanded ? "auto" : "none",
+                }}>
+                  {/* 左侧：좌측 카드 전개 / 우측 카드의 기포+AI면 */}
+                  <div style={{ paddingRight: "24px" }}>
+                    {isLeft ? expandedContent : (
+                      <div style={{ paddingTop: "16px" }}>
+                        {speechBubble}
+                        {aiPanel}
+                      </div>
+                    )}
+                  </div>
+                  {/* 중간 占位 */}
+                  <div />
+                  {/* 右侧：우측 카드 전개 / 좌측 카드의 기포+AI면 */}
+                  <div style={{ paddingLeft: "24px" }}>
+                    {!isLeft ? expandedContent : (
+                      <div style={{ paddingTop: "16px" }}>
+                        {speechBubble}
+                        {aiPanel}
                       </div>
                     )}
                   </div>
