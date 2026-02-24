@@ -715,15 +715,24 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   // 星标状态
   const [starMap, setStarMap] = useState<StarMap>({});
   const [userLevel, setUserLevel] = useState<"初级" | "中级" | "高级" | null>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
+    // 优先从首页等级选择读取
+    const homeLevel = localStorage.getItem('nz_level');
+    if (homeLevel) {
+      const map: Record<string, "初级" | "中级" | "高级"> = {
+        '초급': '初级',
+        '중급': '中级',
+        '고급': '高级',
+      };
+      if (map[homeLevel]) return map[homeLevel];
+    }
+    // fallback: 读取原有持久化状态
+    try {
+      const saved = localStorage.getItem('songPageState');
+      if (saved) {
         const parsed = JSON.parse(saved);
         return parsed.userLevel || null;
-      } catch {
-        return null;
       }
-    }
+    } catch {}
     return null;
   });
   const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
@@ -3325,7 +3334,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   setPracticeInput("");
                   setPracticeFeedback(null);
                 }}
-                className="w-full mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2"
+                className="w-full mt-4 px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 bg-[#7a4f2d] hover:bg-[#a06c3e]"
               >
                 {songPageTranslations[uiLanguage].tryMakingSentence}
               </button>
@@ -3519,7 +3528,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         }
                       }}
                       disabled={isAnalyzingSentence || !practiceInput.trim()}
-                      className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 bg-[#7a4f2d] hover:bg-[#a06c3e]"
                     >
                       {isAnalyzingSentence ? (
                         <>
@@ -3680,7 +3689,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   </button>
                   <button
                     onClick={() => handleCreateDialogue(selectedWord!)}
-                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                    className="flex-1 px-4 py-2 text-white rounded-lg transition-colors bg-[#7a4f2d] hover:bg-[#a06c3e]"
                   >
                     다시 생성
                   </button>
@@ -3697,34 +3706,38 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   const [showExample, setShowExample] = useState(true); // 默认显示示例
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen flex" style={{ background: '#faf6f0' }}>
       {/* 主内容区 */}
       <div className="flex-1">
       {/* 顶部固定输入区 */}
       <div className=" z-50 bg-white/80 backdrop-blur border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold">{songPageTranslations[uiLanguage].title}</h1>
+          <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 700, color: '#1a2e1a', letterSpacing: '-0.5px', fontFamily: "'Noto Sans KR', sans-serif" }}>{songPageTranslations[uiLanguage].title}</h1>
             <div className="flex items-center gap-2">
               {/* 语言切换按钮 */}
-              <button
-                onClick={() => setUiLanguage(uiLanguage === 'zh' ? 'ko' : 'zh')}
-                className="px-3 py-1 rounded-lg border text-sm bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
-                title={uiLanguage === 'zh' ? '한국어로 전환' : '切换到中文'}
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                </svg>
-                <span>{uiLanguage === 'zh' ? '한국어' : '中文'}</span>
-              </button>
-              <button
-                className="px-3 py-1 rounded-lg border text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
-                onClick={testChatGPTAPI}
-                disabled={isLoading}
-                title="ChatGPT API 연결 테스트"
-              >
-                🧪 {songPageTranslations[uiLanguage].apiTest}
-              </button>
+              <div style={{ display: 'none' }}>
+                <button
+                  onClick={() => setUiLanguage(uiLanguage === 'zh' ? 'ko' : 'zh')}
+                  className="px-3 py-1 rounded-lg border text-sm bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
+                  title={uiLanguage === 'zh' ? '한국어로 전환' : '切换到中文'}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                  </svg>
+                  <span>{uiLanguage === 'zh' ? '한국어' : '中文'}</span>
+                </button>
+              </div>
+              <div style={{ display: 'none' }}>
+                <button
+                  className="px-3 py-1 rounded-lg border text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
+                  onClick={testChatGPTAPI}
+                  disabled={isLoading}
+                  title="ChatGPT API 연결 테스트"
+                >
+                  🧪 {songPageTranslations[uiLanguage].apiTest}
+                </button>
+              </div>
               {/* 复习模式选择 */}
               <div className="flex items-center gap-2">
                 <button
@@ -3736,260 +3749,158 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   {reviewMode === "sentence" ? songPageTranslations[uiLanguage].exitSentenceReview : songPageTranslations[uiLanguage].sentenceReview}
                 </button>
               </div>
-              <button
-                className="px-3 py-1 rounded-lg border text-sm bg-white"
-                onClick={exportCurrentPage}
-                disabled={pageItems.length === 0}
-              >
-                {songPageTranslations[uiLanguage].exportHTML}
-              </button>
+              <div style={{ display: 'none' }}>
+                <button
+                  className="px-3 py-1 rounded-lg border text-sm bg-white"
+                  onClick={exportCurrentPage}
+                  disabled={pageItems.length === 0}
+                >
+                  {songPageTranslations[uiLanguage].exportHTML}
+                </button>
+              </div>
             </div>
           </div>
                     {/* ✅ 统一主入口模块（音频优先） */}
-                    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            {/* 上半：大音频拖拽区 */}
-            <div
-              className={`p-8 md:p-12 border-b border-dashed transition-colors ${
-                isDragging 
-                  ? 'bg-blue-100 border-blue-400 border-2' 
-                  : 'border-gray-300 bg-sky-50'
-              }`}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="text-lg md:text-xl font-semibold">
-                {songPageTranslations[uiLanguage].uploadAudioTitle}
-              </div>
-              <div className="text-xs text-gray-500 mt-1">
-                {songPageTranslations[uiLanguage].uploadAudioHint}
-              </div>
-
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <label className="inline-flex items-center gap-2 px-3 py-2 rounded-xl border cursor-pointer hover:bg-gray-50 text-sm">
-                  {songPageTranslations[uiLanguage].selectAudioFile}
-                  <input
-                    className="hidden"
-                    type="file"
-                    accept="audio/*"
-                    onChange={(e) => onAudioFiles(e.target.files)}
-                  />
-                </label>
-
-                <div className="flex items-center gap-2 relative">
-                  <label className="text-sm text-gray-700">{songPageTranslations[uiLanguage].language}</label>
-                  <select
-                    value={languageMode || ''}
-                    onChange={(e) => {
-                      const newMode = e.target.value as 'ko' | 'zh' | '';
-                      if (newMode === 'ko' || newMode === 'zh') {
-                        setLanguageMode(newMode);
-                        // ⭐ 选择语言后立即隐藏提示
-                        setShowLanguageTip(false);
-                      } else {
-                        setLanguageMode(null);
-                        // 如果取消选择且已上传音频文件，重新显示提示
-                        if (audioFile) {
-                          setShowLanguageTip(true);
-                        }
-                      }
-                    }}
-                    className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    required
-                  >
-                    <option value="">{songPageTranslations[uiLanguage].pleaseSelectLanguage}</option>
-                    <option value="zh">{songPageTranslations[uiLanguage].chinese}</option>
-                    <option value="ko">{songPageTranslations[uiLanguage].korean}</option>
-                  </select>
-                  
-                  {/* 提示气泡 */}
-                  {showLanguageTip && !languageMode && audioFile && (
-                    <div className="absolute top-full left-0 mt-2 z-50 animate-bounce">
-                      <div className="bg-blue-500 text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap relative">
-                        <div className="flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                          </svg>
-                          <span>{songPageTranslations[uiLanguage].pleaseSelectMatchingLanguage}</span>
-                        </div>
-                        {/* 气泡箭头 */}
-                        <div className="absolute -top-1 left-4 w-2 h-2 bg-blue-500 rotate-45"></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col items-center gap-3">
-                  <button
-                    className="px-4 py-2 rounded-xl bg-black text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                    onClick={onClickTranscribe}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <svg className="h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        <span>{songPageTranslations[uiLanguage].pauseAnalysis}</span>
-                      </>
-                    ) : (
-                      songPageTranslations[uiLanguage].startTranscribe
-                    )}
-                  </button>
-                  
-                  {/* 中文水平选择器 */}
-                  <div className="relative">
-                    <div className="text-xs text-gray-500 mb-1 text-center">{songPageTranslations[uiLanguage].selectLanguageLevel}</div>
-                    <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-                      <button
-                        onClick={() => {
-                          setUserLevel("初级");
-                          setShowLevelWarning(false);
-                        }}
-                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                          userLevel === "初级"
-                            ? "bg-white text-blue-600 shadow-sm"
-                            : "text-gray-600 hover:text-gray-800"
-                        }`}
-                      >
-                        {songPageTranslations[uiLanguage].beginner}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setUserLevel("中级");
-                          setShowLevelWarning(false);
-                        }}
-                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                          userLevel === "中级"
-                            ? "bg-white text-blue-600 shadow-sm"
-                            : "text-gray-600 hover:text-gray-800"
-                        }`}
-                      >
-                        {songPageTranslations[uiLanguage].intermediate}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setUserLevel("高级");
-                          setShowLevelWarning(false);
-                        }}
-                        className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                          userLevel === "高级"
-                            ? "bg-white text-blue-600 shadow-sm"
-                            : "text-gray-600 hover:text-gray-800"
-                        }`}
-                      >
-                        {songPageTranslations[uiLanguage].advanced}
-                      </button>
-                    </div>
-                    
-                    {/* 提示气泡 */}
-                    {showLevelWarning && (
-                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 z-50 animate-bounce">
-                        <div className="bg-red-500 text-white text-xs px-3 py-2 rounded-lg shadow-lg whitespace-nowrap relative">
-                          <div className="flex items-center gap-2">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            <span>{songPageTranslations[uiLanguage].pleaseSelectLanguageLevelFirst}</span>
+                    <div style={{
+                      background: '#ffffff',
+                      borderRadius: 20,
+                      border: '1px solid #e8f4f0',
+                      boxShadow: '0 2px 16px rgba(45,122,94,0.08)',
+                      overflow: 'hidden',
+                      marginBottom: 16,
+                      minHeight: 280,
+                      maxWidth: '900px',
+                      width: '100%',
+                    }}>
+                      {/* 좌우 분할 */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', minHeight: 180 }}>
+                        {/* 왼쪽: 파일 업로드 */}
+                        <div
+                          style={{
+                            padding: '48px 40px',
+                            borderRight: '1px solid #e8f4f0',
+                            background: isDragging ? '#d0ede6' : '#e8f4f0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
+                            transition: 'background 0.2s',
+                          }}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                        >
+                          <div style={{ fontSize: 36, marginBottom: 12 }}>📎</div>
+                          <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, fontWeight: 600, color: '#2c1a0e', marginBottom: 8 }}>
+                            파일 업로드
                           </div>
-                          {/* 气泡箭头 */}
-                          <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-red-500 rotate-45"></div>
+                          <div style={{ fontSize: 13, color: '#9c7b60', marginBottom: 20 }}>
+                            드래그하거나 클릭하세요
+                          </div>
+                          <label style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 8,
+                            padding: '10px 22px', borderRadius: 8,
+                            border: '1.5px solid #2d7a5e',
+                            background: 'transparent', color: '#2d7a5e',
+                            fontSize: 14, cursor: 'pointer',
+                            width: 'fit-content',
+                          }}>
+                            {songPageTranslations[uiLanguage].selectAudioFile}
+                            <input
+                              className="hidden"
+                              type="file"
+                              accept="audio/*"
+                              onChange={(e) => onAudioFiles(e.target.files)}
+                            />
+                          </label>
+                          {/* 언어 선택 - 숨김 처리, 기본값 ko 유지 */}
+                          <div style={{ marginTop: 12, display: 'block' }}>
+                            <select
+                              value={languageMode || ''}
+                              onChange={(e) => {
+                                const newMode = e.target.value as 'ko' | 'zh' | '';
+                                if (newMode === 'ko' || newMode === 'zh') {
+                                  setLanguageMode(newMode);
+                                  setShowLanguageTip(false);
+                                } else {
+                                  setLanguageMode(null);
+                                  if (audioFile) setShowLanguageTip(true);
+                                }
+                              }}
+                              style={{
+                                padding: '10px 16px',
+                                fontSize: 14,
+                                border: '1.5px solid #2d7a5e',
+                                borderRadius: 10,
+                                color: '#2d7a5e',
+                                background: 'white',
+                                cursor: 'pointer',
+                                outline: 'none',
+                                fontFamily: "'Noto Sans KR', sans-serif",
+                                width: '80%',
+                              }}
+                            >
+                              <option value="">{songPageTranslations[uiLanguage].pleaseSelectLanguage}</option>
+                              <option value="zh">{songPageTranslations[uiLanguage].chinese}</option>
+                              <option value="ko">{songPageTranslations[uiLanguage].korean}</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* 오른쪽: 텍스트 입력 */}
+                        <div style={{ padding: '40px 36px', display: 'flex', flexDirection: 'column' }}>
+                          <div style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, fontWeight: 600, color: '#2c1a0e', marginBottom: 12 }}>
+                            가사 입력
+                          </div>
+                          <textarea
+                            style={{
+                              flex: 1,
+                              minHeight: 200,
+                              padding: '14px 16px',
+                              border: '1.5px solid #e2cdb8',
+                              borderRadius: 8,
+                              fontSize: 14,
+                              color: '#2c1a0e',
+                              background: '#faf6f0',
+                              resize: 'vertical',
+                              fontFamily: "'Noto Sans KR', sans-serif",
+                              outline: 'none',
+                            }}
+                            value={rawText}
+                            onChange={(e) => setRawText(e.target.value)}
+                            placeholder={songPageTranslations[uiLanguage].pasteLyricsPlaceholder}
+                          />
                         </div>
                       </div>
-                    )}
-                  </div>
-                </div>
 
-                <div className={`text-xs transition-colors ${
-                  isDragging ? 'text-blue-600 font-semibold' : 'text-gray-400'
-                }`}>
-                  {isDragging ? songPageTranslations[uiLanguage].releaseMouseToUpload : songPageTranslations[uiLanguage].orDragAudioHere}
-                </div>
-              </div>
-
-              {/* 로딩 진행률 표시 */}
-              {isLoading && (
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-gray-600">
-                    <span>{loadingMessage || songPageTranslations[uiLanguage].analyzing}</span>
-                    <span className="font-semibold">{loadingProgress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                      style={{ width: `${loadingProgress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
-
-              {audioHint && !isLoading && (
-                <div className={`mt-3 text-xs px-3 py-2 rounded-lg ${
-                  audioHint.startsWith('✅') 
-                    ? 'bg-green-50 text-green-700 border border-green-200' 
-                    : 'text-gray-600'
-                }`}>
-                  {audioHint}
-                </div>
-              )}
-              {testResult && (
-                <div className={`mt-3 p-3 rounded-lg text-sm ${
-                  testResult.startsWith('✅') 
-                    ? 'bg-green-50 text-green-800 border border-green-200' 
-                    : 'bg-red-50 text-red-800 border border-red-200'
-                }`}>
-                  <div className="font-semibold mb-1">테스트 결과:</div>
-                  <div>{testResult}</div>
-                  <div className="mt-2 text-xs opacity-75">
-                    브라우저 콘솔(F12)에서 상세 로그를 확인하세요.
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 下半：文本粘贴（次级） */}
-            <div className="p-4">
-              <div className="text-sm font-semibold text-gray-700 mb-2">
-                {songPageTranslations[uiLanguage].orPasteLyrics}
-              </div>
-              <textarea
-                className="w-full h-28 p-3 rounded-xl border bg-white"
-                placeholder={songPageTranslations[uiLanguage].pasteLyricsPlaceholder}
-                value={rawText}
-                onChange={(e) => {
-                  setRawText(e.target.value);
-                  // 不立即清除分析结果，保留现有内容直到点击"开始转写"
-                }}
-              />
-              
-              {/* 学习模式选择 */}
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="text-sm font-semibold text-gray-700 mb-3">{songPageTranslations[uiLanguage].studyMode}</div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setStudyMode("整段学习")}
-                    className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                      studyMode === "整段学习"
-                        ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-                        : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
-                    }`}
-                  >
-                    {songPageTranslations[uiLanguage].wholeParagraphStudy}
-                  </button>
-                  <button
-                    onClick={() => setStudyMode("分句学习")}
-                    className={`px-4 py-2 rounded-lg transition-colors text-sm font-medium ${
-                      studyMode === "分句学习"
-                        ? "bg-blue-100 text-blue-700 border-2 border-blue-300"
-                        : "bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200"
-                    }`}
-                  >
-                    {songPageTranslations[uiLanguage].sentenceBySentenceStudy}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+                      {/* 분석 시작 버튼 */}
+                      <div style={{
+                        padding: '20px 36px',
+                        borderTop: '1px solid #e8f4f0',
+                        display: 'flex',
+                        justifyContent: 'center',
+                      }}>
+                        <button
+                          onClick={onClickTranscribe}
+                          disabled={isLoading}
+                          style={{
+                            padding: '14px 64px',
+                            borderRadius: 32,
+                            background: isLoading ? '#9c7b60' : '#2d7a5e',
+                            color: '#fff',
+                            fontSize: 16,
+                            fontWeight: 600,
+                            border: 'none',
+                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            fontFamily: "'Noto Sans KR', sans-serif",
+                            transition: 'background 0.2s',
+                            letterSpacing: '0.5px',
+                            boxShadow: '0 4px 16px rgba(45,122,94,0.25)',
+                          }}
+                        >
+                          {isLoading ? '분석 중...' : '분석 시작 →'}
+                        </button>
+                      </div>
+                    </div>
 
                    {/* 输入行：文本 + 搜索 */}
                    <div className="hidden grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -4088,12 +3999,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <div className="font-semibold text-blue-900 mb-1">📝 歌词已粘贴</div>
                   <div className="text-blue-700 text-xs">
-                    请点击上方的 <strong>"开始转写 / 分析"</strong> 按钮开始分析歌词。
+                  가사를 붙여넣고 [분석 시작]을 눌러 주세요
                   </div>
                 </div>
               ) : (
                 <div>
-                  请粘贴歌词或拖拽音频文件，然后点击 <strong>"开始转写 / 分析"</strong> 按钮。
+                  가사 또는 오디오 파일 업로드 후 [분석 시작]을 눌러 주세요
                 </div>
               )}
             </div>
@@ -4119,10 +4030,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         ) : showEmpty ? (
           // 空状态提示
           <div className="bg-white border rounded-2xl p-6 text-center">
-            <p className="text-gray-600 mb-4">请粘贴歌词或拖拽音频文件，然后点击 "开始转写 / 分析" 按钮。</p>
+            <div style={{ display: 'none' }}>
+              <p className="text-gray-600 mb-4">가사 또는 오디오 파일 업로드 후 [분석 시작]을 눌러 주세요</p>
+            </div>
             <button
               onClick={() => setShowExample(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+              className="px-4 py-2 text-white rounded-lg transition-colors bg-[#7a4f2d] hover:bg-[#a06c3e]"
             >
               查看示例
             </button>
@@ -4177,10 +4090,31 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 </button>
               </div>
             )}
+
+            {opalPayload?.status === 'ok' && pageItems.length > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
+                <button
+                  onClick={exportCurrentPage}
+                  disabled={pageItems.length === 0}
+                  style={{
+                    padding: '8px 20px',
+                    borderRadius: 8,
+                    border: '1.5px solid #e8f4f0',
+                    background: '#e8f4f0',
+                    color: '#2d7a5e',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    fontFamily: "'Noto Sans KR', sans-serif",
+                  }}
+                >
+                  ↓ HTML 내보내기
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>
-      
+
       {/* 대화 생성 모달 */}
       <DialogueModal />
       </div>

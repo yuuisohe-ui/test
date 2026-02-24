@@ -584,11 +584,11 @@ export default function YoutubePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: '#faf6f0' }}>
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* 顶部区域（Hero 区） */}
         <div className="text-center mb-8 py-12">
-          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3">
+          <h1 className="text-4xl md:text-5xl font-bold mb-3" style={{ color: '#7a4f2d' }}>
             听见中文，说出自然
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-6">
@@ -606,7 +606,7 @@ export default function YoutubePage() {
                 <select
                   value={level}
                   onChange={(e) => setLevel(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
                   <option value="">请选择等级</option>
                   <option value="初级">初级</option>
@@ -624,7 +624,7 @@ export default function YoutubePage() {
                 <select
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
                   <option value="">请选择风格</option>
                   <option value="欢快">欢快</option>
@@ -641,7 +641,7 @@ export default function YoutubePage() {
                 <select
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
                   <option value="">请选择年龄</option>
                   <option value="7-12">7-12</option>
@@ -660,7 +660,7 @@ export default function YoutubePage() {
                 <select
                   value={studyTime}
                   onChange={(e) => setStudyTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
                   <option value="">请选择时长</option>
                   <option value="10分钟">10分钟</option>
@@ -677,7 +677,7 @@ export default function YoutubePage() {
             disabled={!isAllFiltersSelected}
             className={`px-8 py-4 text-lg font-semibold rounded-lg transition-all ${
               isAllFiltersSelected
-                ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                ? 'text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 bg-[#7a4f2d] hover:bg-[#a06c3e]'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
@@ -711,8 +711,8 @@ export default function YoutubePage() {
                   <div
                     key={`${song.id}-${index}`}
                     onClick={() => setSelectedSong(song)}
-                    className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer flex-shrink-0"
-                    style={{ width: '320px', minWidth: '320px' }}
+                    className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-all cursor-pointer flex-shrink-0 border-2 hover:border-[#7a4f2d]"
+                    style={{ width: '320px', minWidth: '320px', borderColor: '#e2cdb8' }}
                   >
                     <div className="relative w-full h-48 bg-gray-200">
                       <img
@@ -727,8 +727,8 @@ export default function YoutubePage() {
                       <div className="flex items-center gap-2 mb-3">
                         <span className={`px-2 py-1 text-xs rounded ${
                           song.level === '初级' ? 'bg-green-100 text-green-700' :
-                          song.level === '中级' ? 'bg-blue-100 text-blue-700' :
-                          song.level === '高级' ? 'bg-purple-100 text-purple-700' :
+                          song.level === '中级' ? 'bg-[#f5ede3] text-[#a06c3e]' :
+                          song.level === '高级' ? 'bg-[#f0e6dc] text-[#7a4f2d]' :
                           'bg-red-100 text-red-700'
                         }`}>
                           {song.level}
@@ -739,7 +739,7 @@ export default function YoutubePage() {
                       </div>
                       <p className="text-sm text-gray-600 mb-2">风格：{song.style}</p>
                       <p className="text-sm text-gray-600 mb-4">适合：{song.age}</p>
-                      <button className="w-full px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+                      <button className="w-full px-4 py-2 text-white rounded-lg transition-colors bg-[#7a4f2d] hover:bg-[#a06c3e]">
                         开始学习
                       </button>
                     </div>
@@ -748,8 +748,8 @@ export default function YoutubePage() {
               </div>
             </div>
             {/* 渐变遮罩效果，提示可以滚动 */}
-            <div className="absolute right-0 top-0 bottom-4 w-20 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none"></div>
-            <div className="absolute left-0 top-0 bottom-4 w-20 bg-gradient-to-r from-gray-50 to-transparent pointer-events-none"></div>
+            <div className="absolute right-0 top-0 bottom-4 w-20 bg-gradient-to-l from-[#faf6f0] to-transparent pointer-events-none"></div>
+            <div className="absolute left-0 top-0 bottom-4 w-20 bg-gradient-to-r from-[#faf6f0] to-transparent pointer-events-none"></div>
           </div>
         </div>
 
@@ -763,7 +763,7 @@ export default function YoutubePage() {
               <h3 className="text-xl font-semibold text-gray-800">初级</h3>
               <button
                 onClick={() => toggleLevel('beginner')}
-                className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
                 {expandedLevels.beginner ? '收起' : '展开更多'}
                 <svg
@@ -824,7 +824,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(liangzhilaohu)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -863,7 +863,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yueliang)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -902,7 +902,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(pengyou)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -941,7 +941,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yishanyishan)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -980,7 +980,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(houlai)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1019,7 +1019,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(ningxia)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1058,7 +1058,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(xinbuliao)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1097,7 +1097,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(qiasini)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1136,7 +1136,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(haishanghua)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1175,7 +1175,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(tongzhuodeni)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1224,7 +1224,7 @@ export default function YoutubePage() {
               <h3 className="text-xl font-semibold text-gray-800">中级</h3>
               <button
                 onClick={() => toggleLevel('intermediate')}
-                className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
                 {expandedLevels.intermediate ? '收起' : '展开更多'}
                 <svg
@@ -1285,7 +1285,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(tianmimi)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1324,7 +1324,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(waipo)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1363,7 +1363,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(paomo)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1402,7 +1402,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yuai)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1441,7 +1441,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(zhiven)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1480,7 +1480,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(xiaoxingyun)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1519,7 +1519,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(wohuainian)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1558,7 +1558,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(guangnian)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1597,7 +1597,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yongqi)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1636,7 +1636,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(buweishuierzuodege)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1685,7 +1685,7 @@ export default function YoutubePage() {
               <h3 className="text-xl font-semibold text-gray-800">高级</h3>
               <button
                 onClick={() => toggleLevel('advanced')}
-                className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
                 {expandedLevels.advanced ? '收起' : '展开更多'}
                 <svg
@@ -1746,7 +1746,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(haizailiulang)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1785,7 +1785,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(pingfan)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1824,7 +1824,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yequ)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1863,7 +1863,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(yanhuayileng)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1902,7 +1902,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(xiangwozheyangderen)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1941,7 +1941,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(xiaochou)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -1980,7 +1980,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(huidaoguoqu)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -2019,7 +2019,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(geiwoyishougedeshijian)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -2058,7 +2058,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(qimiaonengliges)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -2097,7 +2097,7 @@ export default function YoutubePage() {
                       <div
                         key={idx}
                         onClick={() => setSelectedSong(niyaodequannazous)}
-                        className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white rounded-lg shadow-sm border-2 border-[#e2cdb8] overflow-hidden hover:shadow-md hover:border-[#7a4f2d] transition-all cursor-pointer"
                       >
                         <div className="relative w-full h-32 bg-gray-200">
                           <img
@@ -2146,7 +2146,7 @@ export default function YoutubePage() {
               <h3 className="text-xl font-semibold text-gray-800">进阶</h3>
               <button
                 onClick={() => toggleLevel('expert')}
-                className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
                 {expandedLevels.expert ? '收起' : '展开更多'}
                 <svg

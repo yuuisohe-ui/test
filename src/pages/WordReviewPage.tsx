@@ -74,26 +74,27 @@ export default function WordReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4" style={{ background: '#faf6f0' }}>
       <div className="max-w-6xl mx-auto">
         {/* 页面标题 */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            单词复习
+          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2c1a0e', fontFamily: "'Noto Serif KR', serif" }}>
+            어휘 트레이닝
           </h1>
-          <p className="text-gray-600">
-            通过多种方式复习和学习中文单词
+          <p style={{ color: '#9c7b60' }}>
+            노래에서 만난 단어, 다양한 방법으로 복습해요
           </p>
         </div>
 
         {/* Tab导航 */}
         <div className="flex gap-2 mb-6 border-b">
           <button
-            className={`px-6 py-3 font-medium transition-colors ${
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'collection'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? ''
+                : 'hover:text-[#7a4f2d]'
             }`}
+            style={activeTab === 'collection' ? { color: '#7a4f2d', borderColor: '#7a4f2d' } : { color: '#9c7b60' }}
             onClick={() => {
               setActiveTab('collection');
               setGameType(null);
@@ -103,11 +104,12 @@ export default function WordReviewPage() {
             我的收藏
           </button>
           <button
-            className={`px-6 py-3 font-medium transition-colors ${
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'theme'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? ''
+                : 'hover:text-[#7a4f2d]'
             }`}
+            style={activeTab === 'theme' ? { color: '#7a4f2d', borderColor: '#7a4f2d' } : { color: '#9c7b60' }}
             onClick={() => {
               setActiveTab('theme');
               setGameType(null);
@@ -117,11 +119,12 @@ export default function WordReviewPage() {
             主题词汇
           </button>
           <button
-            className={`px-6 py-3 font-medium transition-colors ${
+            className={`px-6 py-3 font-medium transition-colors border-b-2 ${
               activeTab === 'game'
-                ? 'text-blue-600 border-b-2 border-blue-600'
-                : 'text-gray-600 hover:text-gray-900'
+                ? ''
+                : 'hover:text-[#7a4f2d]'
             }`}
+            style={activeTab === 'game' ? { color: '#7a4f2d', borderColor: '#7a4f2d' } : { color: '#9c7b60' }}
             onClick={() => {
               setActiveTab('game');
               setGameType(null);
@@ -275,6 +278,7 @@ function GameTab({
   setGameStarted: (started: boolean) => void;
   starredWords: Word[];
 }) {
+  const [hoveredGameId, setHoveredGameId] = useState<string | null>(null);
   const games = [
     { id: 'matching', name: '单词配对', icon: '🔗', desc: '将中文单词与韩语释义配对' },
     { id: 'fillBlank', name: '填空挑战', icon: '✏️', desc: '选择正确的单词填空' },
@@ -292,7 +296,10 @@ function GameTab({
             <button
               key={game.id}
               onClick={() => setGameType(game.id as GameType)}
-              className="p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200 hover:border-blue-400 transition-all text-left group"
+              onMouseEnter={() => setHoveredGameId(game.id)}
+              onMouseLeave={() => setHoveredGameId(null)}
+              className="p-6 rounded-lg border-2 transition-all text-left group"
+              style={{ background: '#f5ede3', borderColor: hoveredGameId === game.id ? '#7a4f2d' : '#e2cdb8' }}
             >
               <div className="text-4xl mb-3">{game.icon}</div>
               <h3 className="text-lg font-semibold text-gray-800 mb-2">{game.name}</h3>
@@ -465,7 +472,7 @@ function MatchingGame({ words }: { words: Word[] }) {
             setSelectedWord(null);
             setSelectedKorean(null);
           }}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
         >
           再来一局
         </button>
@@ -579,7 +586,7 @@ function FillBlankGame({ words }: { words: Word[] }) {
             setSelectedAnswer(null);
             setShowResult(false);
           }}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
         >
           再来一局
         </button>
@@ -635,7 +642,7 @@ function FillBlankGame({ words }: { words: Word[] }) {
           </div>
           <button
             onClick={handleNext}
-            className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="w-full px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
           >
             {currentQuestion < questions.length - 1 ? '下一题' : '查看结果'}
           </button>
@@ -706,7 +713,7 @@ function ListenGame({ words }: { words: Word[] }) {
             setSelectedAnswer(null);
             setShowResult(false);
           }}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
         >
           再来一局
         </button>
@@ -731,7 +738,7 @@ function ListenGame({ words }: { words: Word[] }) {
         <button
           onClick={() => speakWord(question.word)}
           disabled={isPlaying}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 mb-4"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e] disabled:opacity-50 mb-4"
         >
           {isPlaying ? '播放中...' : '🔊 播放发音'}
         </button>
@@ -769,7 +776,7 @@ function ListenGame({ words }: { words: Word[] }) {
           </div>
           <button
             onClick={handleNext}
-            className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="w-full px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
           >
             {currentQuestion < questions.length - 1 ? '下一题' : '查看结果'}
           </button>
@@ -841,7 +848,7 @@ function WordBuilderGame({ words }: { words: Word[] }) {
             setSelectedChars([]);
             setShowResult(false);
           }}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
         >
           再来一局
         </button>
@@ -908,7 +915,7 @@ function WordBuilderGame({ words }: { words: Word[] }) {
             </button>
             <button
               onClick={handleNext}
-              className="flex-1 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              className="flex-1 px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
             >
               {currentQuestion < questions.length - 1 ? '下一题' : '查看结果'}
             </button>
@@ -987,7 +994,7 @@ function WordChainGame({ words }: { words: Word[] }) {
             setSelectedWords(new Set());
             setShowResult(false);
           }}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          className="px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
         >
           再来一局
         </button>
@@ -1054,7 +1061,7 @@ function WordChainGame({ words }: { words: Word[] }) {
         <button
           onClick={handleSubmit}
           disabled={selectedWords.size === 0}
-          className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          className="w-full px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e] disabled:opacity-50"
         >
           提交答案
         </button>
@@ -1069,7 +1076,7 @@ function WordChainGame({ words }: { words: Word[] }) {
           </div>
           <button
             onClick={handleNext}
-            className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="w-full px-6 py-3 text-white rounded-lg bg-[#7a4f2d] hover:bg-[#a06c3e]"
           >
             {currentQuestion < questions.length - 1 ? '下一题' : '查看结果'}
           </button>

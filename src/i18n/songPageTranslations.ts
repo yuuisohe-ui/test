@@ -85,7 +85,7 @@ export const songPageTranslations = {
   },
   ko: {
     // 顶部导航区域
-    title: '중국어 가사 학습 분석',
+    title: '가사로 배우기',
     apiTest: 'API 테스트',
     sentenceReview: '문장 복습',
     exitSentenceReview: '문장 복습 종료',
