@@ -191,8 +191,8 @@ export default function SongExample({ onClose }: SongExampleProps) {
     <div className="bg-white rounded-2xl border shadow-lg p-6 max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">示例：雨爱 (우애)</h2>
-          <p className="text-sm text-gray-600 mt-1">这是一个学习示例，展示转写后会出现的学习内容格式</p>
+          <h2 className="text-2xl font-bold text-gray-900">예시: 우애 (雨爱)</h2>
+          <p className="text-sm text-gray-600 mt-1">이것은 학습 예시로, 텍스트 변환 후 표시되는 학습 내용 형식을 보여줍니다.</p>
         </div>
         {onClose && (
           <button
@@ -216,7 +216,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
-          分句学习
+          문장별 학습
         </button>
         <button
           onClick={() => setStudyMode("整段学习")}
@@ -226,7 +226,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
           }`}
         >
-          整段学习
+          전체 학습
         </button>
       </div>
 
@@ -256,8 +256,8 @@ export default function SongExample({ onClose }: SongExampleProps) {
                   </div>
                   <button
                     className="text-xl leading-none px-2 py-1 rounded-lg text-gray-300 hover:text-yellow-500"
-                    aria-label="星标"
-                    title="星标"
+                    aria-label="즐겨찾기"
+                    title="즐겨찾기"
                   >
                     ★
                   </button>
@@ -265,7 +265,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
 
                 {/* 中文句子展示 - 使用与 SongPage 相同的格式 */}
                 <div className="mb-4">
-                  <div className="text-sm font-semibold text-gray-700 mb-2">中文句子</div>
+                  <div className="text-sm font-semibold text-gray-700 mb-2">중국어 문장</div>
                   <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed justify-center">
                     {data.chunks?.[0]?.chunkSegments?.map((seg: any, segIdx: number) => {
                       const chunkZh = seg.chunkZh || '';
@@ -295,7 +295,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
                 {/* 教学提示按钮 */}
                 <div className="mb-4">
                   <div className="flex items-center justify-between mb-2">
-                    <div className="text-sm font-semibold text-gray-700">学习分析表</div>
+                    <div className="text-sm font-semibold text-gray-700">학습 분석표</div>
                     <div className="relative">
                       <button
                         onClick={() => {
@@ -318,14 +318,14 @@ export default function SongExample({ onClose }: SongExampleProps) {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                             </svg>
-                            收起
+                            접기
                           </>
                         ) : (
                           <>
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            查看本句教学提示
+                            학습 가이드
                           </>
                         )}
                       </button>
@@ -338,7 +338,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
                           {/* 重点词汇 */}
                           {teachingTipContent[index + 1].vocabulary.length > 0 && (
                             <div className="mb-4">
-                              <h4 className="text-sm font-semibold text-gray-800 mb-3">重点词汇</h4>
+                              <h4 className="text-sm font-semibold text-gray-800 mb-3">핵심 어휘</h4>
                               <div className="space-y-2">
                                 {teachingTipContent[index + 1].vocabulary.map((vocab, vocabIndex) => (
                                   <div key={vocabIndex} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-200">
@@ -366,7 +366,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
                           {/* 重点句型 */}
                           {teachingTipContent[index + 1].patterns.length > 0 && (
                             <div className="mb-4">
-                              <h4 className="text-sm font-semibold text-gray-800 mb-3">重点句型</h4>
+                              <h4 className="text-sm font-semibold text-gray-800 mb-3">핵심 문형</h4>
                               {teachingTipContent[index + 1].patterns.map((pattern, patternIndex) => (
                                 <div key={patternIndex} className="p-3 bg-white rounded border border-gray-200">
                                   <div className="font-medium text-gray-900 mb-1">{pattern.pattern}</div>
@@ -400,7 +400,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
                   startSec={subtitle.startTime}
                   endSec={subtitle.endTime}
                   userLevel="中级"
-                  uiLanguage="zh"
+                  uiLanguage="ko"
                 />
               </div>
             );
@@ -410,7 +410,7 @@ export default function SongExample({ onClose }: SongExampleProps) {
         // 整段学习模式
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-semibold mb-4">整段歌词</h3>
+            <h3 className="text-lg font-semibold mb-4">전체 가사</h3>
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
               {subtitles.slice(0, 8).map((subtitle, index) => {
                 const sentenceText = getSentenceText(subtitle.text);

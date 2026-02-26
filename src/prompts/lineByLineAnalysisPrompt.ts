@@ -38,7 +38,8 @@ Please generate a JSON response following this exact structure:
           "text": "중국어 단어",
           "glossZh": "중국어 설명",
           "glossKr": "한국어 설명",
-          "example": "예문"
+          "example": "예문",
+          "hskLevel": 1
         }
       ],
       "chunks": [
@@ -49,7 +50,8 @@ Please generate a JSON response following this exact structure:
           "pinyin": "zhōng guó yǔ",
           "chunkZh": "중국어 의미",
           "explanation": "문법/의미 상세 설명",
-          "tones": "1-2-3"
+          "tones": "1-2-3",
+          "hskLevel": 1
         }
       ],
       "chunkSegments": [
@@ -80,7 +82,8 @@ CRITICAL REQUIREMENTS:
 5. **Provide accurate 'pos'** (part of speech) for each chunk.
 6. **'romanization'** should use Revised Romanization of Korean.
 7. **'chunks'** should break sentences into meaningful grammatical units.
-8. **SEMANTIC SEGMENTATION (chunkSegments):**
+8. **HSK LEVEL (hskLevel):** For each item in tokensZh and chunks, include "hskLevel" (integer 1-6): 1-2 = elementary, 3-4 = intermediate, 5-6 = advanced.
+9. **SEMANTIC SEGMENTATION (chunkSegments):**
    - You are a Chinese language processing assistant.
    - Task: Segment the Chinese sentence (zhSentence) into 2-3 semantic segments based on natural speech boundaries.
    - Requirements:

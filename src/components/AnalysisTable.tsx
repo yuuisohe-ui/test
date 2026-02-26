@@ -1,7 +1,8 @@
+import { forwardRef, type Ref } from 'react';
 import { Chunk } from '../types';
 import { TTSButton } from './TTSButton';
 import { AudioPlayer } from './AudioPlayer';
-import { SingAlongButton } from './SingAlongButton';
+import { SingAlongButton, type ReadingFeedback, type SingAlongButtonHandle } from './SingAlongButton';
 import { songPageTranslations } from '../i18n/songPageTranslations';
 
 interface AnalysisTableProps {
@@ -12,7 +13,11 @@ interface AnalysisTableProps {
   startSec?: number; // 开始时间
   endSec?: number; // 结束时间
   userLevel?: "初级" | "中级" | "高级" | null; // 用户水平（用于跟读按钮）
-  uiLanguage?: 'zh' | 'ko'; // UI语言
+  uiLanguage?: 'ko'; // UI 固定韩文（保留 prop 以兼容调用方）
+  /** 由 SentenceCard 渲染跟读反馈面板（与教学提示同级），避免被裁切 */
+  renderFeedbackExternally?: boolean;
+  onReadAlongFeedbackReady?: (feedback: ReadingFeedback) => void;
+  onPlayingChange?: (playing: boolean) => void;
 }
 
 // 按照chunk边界（语义断句）分段拼音和声调
@@ -180,7 +185,10 @@ const HSKLevelIndicator = ({ level }: { level: number }) => {
   );
 };
 
-export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec, endSec, userLevel, uiLanguage = 'zh' }: AnalysisTableProps) => {
+const AnalysisTableInner = (
+  { chunks, sentence, audioFile, audioUrl, startSec, endSec, userLevel, uiLanguage = 'ko', renderFeedbackExternally, onReadAlongFeedbackReady, onPlayingChange }: AnalysisTableProps,
+  ref: Ref<SingAlongButtonHandle>
+) => {
   if (chunks.length === 0) return null;
   
   const chunk = chunks[0]; // 只显示第一个（整句分析）
@@ -198,16 +206,16 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
         <thead>
           <tr className="bg-gray-50 border-b border-gray-200">
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">
-              {uiLanguage === 'zh' ? '难度等级' : '난이도 등급'}
+              난이도 등급
             </th>
             <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">
-              {songPageTranslations[uiLanguage].tryReading}
+              {songPageTranslations.ko.tryReading}
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">
-              {uiLanguage === 'zh' ? '整句声调结构' : '문장 성조 구조'}
+              문장 성조 구조
             </th>
             <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">
-              {uiLanguage === 'zh' ? '音频' : '오디오'}
+              오디오
             </th>
           </tr>
         </thead>
@@ -219,8 +227,16 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
             <td className="px-4 py-4 text-base text-gray-700 min-w-[300px]">
               {/* 跟读按钮 */}
               <div className="flex flex-col items-center gap-2">
-                <div className="text-xs text-gray-500">{songPageTranslations[uiLanguage].clickToStartReading}</div>
-                <SingAlongButton text={chunk.text} userLevel={userLevel || null} />
+                <div className="text-xs text-gray-500">{songPageTranslations.ko.clickToStartReading}</div>
+                <SingAlongButton
+                  ref={ref}
+                  text={chunk.text}
+                  userLevel={userLevel || null}
+                  uiLanguage="ko"
+                  renderFeedbackExternally={renderFeedbackExternally}
+                  onFeedbackReady={onReadAlongFeedbackReady}
+                  onPlayingChange={onPlayingChange}
+                />
               </div>
             </td>
             <td className="px-4 py-4">
@@ -255,7 +271,8 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
                 <TTSButton 
                   text={chunk.text} 
                   className="w-full px-3 py-1.5"
-                  label="朗读"
+                  label={songPageTranslations.ko.readAloud}
+                  uiLanguage="ko"
                 />
               </div>
             </td>
@@ -265,4 +282,6 @@ export const AnalysisTable = ({ chunks, sentence, audioFile, audioUrl, startSec,
     </div>
   );
 };
+
+export const AnalysisTable = forwardRef<SingAlongButtonHandle, AnalysisTableProps>(AnalysisTableInner);
 

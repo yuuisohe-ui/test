@@ -3,6 +3,8 @@ export type OpalToken = {
   glossZh?: string;
   glossKr?: string;
   example?: string;
+  /** HSK 等级 1-6，用于难度背景色：1-2 初级绿、3-4 中级蓝、5-6 高级紫 */
+  hskLevel?: number;
 };
 
 export type OpalChunk = {
@@ -15,6 +17,8 @@ export type OpalChunk = {
   tones?: string;            // 성조 구조
   startSec?: number;
   endSec?: number;
+  /** HSK 等级 1-6，用于难度背景色 */
+  hskLevel?: number;
 };
 
 export type OpalLine = {
@@ -55,12 +59,12 @@ export const opalMockOk: SongPayload = {
       zhSentence: "我爱你",
     startSec: 10.2,      endSec: 12.0,
       tokensZh: [
-        { text: "我", glossZh: "第一人称" },
-        { text: "爱", glossZh: "喜欢、深爱" },
-        { text: "你", glossZh: "第二人称" }
+        { text: "我", glossZh: "第一人称", hskLevel: 1 },
+        { text: "爱", glossZh: "喜欢、深爱", hskLevel: 1 },
+        { text: "你", glossZh: "第二人称", hskLevel: 1 }
       ],
       chunks: [
-        { pattern: "主语 + 动词 + 宾语", chunkZh: "我爱你", pinyin: "wǒ ài nǐ", tones: "3-4-3" }
+        { pattern: "主语 + 动词 + 宾语", chunkZh: "我爱你", pinyin: "wǒ ài nǐ", tones: "3-4-3", hskLevel: 1 }
       ]
     }
   ]

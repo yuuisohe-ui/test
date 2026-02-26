@@ -129,41 +129,50 @@ export const SentenceView = ({
   };
 
 
+  // 根据 token 的 level 或 hskLevel 得到难度背景色（初级绿、中级蓝、高级紫）
+  const getDifficultyBg = (t?: Token): string => {
+    let level: 'basic' | 'intermediate' | 'advanced' | undefined = t?.level;
+    if (level == null && t?.hskLevel != null) {
+      const n = Number(t.hskLevel);
+      if (n >= 1 && n <= 2) level = 'basic';
+      else if (n >= 3 && n <= 4) level = 'intermediate';
+      else if (n >= 5 && n <= 6) level = 'advanced';
+    }
+    if (level === 'basic') return 'bg-green-100';
+    if (level === 'intermediate') return 'bg-blue-100';
+    if (level === 'advanced') return 'bg-purple-100';
+    return '';
+  };
+
   // 渲染单词的辅助函数（统一处理词卡功能）
   const renderWord = (word: string, key: string, isToken: boolean = false, token?: Token, index?: number) => {
     const wordToken = isToken && token ? token : createTempToken(word);
-    // 使用 key 作为 tokenId，确保每个字符都有唯一的 ID
     const tokenId = key;
     const isActive = globalActiveTokenId === tokenId;
     
-    // 根据难度等级设置颜色（如果有 level 字段）
+    let level: 'basic' | 'intermediate' | 'advanced' | undefined = token?.level;
+    if (level == null && token?.hskLevel != null) {
+      const n = Number(token.hskLevel);
+      if (n >= 1 && n <= 2) level = 'basic';
+      else if (n >= 3 && n <= 4) level = 'intermediate';
+      else if (n >= 5 && n <= 6) level = 'advanced';
+    }
+    
     let bgColorClass = 'hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200';
     let selectedBgClass = 'bg-blue-200 text-blue-800';
-    
-    if (token?.level) {
-      if (token.level === 'basic') {
-        bgColorClass = 'hover:bg-green-100 hover:text-green-700 active:bg-green-200';
-        selectedBgClass = 'bg-green-200 text-green-800';
-      } else if (token.level === 'intermediate') {
-        bgColorClass = 'hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200';
-        selectedBgClass = 'bg-blue-200 text-blue-800';
-      } else if (token.level === 'advanced') {
-        bgColorClass = 'hover:bg-purple-100 hover:text-purple-700 active:bg-purple-200';
-        selectedBgClass = 'bg-purple-200 text-purple-800';
-      }
+    if (level === 'basic') {
+      bgColorClass = 'hover:bg-green-100 hover:text-green-700 active:bg-green-200';
+      selectedBgClass = 'bg-green-200 text-green-800';
+    } else if (level === 'intermediate') {
+      bgColorClass = 'hover:bg-blue-100 hover:text-blue-700 active:bg-blue-200';
+      selectedBgClass = 'bg-blue-200 text-blue-800';
+    } else if (level === 'advanced') {
+      bgColorClass = 'hover:bg-purple-100 hover:text-purple-700 active:bg-purple-200';
+      selectedBgClass = 'bg-purple-200 text-purple-800';
     }
     
-    // 如果有 level，添加背景色（仅在词汇训练模式下）
-    let levelBgClass = '';
-    if (disableWordCards && token?.level) {
-      if (token.level === 'basic') {
-        levelBgClass = 'bg-green-100';
-      } else if (token.level === 'intermediate') {
-        levelBgClass = 'bg-blue-100';
-      } else if (token.level === 'advanced') {
-        levelBgClass = 'bg-purple-100';
-      }
-    }
+    // 难度背景色：有 level 或 hskLevel 时始终显示（初级绿、中级蓝、高级紫）
+    const levelBgClass = getDifficultyBg(token);
     
     return (
       <span
@@ -175,7 +184,7 @@ export const SentenceView = ({
           inline-block
           ${disableWordCards ? 'cursor-default' : 'cursor-pointer'}
           ${disableWordCards ? '' : bgColorClass}
-          ${disableWordCards ? levelBgClass : (selectedWord === word ? selectedBgClass : levelBgClass)}
+          ${selectedWord === word ? selectedBgClass : levelBgClass}
           rounded transition-colors duration-150
           relative
         `}

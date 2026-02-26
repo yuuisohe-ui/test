@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { audioManager } from '../utils/audioManager';
+import { songPageTranslations } from '../i18n/songPageTranslations';
 
 interface TTSButtonProps {
   text: string;
@@ -7,9 +8,11 @@ interface TTSButtonProps {
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
   label?: string; // 可选：按钮上显示的文字标签
+  uiLanguage?: 'ko'; // UI 固定韩文
 }
 
-export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label }: TTSButtonProps) => {
+export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label, uiLanguage = 'ko' }: TTSButtonProps) => {
+  const t = songPageTranslations.ko;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -145,8 +148,8 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label
         text-sm font-medium
         ${className}
       `}
-      title={isPaused ? "继续朗读" : isSpeaking ? "暂停朗读" : "AI朗读"}
-      aria-label={isPaused ? "继续朗读" : isSpeaking ? "暂停朗读" : "AI朗读"}
+      title={isPaused ? t.ttsTitleResume : isSpeaking ? t.ttsTitlePause : t.ttsTitlePlay}
+      aria-label={isPaused ? t.ttsTitleResume : isSpeaking ? t.ttsTitlePause : t.ttsTitlePlay}
     >
       {isPaused ? (
         // 继续图标

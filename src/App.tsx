@@ -28,7 +28,7 @@ export default function App() {
         <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>
           <button onClick={() => setView("home")} style={{ background: "none", border: "1px solid #e2cdb8", borderRadius: 8, padding: "6px 16px", fontSize: 13, color: "#9c7b60", cursor: "pointer", fontFamily: "'Noto Sans KR', sans-serif" }}>← 홈</button>
         </div>
-        <SongPage />
+        <SongPage isVisible={view === "song"} />
       </div>
       <div style={{ display: view === "wordReview" ? "block" : "none" }}>
         <div style={{ padding: "12px 24px", borderBottom: "1px solid #e2cdb8", background: "rgba(250,246,240,0.88)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 50 }}>

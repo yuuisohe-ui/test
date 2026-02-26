@@ -28,7 +28,8 @@ export function getTextAnalysisPrompt(text: string, sourceLang: 'ko' | 'zh'): st
           "text": "중국어 단어",
           "glossZh": "중국어 설명",
           "glossKr": "한국어 설명",
-          "example": "예문"
+          "example": "예문",
+          "hskLevel": 1
         }
       ],
       "chunks": [
@@ -39,7 +40,8 @@ export function getTextAnalysisPrompt(text: string, sourceLang: 'ko' | 'zh'): st
           "pinyin": "zhōng guó yǔ",
           "chunkZh": "중국어 의미",
           "explanation": "문법/의미 설명",
-          "tones": "1-2-3"
+          "tones": "1-2-3",
+          "hskLevel": 1
         }
       ],
       "chunkSegments": [
@@ -68,8 +70,9 @@ CRITICAL REQUIREMENTS:
 7. 'romanization' should be Korean text in romanized form (Revised Romanization of Korean)
 8. Focus on teaching Chinese (zhSentence) that helps Korean learners understand the meaning
 9. 'chunks' should break down the sentence into meaningful grammatical units
-10. **IMPORTANT: Include ALL lines from the input. If the input has 10 lines, the response must have 10 line entries. If it has 20 lines, return 20 entries.**
-11. **CRITICAL: tokensZh CONSISTENCY REQUIREMENTS:**
+10. **HSK LEVEL (hskLevel):** For each item in tokensZh and chunks, include "hskLevel" (integer 1-6) based on HSK vocabulary: 1-2 = elementary, 3-4 = intermediate, 5-6 = advanced. Use word-level segmentation (typical 1-4 characters per token); avoid tokens longer than 4 characters unless fixed expressions (e.g. 不好意思).
+11. **IMPORTANT: Include ALL lines from the input. If the input has 10 lines, the response must have 10 line entries. If it has 20 lines, return 20 entries.**
+12. **CRITICAL: tokensZh CONSISTENCY REQUIREMENTS:**
     ${sourceLang === 'zh' ? `
     - If input text is Chinese (langDisplay = "zh"):
       1) displayLine MUST equal the original input line exactly (preserve all spaces and punctuation)
@@ -81,7 +84,7 @@ CRITICAL REQUIREMENTS:
       2) zhSentence is the Chinese translation sentence
       3) tokensZh MUST be strictly generated from zhSentence by word-segmentation. When tokensZh are joined (ignoring spaces/punctuation), they MUST exactly reconstruct zhSentence (ignoring spaces/punctuation)
     `}
-11. **SEMANTIC SEGMENTATION (chunkSegments):**
+13. **SEMANTIC SEGMENTATION (chunkSegments):**
     - You are a Chinese language processing assistant.
     - Task: Segment the Chinese sentence (zhSentence) into 2-3 semantic segments based on natural speech boundaries.
     - Requirements:

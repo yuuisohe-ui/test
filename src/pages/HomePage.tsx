@@ -25,6 +25,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
   const [running, setRunning] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalData, setModalData] = useState({ emoji: "🎉", title: "다시 돌아오셨군요!", msg: "오늘도 함께 공부해요.<br/>꾸준한 학습이 실력을 만들어요 💪" });
+  const [showLevelRequiredModal, setShowLevelRequiredModal] = useState(false);
 
   // Timer
   useEffect(() => {
@@ -125,14 +126,22 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         {/* CARDS ROW 1 - 3 cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14, marginBottom: 14 }}>
           {cards.slice(0, 3).map(card => (
-            <CardItem key={card.id} card={card} onClick={() => onNavigate(card.id)} />
+            <CardItem
+              key={card.id}
+              card={card}
+              onClick={() => (level ? onNavigate(card.id) : setShowLevelRequiredModal(true))}
+            />
           ))}
         </div>
 
         {/* CARDS ROW 2 - 2 cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 14, marginBottom: 36 }}>
           {cards.slice(3).map(card => (
-            <CardItem key={card.id} card={card} onClick={() => onNavigate(card.id)} />
+            <CardItem
+              key={card.id}
+              card={card}
+              onClick={() => (level ? onNavigate(card.id) : setShowLevelRequiredModal(true))}
+            />
           ))}
         </div>
 
@@ -143,6 +152,62 @@ export default function HomePage({ onNavigate }: HomePageProps) {
         <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, color: COLORS.ink2 }}>노래 중국어</span>
         <span style={{ fontSize: 11, color: COLORS.ink3 }}>© 2025 노래 중국어 · 중국 대중음악 기반 통합 중국어 학습 플랫폼</span>
       </div>
+
+      {/* 학습 수준 선택 안내 모달 - 카드 클릭 시 미선택이면 표시 */}
+      {showLevelRequiredModal && (
+        <div
+          onClick={() => setShowLevelRequiredModal(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(44,26,14,0.5)",
+            backdropFilter: "blur(6px)",
+            zIndex: 200,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: "#fff",
+              borderRadius: 20,
+              padding: "32px 40px",
+              maxWidth: 400,
+              width: "100%",
+              textAlign: "center",
+              boxShadow: "0 20px 60px rgba(122,79,45,0.25)",
+              border: `2px solid ${COLORS.brownPale}`,
+            }}
+          >
+            <div style={{ fontSize: 48, marginBottom: 16 }}>📌</div>
+            <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, color: COLORS.ink, marginBottom: 14, lineHeight: 1.4 }}>
+              학습을 시작하려면 먼저 학습 수준을 선택해 주세요
+            </h3>
+            <p style={{ fontSize: 13, color: COLORS.ink3, marginBottom: 24, lineHeight: 1.6 }}>
+              상단의 <strong>나의 수준</strong>에서 초급 · 중급 · 고급 중 하나를 선택한 뒤, 다시 메뉴를 눌러 주세요.
+            </p>
+            <button
+              onClick={() => setShowLevelRequiredModal(false)}
+              style={{
+                padding: "12px 28px",
+                borderRadius: 12,
+                border: "none",
+                background: COLORS.brown,
+                color: "#fff",
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: "pointer",
+                fontFamily: "'Noto Sans KR', sans-serif",
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* WELCOME MODAL */}
       {showModal && (

@@ -1,15 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { generateReadingFeedback, transcribeAudio } from '../services/chatgptApi';
 import { SpeechRadarChart } from './RadarChart';
+import { songPageTranslations } from '../i18n/songPageTranslations';
 
-interface SingAlongButtonProps {
-  text: string; // 要跟读的目标文本
-  userLevel: "初级" | "中级" | "高级" | null; // 用户水平
-  className?: string;
-  onStartRecording?: () => void; // 开始录音时的回调
-}
-
-interface ReadingFeedback {
+export interface ReadingFeedback {
   scores: {
     contentAccuracy: number;
     tonePerformance: number;
@@ -26,7 +20,27 @@ interface ReadingFeedback {
   };
 }
 
-export const SingAlongButton = ({ text, userLevel, className = '', onStartRecording }: SingAlongButtonProps) => {
+interface SingAlongButtonProps {
+  text: string; // 要跟读的目标文本
+  userLevel: "初级" | "中级" | "高级" | null; // 用户水平
+  className?: string;
+  onStartRecording?: () => void; // 开始录音时的回调
+  uiLanguage?: 'ko';
+  /** 由父级（如 SentenceCard）渲染反馈面板，避免被裁切；为 true 时不渲染内部面板并回调 onFeedbackReady */
+  renderFeedbackExternally?: boolean;
+  /** 分析完成时回调，父级用此数据渲染面板 */
+  onFeedbackReady?: (feedback: ReadingFeedback) => void;
+  /** 播放/暂停状态变化时回调，供父级面板显示「播放/暂停」按钮状态 */
+  onPlayingChange?: (playing: boolean) => void;
+}
+
+export interface SingAlongButtonHandle {
+  restartRecording: () => void;
+  playRecording: () => void;
+}
+
+const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecording, uiLanguage = 'ko', renderFeedbackExternally, onFeedbackReady, onPlayingChange }: SingAlongButtonProps, ref: React.Ref<SingAlongButtonHandle>) => {
+  const t = songPageTranslations.ko;
   const [isRecording, setIsRecording] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
@@ -89,9 +103,18 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
         }
         
         audioRef.current = new Audio(audioUrl);
-        audioRef.current.onended = () => setIsPlaying(false);
-        audioRef.current.onplay = () => setIsPlaying(true);
-        audioRef.current.onpause = () => setIsPlaying(false);
+        audioRef.current.onended = () => {
+          setIsPlaying(false);
+          onPlayingChange?.(false);
+        };
+        audioRef.current.onplay = () => {
+          setIsPlaying(true);
+          onPlayingChange?.(true);
+        };
+        audioRef.current.onpause = () => {
+          setIsPlaying(false);
+          onPlayingChange?.(false);
+        };
         
         setHasRecording(true);
         setFeedback(null);
@@ -247,7 +270,12 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
       };
 
       setFeedback(normalizedFeedback);
-      setShowFeedback(true);
+      if (renderFeedbackExternally && onFeedbackReady) {
+        onFeedbackReady(normalizedFeedback);
+        // 不在此处渲染面板，由父级渲染
+      } else {
+        setShowFeedback(true);
+      }
       
       // 短暂延迟后重置进度，为下次分析做准备
       setTimeout(() => {
@@ -269,6 +297,11 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  useImperativeHandle(ref, () => ({
+    restartRecording,
+    playRecording,
+  }), [restartRecording, playRecording]);
+
   return (
     <div className={`relative inline-block ${className}`}>
       {/* 跟读按钮 - 一直显示 */}
@@ -285,7 +318,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
             text-sm font-medium
             disabled:opacity-50 disabled:cursor-not-allowed
           "
-          title={!userLevel ? "请先选择语言等级" : hasRecording ? "重新跟读" : "开始跟读录音"}
+          title={!userLevel ? t.alertSelectLevel : hasRecording ? t.restartReadAlong : t.startReadAlong}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -301,7 +334,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
             />
           </svg>
-          {hasRecording ? '再读一次' : '跟读'}
+          {hasRecording ? t.readAgain : t.readAlong}
         </button>
       )}
 
@@ -311,7 +344,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-50 border border-red-200">
             <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
             <span className="text-sm text-red-700 font-medium">
-              正在录音，录音目前为 {formatDuration(recordingDuration)}
+              {t.recordingInProgress.replace('{time}', formatDuration(recordingDuration))}
             </span>
           </div>
           <button
@@ -324,7 +357,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               transition-colors
             "
           >
-            结束录音
+            {t.endRecording}
           </button>
           <button
             onClick={() => {
@@ -362,7 +395,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
               transition-colors
             "
           >
-            取消
+            {t.cancel}
           </button>
         </div>
       )}
@@ -391,7 +424,7 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
               ></path>
             </svg>
-            <span>分析中... {analysisProgress}%</span>
+            <span>{t.analyzingProgress} {analysisProgress}%</span>
           </div>
           {/* 进度条 */}
           <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
@@ -403,14 +436,14 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
         </div>
       )}
 
-      {/* AI跟读点评面板 - 使用绝对定位，出现在按钮上方，确保右边不超出页面 */}
-      {showFeedback && feedback && (
-        <div className="absolute bottom-full right-0 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-[100] space-y-4" style={{ right: 0 }}>
+      {/* AI跟读点评面板 - 非外部渲染时才在此显示；与教学提示同级时由 SentenceCard 渲染 */}
+      {!renderFeedbackExternally && showFeedback && feedback && (
+        <div className="absolute bottom-full right-0 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4" style={{ right: 0 }}>
           {/* 气泡箭头 */}
           <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r-2 border-b-2 border-purple-300 transform rotate-45"></div>
           
           <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="text-sm font-semibold text-gray-800">AI跟读点评</h3>
+            <h3 className="text-sm font-semibold text-gray-800">{t.aiReadAlongFeedback}</h3>
             <button
               onClick={() => setShowFeedback(false)}
               className="text-gray-400 hover:text-gray-600"
@@ -501,3 +534,5 @@ export const SingAlongButton = ({ text, userLevel, className = '', onStartRecord
     </div>
   );
 };
+
+export const SingAlongButton = forwardRef<SingAlongButtonHandle, SingAlongButtonProps>(SingAlongButtonInner);

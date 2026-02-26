@@ -28,6 +28,8 @@ function normalizeLanguage(lang: string | null | undefined): 'ko' | 'zh' | null 
 import { opalMockOk } from "../data/opalMock";
 import { SentenceView } from "../components/SentenceView";
 import { AnalysisTable } from "../components/AnalysisTable";
+import { type ReadingFeedback, type SingAlongButtonHandle } from "../components/SingAlongButton";
+import { SpeechRadarChart } from "../components/RadarChart";
 import { TTSButton } from "../components/TTSButton";
 import { AudioPlayer } from "../components/AudioPlayer";
 import { audioManager } from "../utils/audioManager";
@@ -204,24 +206,25 @@ function opalLineToSentenceData(line: any): SentenceData {
     }
   }
   
-  // tokensZh를 Token[]로 변환，并从chunks中提取拼音
+  // tokensZh를 Token[]로 변환，并从chunks中提取拼音与 hskLevel
   let tokens = (line.tokensZh || []).map((token: any) => {
-    // 从chunks中查找包含该词的chunk，提取拼音
     let pinyin = '';
+    let hskLevel: number | undefined = token.hskLevel;
     if (line.chunks) {
       const matchingChunk = line.chunks.find((chunk: any) => {
         const chunkZh = chunk.chunkZh || '';
         return chunkZh.includes(token.text);
       });
       pinyin = matchingChunk?.pinyin || '';
+      if (hskLevel == null && matchingChunk?.hskLevel != null) hskLevel = matchingChunk.hskLevel;
     }
-    
     return {
       text: token.text || "",
       glossZh: token.glossZh || "",
       glossKr: token.glossKr || "",
       example: token.example || "",
       pinyin: pinyin,
+      ...(hskLevel != null && { hskLevel }),
     };
   });
 
@@ -265,6 +268,7 @@ function opalLineToSentenceData(line: any): SentenceData {
       glossKr: "",
       example: "",
       pinyin: "",
+      hskLevel: 1,
     }));
   }
 
@@ -442,9 +446,11 @@ function formatLineNo(n: number) {
 
 interface SongPageProps {
   initialLyrics?: string;
+  /** 是否正在显示歌曲页（从首页切到歌曲页时为 true，用于同步首页选择的等级） */
+  isVisible?: boolean;
 }
 
-export default function SongPage({ initialLyrics }: SongPageProps = {}) {
+export default function SongPage({ initialLyrics, isVisible = true }: SongPageProps = {}) {
   // ⭐ 状态持久化：从 localStorage 恢复状态
   const STORAGE_KEY = 'songPage_state';
   
@@ -737,16 +743,19 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   });
   const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
   const [showLevelWarning, setShowLevelWarning] = useState(false);
-  const [uiLanguage, setUiLanguage] = useState<'zh' | 'ko'>(() => {
-    // 从 localStorage 读取保存的语言设置
-    const saved = localStorage.getItem('uiLanguage');
-    return (saved === 'ko' ? 'ko' : 'zh') as 'zh' | 'ko';
-  });
-
-  // 保存语言设置到 localStorage
+  // ⭐ 从首页进入歌曲页时同步 nz_level → userLevel（否则首页选的等级不会生效，分析按钮会无反应）
   useEffect(() => {
-    localStorage.setItem('uiLanguage', uiLanguage);
-  }, [uiLanguage]);
+    if (!isVisible) return;
+    const homeLevel = localStorage.getItem('nz_level');
+    if (homeLevel) {
+      const map: Record<string, "初级" | "中级" | "高级"> = {
+        '초급': '初级',
+        '중급': '中级',
+        '고급': '高级',
+      };
+      if (map[homeLevel]) setUserLevel(map[homeLevel]);
+    }
+  }, [isVisible]);
 
   // ⭐ 状态持久化：保存关键状态到 localStorage（包括 userLevel）
   useEffect(() => {
@@ -817,10 +826,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
   // 导出 HTML（本页）
   function exportCurrentPage() {
     const items = pageItems;
-    const title = "中文歌词学习笔记";
-    const modeTitle = reviewMode === "sentence" 
-      ? "（句子复习模式：本页星标句子）" 
-      : "（普通模式：本页句子）";
+    const title = songPageTranslations['ko'].exportTitle;
+    const modeTitle = reviewMode === "sentence"
+      ? songPageTranslations['ko'].exportModeReview
+      : songPageTranslations['ko'].exportModeNormal;
 
     const blocks = items
       .map((it: any) => {
@@ -846,32 +855,32 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           <section style="margin:24px 0; padding:16px; border:1px solid #ddd; border-radius:12px;">
             <h2 style="margin:0 0 8px 0;">${formatLineNo(it.lineNo)}. ${escapeHtml(it.line)}</h2>
 
-            <h3 style="margin:16px 0 8px 0;">词汇表</h3>
+            <h3 style="margin:16px 0 8px 0;">${songPageTranslations['ko'].vocabTable}</h3>
             <table style="width:100%; border-collapse:collapse;">
               <thead>
                 <tr>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">词</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">中文释义</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">韩语释义</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">例句</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].word}</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].chineseMeaning}</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].koreanMeaning}</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].example}</th>
                 </tr>
               </thead>
               <tbody>
-                ${tokensRows || `<tr><td colspan="4" style="padding:8px; color:#777;">（暂无）</td></tr>`}
+                ${tokensRows || `<tr><td colspan="4" style="padding:8px; color:#777;">${songPageTranslations['ko'].noData}</td></tr>`}
               </tbody>
             </table>
 
-            <h3 style="margin:16px 0 8px 0;">语块表</h3>
+            <h3 style="margin:16px 0 8px 0;">${songPageTranslations['ko'].chunkTable}</h3>
             <table style="width:100%; border-collapse:collapse;">
               <thead>
                 <tr>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">语块</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">拼音</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">声调结构</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].chunk}</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].pinyin}</th>
+                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].tonePattern}</th>
                 </tr>
               </thead>
               <tbody>
-                ${chunksRows || `<tr><td colspan="3" style="padding:8px; color:#777;">（暂无）</td></tr>`}
+                ${chunksRows || `<tr><td colspan="3" style="padding:8px; color:#777;">${songPageTranslations['ko'].noData}</td></tr>`}
               </tbody>
             </table>
           </section>
@@ -889,8 +898,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       </head>
       <body style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial; margin:24px; color:#111;">
         <h1 style="margin:0 0 8px 0;">${title}</h1>
-        <p style="margin:0 0 24px 0; color:#555;">${modeTitle} · 导出时间：${new Date().toLocaleString()}</p>
-        ${blocks || `<p style="color:#777;">（当前页无内容）</p>`}
+        <p style="margin:0 0 24px 0; color:#555;">${modeTitle} · ${songPageTranslations['ko'].exportTime}${new Date().toLocaleString()}</p>
+        ${blocks || `<p style="color:#777;">${songPageTranslations['ko'].noContent}</p>`}
       </body>
       </html>
     `;
@@ -906,15 +915,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     if (!files || files.length === 0) return;
     const f = files[0];
     if (!f.type.startsWith("audio/")) {
-      setAudioHint("仅支持音频文件（mp3 / m4a / wav）。");
+      setAudioHint(songPageTranslations['ko'].audioOnly);
       return;
     }
     setAudioFile(f);
     // 如果已经有分析结果，在提示中提醒
     if (opalPayload && opalPayload.status === 'ok' && opalPayload.lines && opalPayload.lines.length > 0) {
-      setAudioHint(`✅ 文件 "${f.name}" 已选择！点击"开始转写 / 分析"将替换当前内容。`);
+      setAudioHint(translate('fileSelectedReplace', { name: f.name }));
     } else {
-      setAudioHint(`✅ 文件 "${f.name}" 已成功选择！请点击"开始转写 / 分析"按钮开始今天的学习吧！`);
+      setAudioHint(translate('fileSelectedNew', { name: f.name }));
     }
     // ⭐ 上传音频文件后，如果未选择语言，显示提示
     if (!languageMode) {
@@ -1009,13 +1018,13 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         }
         
         setOpalPayload(result);
-        setAudioHint(`ChatGPT API 테스트 성공! ${result.lines?.length || 0}개 라인 분석 완료.`);
+        setAudioHint(`테스트 성공! ${result.lines?.length || 0}개 라인 분석 완료.`);
       } else {
         setTestResult(`❌ 실패: ${result.message || '알 수 없는 오류'}`);
         setAudioHint(result.message || 'ChatGPT API 테스트 실패');
       }
     } catch (error) {
-      console.error('❌ ChatGPT API 테스트 오류:', error);
+      console.error('❌ 테스트 오류:', error);
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
       setTestResult(`❌ 오류: ${errorMessage}`);
       setAudioHint(`테스트 실패: ${errorMessage}`);
@@ -1032,7 +1041,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     }
     setIsLoading(false);
     setLoadingProgress(0);
-    setLoadingMessage("已取消分析");
+    setLoadingMessage("분석이 취소됐어요");
     setTimeout(() => {
       setLoadingMessage("");
     }, 2000);
@@ -1061,7 +1070,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     
     // 如果已经有分析结果，显示确认提示
     if (opalPayload && opalPayload.status === 'ok' && opalPayload.lines && opalPayload.lines.length > 0) {
-      const confirmed = window.confirm('⚠️ 已有学习资料，开始新分析将替换当前内容。是否继续？');
+      const confirmed = window.confirm(songPageTranslations['ko'].confirmReplace);
       if (!confirmed) {
         return; // 用户取消，不执行分析
       }
@@ -1108,7 +1117,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           
           // 检查语言是否已选择
           if (!languageMode || (languageMode !== 'ko' && languageMode !== 'zh')) {
-            alert('请先选择音频语言（中文或韩文）');
+            alert(songPageTranslations['ko'].selectAudioLang);
             setIsLoading(false);
             setLoadingProgress(0);
             setLoadingMessage("");
@@ -1134,10 +1143,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           
           result = apiResult;
           
-          setLoadingMessage("ChatGPT로 가사 분석 중... (80%)");
+          setLoadingMessage("가사 분석 중... (80%)");
           setLoadingProgress(80);
         } else {
-          setLoadingMessage("Opal API로 음성 분석 중... (50%)");
+          setLoadingMessage("음성 분석 중... (50%)");
           setLoadingProgress(50);
           result = await callOpalApiWithAudio(audioFile);
         }
@@ -1156,12 +1165,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         const detectedLang = isChineseInput ? 'zh' : 'ko';
         
         if (useChatGPT) {
-          setLoadingMessage("ChatGPT로 가사 분석 중... (30%)");
+          setLoadingMessage("가사 분석 중... (30%)");
           setLoadingProgress(30);
           
           // 检查是否已取消
           if (signal.aborted) {
-            console.log('分析已取消');
+            console.log('분석이 취소 되었습니다');
             return;
           }
           
@@ -1171,7 +1180,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           setLoadingMessage("분석 결과 처리 중... (80%)");
           setLoadingProgress(80);
         } else {
-          setLoadingMessage("Opal API로 텍스트 분석 중... (50%)");
+          setLoadingMessage("텍스트 분석 중... (50%)");
           setLoadingProgress(50);
           result = await callOpalApiWithText(rawText.trim());
         }
@@ -1439,7 +1448,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               ? "text-pink-500" 
               : "text-gray-300 hover:text-pink-400"
           }`}
-          title={isStarred ? "取消收藏" : "收藏词汇"}
+          title={isStarred ? "즐겨찾기 해제" : "즐겨찾기"}
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -1507,7 +1516,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 ? "text-pink-500" 
                 : "text-gray-300 hover:text-pink-400"
             }`}
-            title={isStarred ? "取消收藏" : "收藏句型"}
+            title={isStarred ? "즐겨찾기 해제" : "즐겨찾기"}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -1588,6 +1597,14 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         return time >= startSec && time < endSec;
       });
       return line ? Number(line?.lineNo ?? 0) : null;
+    };
+
+    // 根据 HSK 等级返回难度背景色（初级绿、中级蓝、高级紫）
+    const getHskBgClass = (hskLevel: number | undefined): string => {
+      if (hskLevel == null) return '';
+      if (hskLevel <= 2) return 'bg-green-100';
+      if (hskLevel <= 4) return 'bg-blue-100';
+      return 'bg-purple-100';
     };
 
     // 获取句子的拼音（从 tokens 或 chunks 中提取）
@@ -2130,7 +2147,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#86efac" stroke="#4ade80" strokeWidth="1.5"/>
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-green-600">基础</span>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-green-600">{songPageTranslations['ko'].basic}</span>
             </div>
             
             {/* 中级 - 淡蓝色爱心 */}
@@ -2138,7 +2155,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#93c5fd" stroke="#60a5fa" strokeWidth="1.5"/>
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-blue-600">中级</span>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-blue-600">{songPageTranslations['ko'].intermediate}</span>
             </div>
             
             {/* 高级 - 淡紫色爱心 */}
@@ -2146,7 +2163,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                 <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#c4b5fd" stroke="#a78bfa" strokeWidth="1.5"/>
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-purple-600">高级</span>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-purple-600">{songPageTranslations['ko'].advanced}</span>
             </div>
           </div>
         </div>
@@ -2162,8 +2179,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               <div className="flex items-center gap-3 flex-1">
                 <span className="text-2xl">📖</span>
                 <div className="flex-1">
-                  <h3 className="text-lg font-semibold">{songPageTranslations[uiLanguage].wholeParagraphLyrics}</h3>
-                  <p className="text-sm text-blue-100">{translate('totalSentences', uiLanguage, { count: linesAll.length })}</p>
+                  <h3 className="text-lg font-semibold">{songPageTranslations['ko'].wholeParagraphLyrics}</h3>
+                  <p className="text-sm text-blue-100">{translate('totalSentences', { count: linesAll.length })}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -2185,8 +2202,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         transition-colors duration-200
                         text-sm font-medium
                       `}
-                      title={isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}
-                      aria-label={isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}
+                      title={isPlaying ? songPageTranslations['ko'].pauseOriginal : songPageTranslations['ko'].playOriginal}
+                      aria-label={isPlaying ? songPageTranslations['ko'].pauseOriginal : songPageTranslations['ko'].playOriginal}
                     >
                       {isPlaying ? (
                         // 暂停图标
@@ -2200,7 +2217,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                       )}
-                      <span>{isPlaying ? songPageTranslations[uiLanguage].pauseOriginal : songPageTranslations[uiLanguage].playOriginal}</span>
+                      <span>{isPlaying ? songPageTranslations['ko'].pauseOriginal : songPageTranslations['ko'].playOriginal}</span>
                     </button>
                     
                     {/* 时间显示 */}
@@ -2334,10 +2351,11 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                 // 将拼音按空格拆分
                                 const pinyinWords = segPinyin.split(/\s+/).filter((p: string) => p.trim());
                                 
+                                const segBg = getHskBgClass(data.chunks?.[0]?.hskLevel);
                                 // 如果字符数和拼音数一致，逐字对齐
                                 if (zhChars.length === pinyinWords.length && zhChars.length > 0) {
                                   return (
-                                    <div key={`seg-${lineNo}-${segIdx}`} className="inline-flex flex-wrap items-end gap-x-1">
+                                    <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-wrap items-end gap-x-1 rounded px-0.5 ${segBg}`}>
                                       {zhChars.map((char: string, charIdx: number) => (
                                         <div
                                           key={`char-${lineNo}-${segIdx}-${charIdx}`}
@@ -2360,7 +2378,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                 } else {
                                   // 如果不一致，显示整个分段（拼音在上，汉字在下）
                                   return (
-                                    <div key={`seg-${lineNo}-${segIdx}`} className="inline-flex flex-col items-center justify-end mx-1">
+                                    <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-col items-center justify-end mx-1 rounded px-0.5 ${segBg}`}>
                                       {/* 拼音 */}
                                       {segPinyin && (
                                         <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
@@ -2377,7 +2395,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                               });
                             }
                             
-                            // 如果没有 chunkSegments，回退到 tokens
+                            // 如果没有 chunkSegments，回退到 tokens（按 token 难度背景色）
                             if (data.tokens && data.tokens.length > 0) {
                               return data.tokens.map((token: any, tokenIdx: number) => {
                                 const tokenText = token.text || '';
@@ -2385,6 +2403,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                 
                                 if (!tokenText.trim()) return null;
                                 
+                                const tokenBg = getHskBgClass(token.hskLevel);
                                 return (
                                   <div
                                     key={`token-${lineNo}-${tokenIdx}`}
@@ -2395,7 +2414,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                         {tokenPinyin}
                                       </span>
                                     )}
-                                    <span className="text-xl font-medium text-gray-900">
+                                    <span className={`text-xl font-medium text-gray-900 rounded px-0.5 ${tokenBg}`}>
                                       {tokenText}
                                     </span>
                                   </div>
@@ -2444,15 +2463,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
 
         {/* 整段学习分析表 */}
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">整段学习分析表</h3>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">{songPageTranslations['ko'].wholeAnalysisTable}</h3>
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">难度等级</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">整句拼音</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">整句声调结构</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">音频</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">{songPageTranslations['ko'].difficultyLevel}</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">{songPageTranslations['ko'].sentencePinyin}</th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">{songPageTranslations['ko'].sentenceTonePattern}</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">{songPageTranslations['ko'].audio}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2510,8 +2529,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📚</span>
-                <h3 className="text-lg font-semibold">{songPageTranslations[uiLanguage].keyVocabSummary}</h3>
-                <span className="text-sm text-purple-100">({allVocabulary.length} {uiLanguage === 'zh' ? '个' : '개'})</span>
+                <h3 className="text-lg font-semibold">{songPageTranslations['ko'].keyVocabSummary}</h3>
+                <span className="text-sm text-purple-100">({allVocabulary.length} 개)</span>
               </div>
               <svg 
                 className={`w-6 h-6 transition-transform ${showVocabSummary ? 'rotate-180' : ''}`}
@@ -2530,7 +2549,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   type="text"
                   value={vocabSearch}
                   onChange={(e) => setVocabSearch(e.target.value)}
-                  placeholder={uiLanguage === 'zh' ? '搜索词汇...' : '어휘 검색...'}
+                  placeholder="어휘 검색..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
@@ -2539,12 +2558,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.current.length > 0 && (
                   <div className="border-l-4 border-purple-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].currentFocus} ({vocabularyGroups.current.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations['ko'].currentFocus} ({vocabularyGroups.current.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('current')}
                         className="text-sm text-purple-600 hover:text-purple-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.current ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
+                        {vocabGroupExpanded.current ? songPageTranslations['ko'].collapse : songPageTranslations['ko'].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.current && (
@@ -2571,12 +2590,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.advanced.length > 0 && (
                   <div className="border-l-4 border-blue-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].advancedWords} ({vocabularyGroups.advanced.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations['ko'].advancedWords} ({vocabularyGroups.advanced.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('advanced')}
                         className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.advanced ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
+                        {vocabGroupExpanded.advanced ? songPageTranslations['ko'].collapse : songPageTranslations['ko'].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.advanced && (
@@ -2603,12 +2622,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 {vocabularyGroups.basic.length > 0 && (
                   <div className="border-l-4 border-green-400 pl-4">
                     <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-700">{songPageTranslations[uiLanguage].basicWords} ({vocabularyGroups.basic.length})</h4>
+                      <h4 className="font-semibold text-gray-700">{songPageTranslations['ko'].basicWords} ({vocabularyGroups.basic.length})</h4>
                       <button
                         onClick={() => handleVocabGroupToggle('basic')}
                         className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
                       >
-                        {vocabGroupExpanded.basic ? songPageTranslations[uiLanguage].collapse : songPageTranslations[uiLanguage].expand}
+                        {vocabGroupExpanded.basic ? songPageTranslations['ko'].collapse : songPageTranslations['ko'].expand}
                       </button>
                     </div>
                     {vocabGroupExpanded.basic && (
@@ -2644,8 +2663,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">📝</span>
-                <h3 className="text-lg font-semibold">重点句型汇总</h3>
-                <span className="text-sm text-green-100">({allPatterns.length} 个)</span>
+                <h3 className="text-lg font-semibold">{songPageTranslations['ko'].keyPatternSummary}</h3>
+                <span className="text-sm text-green-100">({allPatterns.length}개)</span>
               </div>
               <svg 
                 className={`w-6 h-6 transition-transform ${showPatternSummary ? 'rotate-180' : ''}`}
@@ -2664,7 +2683,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   type="text"
                   value={patternSearch}
                   onChange={(e) => setPatternSearch(e.target.value)}
-                  placeholder="搜索句型..."
+                  placeholder={songPageTranslations['ko'].searchPatternPlaceholder}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
@@ -2723,6 +2742,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
     const practiceStreamRef = useRef<MediaStream | null>(null);
     const practiceDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const practiceStartTimeRef = useRef<number>(0);
+    const [readAlongFeedback, setReadAlongFeedback] = useState<ReadingFeedback | null>(null);
+    const [showReadAlongFeedback, setShowReadAlongFeedback] = useState(false);
+    const [readAlongIsPlaying, setReadAlongIsPlaying] = useState(false);
+    const singAlongRef = useRef<SingAlongButtonHandle | null>(null);
 
     // ✅ 添加清理逻辑：组件卸载时重置状态
     useEffect(() => {
@@ -3003,7 +3026,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           <div className="font-medium flex-1">
             {formatTextWithLineBreaks(displayLine)}
             {isDuplicate && (
-              <span className="ml-2 text-xs text-gray-400 italic">(重复)</span>
+              <span className="ml-2 text-xs text-gray-400 italic">{songPageTranslations['ko'].duplicate}</span>
             )}
           </div>
 
@@ -3019,8 +3042,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 return next;
               })
             }
-            aria-label={starred ? "取消星标" : "星标"}
-            title={starred ? "取消星标" : "星标"}
+            aria-label={starred ? "즐겨찾기 해제" : "즐겨찾기"}
+            title={starred ? "즐겨찾기 해제" : "즐겨찾기"}
           >
             ★
           </button>
@@ -3029,7 +3052,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
         <div className="mb-4">
           {/* 中文整句展示 */}
           <div className="mb-2">
-            <div className="text-sm font-semibold text-gray-700 mb-2">{songPageTranslations[uiLanguage].chineseSentenceDisplay}</div>
+            <div className="text-sm font-semibold text-gray-700 mb-2">{songPageTranslations['ko'].chineseSentenceDisplay}</div>
             {/* 使用与整段歌词相同的显示逻辑，字体放大并居中，支持词卡功能 */}
             <div className="flex flex-wrap items-end gap-x-1 gap-y-2 leading-relaxed justify-center">
             {(() => {
@@ -3152,14 +3175,14 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           </div>
         </div>
 
-        <div>
+        <div className="relative">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-sm font-semibold text-gray-700">{songPageTranslations[uiLanguage].learningAnalysisTable}</div>
+            <div className="text-sm font-semibold text-gray-700">{songPageTranslations['ko'].learningAnalysisTable}</div>
             <div className="relative">
             <button
               onClick={async () => {
                 if (!userLevel) {
-                  alert('请先选择您的语言等级');
+                  alert(songPageTranslations['ko'].alertSelectLevel);
                   return;
                 }
                 
@@ -3219,7 +3242,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           ...pattern,
                           korean: `이 문형은 ${pattern.hskLevel} 수준의 중요한 표현입니다.`,
                           chineseExample: zhSentence || data.sentence || "",
-                          koreanExample: "这是句型的韩文例句翻译",
+                          koreanExample: songPageTranslations['ko'].patternKoreanExample,
                         };
                       }
                     })
@@ -3232,8 +3255,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   });
                   setShowTeachingTip(true);
                 } catch (error) {
-                  console.error('生成教学提示失败:', error);
-                  alert('生成教学提示失败，请稍后重试');
+                  console.error('학습 가이드를 생성하지 못했어요:', error);
+                  alert(songPageTranslations['ko'].alertTeachingTipFailed);
                 } finally {
                   setIsGeneratingTipForThis(false);
                   setTeachingTipProgress(0);
@@ -3251,7 +3274,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 text-sm font-medium
                 ${!userLevel ? 'opacity-50 cursor-not-allowed' : ''}
               `}
-              title={!userLevel ? songPageTranslations[uiLanguage].pleaseSelectLanguageLevelFirst : isGeneratingTipForThis ? songPageTranslations[uiLanguage].analyzing : showTeachingTip ? (uiLanguage === 'zh' ? '收起教学提示' : '학습 팁 접기') : (uiLanguage === 'zh' ? '查看本句教学提示' : '이 문장 학습 팁 보기')}
+              title={!userLevel ? songPageTranslations['ko'].pleaseSelectLanguageLevelFirst : isGeneratingTipForThis ? songPageTranslations['ko'].analyzing : showTeachingTip ? '학습 가이드 접기' : '학습 가이드 보기'}
             >
               {isGeneratingTipForThis ? (
                 <>
@@ -3295,7 +3318,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                     />
                   </svg>
-                  {songPageTranslations[uiLanguage].teachingTip}
+                  {songPageTranslations['ko'].teachingTip}
                 </>
               )}
             </button>
@@ -3308,7 +3331,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               {/* 重点词汇 */}
               {teachingTipContent.vocabulary.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">重点词汇</h4>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">{songPageTranslations['ko'].keyVocab}</h4>
                   <div className="space-y-2">
                     {teachingTipContent.vocabulary.map((vocab, index) => (
                       <VocabularyItem key={index} vocab={vocab} />
@@ -3320,7 +3343,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
               {/* 重点句型 */}
               {teachingTipContent.patterns.length > 0 && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-3">重点句型</h4>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-3">{songPageTranslations['ko'].keyPattern}</h4>
                   {teachingTipContent.patterns.map((pattern, index) => (
                     <PatternItem key={index} pattern={pattern} />
                   ))}
@@ -3336,7 +3359,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 }}
                 className="w-full mt-4 px-4 py-2 text-white rounded-lg transition-colors flex items-center justify-center gap-2 bg-[#7a4f2d] hover:bg-[#a06c3e]"
               >
-                {songPageTranslations[uiLanguage].tryMakingSentence}
+                {songPageTranslations['ko'].tryMakingSentence}
               </button>
               </div>
             )}
@@ -3348,7 +3371,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <div className="absolute top-6 -right-2 w-4 h-4 bg-white border-r-2 border-t-2 border-blue-300 transform rotate-45"></div>
                 
                 <div className="flex items-center justify-between mb-3">
-                  <h4 className="text-sm font-semibold text-gray-800">造句练习</h4>
+                  <h4 className="text-sm font-semibold text-gray-800">{songPageTranslations['ko'].makeSentence}</h4>
                   <button
                     onClick={() => {
                       setShowPracticeDialog(false);
@@ -3368,7 +3391,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   <textarea
                     value={practiceInput}
                     onChange={(e) => setPracticeInput(e.target.value)}
-                    placeholder="在这里输入你造的句子..."
+                    placeholder={songPageTranslations['ko'].inputSentencePlaceholder}
                     className="w-full p-2 border border-gray-300 rounded-lg text-sm resize-none"
                     rows={3}
                     disabled={isAnalyzingSentence}
@@ -3416,7 +3439,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             }, 100);
                           } catch (error) {
                             console.error('无法访问麦克风:', error);
-                            alert('无法访问麦克风，请检查权限设置');
+                            alert(songPageTranslations['ko'].alertMicFailed);
                           }
                         }}
                         className="w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
@@ -3505,12 +3528,12 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     <button
                       onClick={async () => {
                         if (!practiceInput.trim()) {
-                          alert('请输入你造的句子');
+                          alert(songPageTranslations['ko'].alertInputSentence);
                           return;
                         }
                         
                         if (!userLevel) {
-                          alert('请先选择语言等级');
+                          alert(songPageTranslations['ko'].alertSelectLevel);
                           return;
                         }
                         
@@ -3522,7 +3545,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           setPracticeFeedback(feedback);
                         } catch (error) {
                           console.error('评价失败:', error);
-                          alert('评价失败，请稍后重试');
+                          alert(songPageTranslations['ko'].alertEvalFailed);
                         } finally {
                           setIsAnalyzingSentence(false);
                         }
@@ -3536,10 +3559,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          {songPageTranslations[uiLanguage].analyzing}
+                          {songPageTranslations['ko'].analyzing}
                         </>
                       ) : (
-                        songPageTranslations[uiLanguage].submitEvaluation
+                        songPageTranslations['ko'].submitEvaluation
                       )}
                     </button>
                   )}
@@ -3548,7 +3571,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                     <button
                       onClick={async () => {
                         if (!userLevel) {
-                          alert('请先选择语言等级');
+                          alert(songPageTranslations['ko'].alertSelectLevel);
                           return;
                         }
                         
@@ -3574,7 +3597,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                           setPracticeFeedback(feedbackText);
                         } catch (error) {
                           console.error('评价失败:', error);
-                          alert('评价失败，请稍后重试');
+                          alert(songPageTranslations['ko'].alertEvalFailed);
                         } finally {
                           setIsAnalyzingSentence(false);
                         }
@@ -3588,10 +3611,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          {songPageTranslations[uiLanguage].analyzing}
+                          {songPageTranslations['ko'].analyzing}
                         </>
                       ) : (
-                        songPageTranslations[uiLanguage].sendVoiceEvaluation
+                        songPageTranslations['ko'].sendVoiceEvaluation
                       )}
                     </button>
                   )}
@@ -3608,16 +3631,100 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             </div>
           </div>
           
-          <AnalysisTable 
-            chunks={data.chunks ?? []} 
-            sentence={data.sentence}
-            audioFile={audioFile}
-            audioUrl={opalPayload?.audioUrl}
-            startSec={item?.startSec}
-            endSec={item?.endSec}
-            userLevel={userLevel}
-            uiLanguage={uiLanguage}
-          />
+          <div className="relative">
+            <AnalysisTable
+              ref={singAlongRef}
+              chunks={data.chunks ?? []}
+              sentence={data.sentence}
+              audioFile={audioFile}
+              audioUrl={opalPayload?.audioUrl}
+              startSec={item?.startSec}
+              endSec={item?.endSec}
+              userLevel={userLevel}
+              uiLanguage="ko"
+              renderFeedbackExternally
+              onReadAlongFeedbackReady={(feedback) => {
+                setReadAlongFeedback(feedback);
+                setShowReadAlongFeedback(true);
+              }}
+              onPlayingChange={setReadAlongIsPlaying}
+            />
+            {/* 跟读反馈面板 - 相对表格定位，出现在表格正上方 */}
+            {showReadAlongFeedback && readAlongFeedback && (
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4">
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-purple-300 transform rotate-45" />
+              <div className="flex items-center justify-between border-b pb-2">
+                <h3 className="text-sm font-semibold text-gray-800">{songPageTranslations['ko'].aiReadAlongFeedback}</h3>
+                <button
+                  onClick={() => setShowReadAlongFeedback(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-2">一、本次发音表现</div>
+                <SpeechRadarChart
+                  data={[
+                    { subject: '内容准确度', score: readAlongFeedback.scores.contentAccuracy, fullMark: 100 },
+                    { subject: '声调表现', score: readAlongFeedback.scores.tonePerformance, fullMark: 100 },
+                    { subject: '说话流畅度', score: readAlongFeedback.scores.speakingFluency, fullMark: 100 },
+                  ]}
+                />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-1">二、整体评价</div>
+                <div className="text-sm text-gray-800">{readAlongFeedback.overallComment}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-1">三、本次主要问题</div>
+                <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">
+                  {readAlongFeedback.keyIssue}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-1">四、下一步练习</div>
+                <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">
+                  {readAlongFeedback.oneAction}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 pt-2 border-t">
+                <button
+                  onClick={() => {
+                    singAlongRef.current?.restartRecording();
+                    setShowReadAlongFeedback(false);
+                  }}
+                  className="flex-1 px-3 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium transition-colors"
+                >
+                  再读一次
+                </button>
+                <button
+                  onClick={() => singAlongRef.current?.playRecording()}
+                  className="flex-1 px-3 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                >
+                  {readAlongIsPlaying ? (
+                    <>
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                      </svg>
+                      暂停
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      播放我的录音
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+          </div>
         </div>
       </div>
     );
@@ -3713,21 +3820,8 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
       <div className=" z-50 bg-white/80 backdrop-blur border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 space-y-3">
           <div className="flex items-center justify-between">
-          <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 700, color: '#1a2e1a', letterSpacing: '-0.5px', fontFamily: "'Noto Sans KR', sans-serif" }}>{songPageTranslations[uiLanguage].title}</h1>
+          <h1 style={{ fontSize: 'clamp(32px, 4vw, 52px)', fontWeight: 700, color: '#1a2e1a', letterSpacing: '-0.5px', fontFamily: "'Noto Sans KR', sans-serif" }}>{songPageTranslations['ko'].title}</h1>
             <div className="flex items-center gap-2">
-              {/* 语言切换按钮 */}
-              <div style={{ display: 'none' }}>
-                <button
-                  onClick={() => setUiLanguage(uiLanguage === 'zh' ? 'ko' : 'zh')}
-                  className="px-3 py-1 rounded-lg border text-sm bg-white hover:bg-gray-50 transition-colors flex items-center gap-2"
-                  title={uiLanguage === 'zh' ? '한국어로 전환' : '切换到中文'}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-                  </svg>
-                  <span>{uiLanguage === 'zh' ? '한국어' : '中文'}</span>
-                </button>
-              </div>
               <div style={{ display: 'none' }}>
                 <button
                   className="px-3 py-1 rounded-lg border text-sm bg-green-500 text-white hover:bg-green-600 disabled:opacity-50"
@@ -3735,7 +3829,26 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   disabled={isLoading}
                   title="ChatGPT API 연결 테스트"
                 >
-                  🧪 {songPageTranslations[uiLanguage].apiTest}
+                  🧪 {songPageTranslations['ko'].apiTest}
+                </button>
+              </div>
+              {/* 学习模式：整段 / 分句 */}
+              <div className="flex items-center gap-2">
+                <button
+                  className={`px-3 py-1 rounded-lg border text-sm ${
+                    studyMode === "整段学习" ? "bg-black text-white" : "bg-white"
+                  }`}
+                  onClick={() => setStudyMode("整段学习")}
+                >
+                  전체 학습
+                </button>
+                <button
+                  className={`px-3 py-1 rounded-lg border text-sm ${
+                    studyMode === "分句学习" ? "bg-black text-white" : "bg-white"
+                  }`}
+                  onClick={() => setStudyMode("分句学习")}
+                >
+                  문장별 학습
                 </button>
               </div>
               {/* 复习模式选择 */}
@@ -3746,7 +3859,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   }`}
                   onClick={() => setReviewMode((v) => v === "sentence" ? false : "sentence")}
                 >
-                  {reviewMode === "sentence" ? songPageTranslations[uiLanguage].exitSentenceReview : songPageTranslations[uiLanguage].sentenceReview}
+                  {reviewMode === "sentence" ? songPageTranslations['ko'].exitSentenceReview : songPageTranslations['ko'].sentenceReview}
                 </button>
               </div>
               <div style={{ display: 'none' }}>
@@ -3755,7 +3868,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   onClick={exportCurrentPage}
                   disabled={pageItems.length === 0}
                 >
-                  {songPageTranslations[uiLanguage].exportHTML}
+                  {songPageTranslations['ko'].exportHTML}
                 </button>
               </div>
             </div>
@@ -3804,7 +3917,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             fontSize: 14, cursor: 'pointer',
                             width: 'fit-content',
                           }}>
-                            {songPageTranslations[uiLanguage].selectAudioFile}
+                            {songPageTranslations['ko'].selectAudioFile}
                             <input
                               className="hidden"
                               type="file"
@@ -3839,10 +3952,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                                 width: '80%',
                               }}
                             >
-                              <option value="">{songPageTranslations[uiLanguage].pleaseSelectLanguage}</option>
-                              <option value="zh">{songPageTranslations[uiLanguage].chinese}</option>
-                              <option value="ko">{songPageTranslations[uiLanguage].korean}</option>
+                              <option value="">{songPageTranslations['ko'].pleaseSelectLanguage}</option>
+                              <option value="zh">{songPageTranslations['ko'].chinese}</option>
+                              <option value="ko">{songPageTranslations['ko'].korean}</option>
                             </select>
+                            {showLanguageTip && (
+                              <div style={{ marginTop: 8, padding: '8px 12px', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 8, fontSize: 13, color: '#92400e' }}>
+                                {songPageTranslations['ko'].pleaseSelectMatchingLanguage}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -3867,7 +3985,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                             }}
                             value={rawText}
                             onChange={(e) => setRawText(e.target.value)}
-                            placeholder={songPageTranslations[uiLanguage].pasteLyricsPlaceholder}
+                            placeholder={songPageTranslations['ko'].pasteLyricsPlaceholder}
                           />
                         </div>
                       </div>
@@ -3877,8 +3995,15 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         padding: '20px 36px',
                         borderTop: '1px solid #e8f4f0',
                         display: 'flex',
-                        justifyContent: 'center',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 12,
                       }}>
+                        {showLevelWarning && (
+                          <div style={{ padding: '8px 16px', background: '#fef2f2', border: '1px solid #ef4444', borderRadius: 8, fontSize: 13, color: '#b91c1c' }}>
+                            {songPageTranslations['ko'].pleaseSelectLanguageLevelFirst}
+                          </div>
+                        )}
                         <button
                           onClick={onClickTranscribe}
                           disabled={isLoading}
@@ -3899,16 +4024,35 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                         >
                           {isLoading ? '분석 중...' : '분석 시작 →'}
                         </button>
+                        {isLoading && (
+                          <div style={{ width: '100%', maxWidth: 420, padding: '0 16px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, color: '#555', marginBottom: 6 }}>
+                              <span>{loadingMessage || songPageTranslations['ko'].analyzing}</span>
+                              <span style={{ fontWeight: 600, color: '#2d7a5e' }}>{loadingProgress}%</span>
+                            </div>
+                            <div style={{ width: '100%', height: 8, background: '#e5e7eb', borderRadius: 4, overflow: 'hidden' }}>
+                              <div
+                                style={{
+                                  width: `${loadingProgress}%`,
+                                  height: '100%',
+                                  background: '#2d7a5e',
+                                  borderRadius: 4,
+                                  transition: 'width 0.3s ease-out',
+                                }}
+                              />
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
                    {/* 输入行：文本 + 搜索 */}
                    <div className="hidden grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-700">粘贴歌词文本（按换行分句）</div>
+              <div className="text-sm font-semibold text-gray-700">{songPageTranslations['ko'].pasteLyricsLabel}</div>
               <textarea
                 className="w-full h-24 p-3 rounded-xl border bg-white"
-                placeholder="在这里粘贴歌词，每行一句…"
+                placeholder={songPageTranslations['ko'].pasteLyricsPlaceholder}
                 value={rawText}
                 onChange={(e) => {
                   setRawText(e.target.value);
@@ -3918,10 +4062,10 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             </div>
 
             <div className="space-y-2">
-              <div className="text-sm font-semibold text-gray-700">搜索（按中文包含匹配）</div>
+              <div className="text-sm font-semibold text-gray-700">{songPageTranslations['ko'].searchLabel}</div>
               <input
                 className="w-full p-3 rounded-xl border bg-white"
-                placeholder="输入中文词或片段进行过滤…"
+                placeholder={songPageTranslations['ko'].searchPlaceholderFilter}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
@@ -3939,7 +4083,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                 <div className={`text-sm font-semibold mb-2 ${
                   isDragging ? 'text-blue-700' : 'text-gray-700'
                 }`}>
-                  {isDragging ? '松开鼠标以放置文件' : '拖拽音频文件（占位）'}
+                  {isDragging ? '마우스를 놓아 파일을 업로드하세요' : '오디오 파일을 드래그해 주세요'}
                 </div>
                 <input
                   type="file"
@@ -3960,7 +4104,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                       <span>분석 중...</span>
                     </>
                   ) : (
-                    '开始转写 / 分析'
+                    '분석 시작'
                   )}
                 </button>
                 
@@ -3997,25 +4141,25 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
             <div className="text-sm text-gray-600">
               {rawText.trim() ? (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <div className="font-semibold text-blue-900 mb-1">📝 歌词已粘贴</div>
+                  <div className="font-semibold text-blue-900 mb-1">{songPageTranslations['ko'].lyricsPasted}</div>
                   <div className="text-blue-700 text-xs">
-                  가사를 붙여넣고 [분석 시작]을 눌러 주세요
+                  {songPageTranslations['ko'].pasteThenAnalyze}
                   </div>
                 </div>
               ) : (
                 <div>
-                  가사 또는 오디오 파일 업로드 후 [분석 시작]을 눌러 주세요
+                  {songPageTranslations['ko'].emptyStatePrompt}
                 </div>
               )}
             </div>
           ) : (
             <div className="text-sm text-gray-600 flex items-center justify-between">
               <div>
-                共 {filtered.length} 句（原始 {linesAll.length} 句）
-                {reviewMode === "sentence" ? " · 句子复习模式（仅星标句子）" : ""}
+                {translate('totalLinesFormat', { n: filtered.length, m: linesAll.length })}
+                {reviewMode === "sentence" ? ` ${songPageTranslations['ko'].reviewModeSuffix}` : ""}
               </div>
               <div>
-                第 {currentPage} / {totalPages} 页（每页 {pageSize} 句）
+                {translate('pageInfoFormat', { current: currentPage, total: totalPages, size: pageSize })}
               </div>
             </div>
           )}
@@ -4031,13 +4175,13 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           // 空状态提示
           <div className="bg-white border rounded-2xl p-6 text-center">
             <div style={{ display: 'none' }}>
-              <p className="text-gray-600 mb-4">가사 또는 오디오 파일 업로드 후 [분석 시작]을 눌러 주세요</p>
+              <p className="text-gray-600 mb-4">{songPageTranslations['ko'].emptyStatePrompt}</p>
             </div>
             <button
               onClick={() => setShowExample(true)}
               className="px-4 py-2 text-white rounded-lg transition-colors bg-[#7a4f2d] hover:bg-[#a06c3e]"
             >
-              查看示例
+              {songPageTranslations['ko'].viewExample}
             </button>
           </div>
         ) : studyMode === "整段学习" ? (
@@ -4056,7 +4200,7 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
           <>
             {!showEmpty && pageItems.length === 0 ? (
               <div className="bg-white border rounded-2xl p-6 text-gray-600">
-                没有匹配结果。{reviewMode === "sentence" ? "请调整搜索词或取消句子复习模式。" : "请调整搜索词。"}
+                {reviewMode === "sentence" ? songPageTranslations['ko'].noSearchResult : songPageTranslations['ko'].adjustSearch}
               </div>
             ) : null}
 
@@ -4076,17 +4220,17 @@ export default function SongPage({ initialLyrics }: SongPageProps = {}) {
                   disabled={currentPage <= 1}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  上一页
+                  {songPageTranslations['ko'].prevPage}
                 </button>
                 <div className="text-sm text-gray-600">
-                  第 {currentPage} / {totalPages} 页
+                  {translate('pageShortFormat', { current: currentPage, total: totalPages })}
                 </div>
                 <button
                   className="px-3 py-1 rounded-lg border text-sm bg-white disabled:opacity-50"
                   disabled={currentPage >= totalPages}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  下一页
+                  {songPageTranslations['ko'].nextPage}
                 </button>
               </div>
             )}
