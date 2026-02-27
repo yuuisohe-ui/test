@@ -62,3 +62,8 @@ export const geiwoyishougedeshijianKoreanTranslations: Record<number, string> = 
   58: "내겐 단 하루의 기억뿐이에요"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return geiwoyishougedeshijianKoreanTranslations[sentenceIndex] || '';
+}
+

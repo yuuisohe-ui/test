@@ -50,3 +50,8 @@ export const yongqiKoreanTranslations: Record<number, string> = {
   46: "당신의 진심을 간직할게요"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return yongqiKoreanTranslations[sentenceIndex] || '';
+}
+

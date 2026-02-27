@@ -37,3 +37,8 @@ export const tongzhuodeniKoreanTranslations: Record<number, string> = {
   33: "라라라"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return tongzhuodeniKoreanTranslations[sentenceIndex] || '';
+}
+

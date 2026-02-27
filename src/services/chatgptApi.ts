@@ -1271,6 +1271,76 @@ ${chineseText}
   return translatedText;
 }
 
+const TEACHER_SYSTEM_PROMPT = `당신은 한국인 중국어 학습자를 가르치는 친절한 중국어 선생님입니다.
+학습자 레벨은 {LEVEL}입니다. 모든 설명은 반드시 이 레벨에 맞춰 난이도와 용어를 조절하세요.
+
+규칙:
+- 답변은 간단하게: 기본 4-6문장 이내.
+- 기본은 예문 1개만 제시: (중국어 간체 + 병음 + 짧은 한국어 뜻).
+- 학습자를 격려하는 한 문장으로 시작하되, 과한 수다는 하지 마세요.
+- 중국어 학습(단어/문법/발음/번역/가사·문장 이해/작문 수정)과 직접 관련된 질문만 답하세요.
+- 범위 밖 질문(잡담, 정치/시사, 의료/법률/투자, 코딩 등)은 정중히 거절하고 "중국어 학습 질문으로 다시 물어봐 달라"고 안내하세요.
+- 사용자가 이어서 질문하면 같은 맥락을 유지해 계속 설명하세요(규칙을 반복하지 마세요).
+
+출력 형식:
+1) 결론 1문장
+2) 핵심 설명(레벨에 맞게)
+3) 예문 1개(중국어/병음/한국어 뜻)
+4) 아주 짧은 연습 1문항(선택/빈칸 중 하나) + 힌트`;
+
+/**
+ * 학습 도우미(선생님) 채팅: 레벨을 반영한 AI 중국어 선생님과 대화
+ * @param messages 대화 기록 (user / assistant)
+ * @param level 학습자 레벨: "초급" | "중급" | "고급"
+ * @returns AI 답변 텍스트
+ */
+export async function teacherChat(
+  messages: Array<{ role: 'user' | 'assistant'; content: string }>,
+  level: string
+): Promise<string> {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY || '';
+  const apiUrl = import.meta.env.VITE_OPENAI_API_URL || 'https://api.openai.com/v1';
+
+  if (!apiKey || apiKey === 'your-openai-api-key-here' || apiKey.trim() === '') {
+    throw new Error('OpenAI API 키가 설정되지 않았습니다.');
+  }
+
+  const systemContent = TEACHER_SYSTEM_PROMPT.replace('{LEVEL}', level || '초급');
+
+  const apiMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    { role: 'system', content: systemContent },
+    ...messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
+  ];
+
+  const response = await fetch(`${apiUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      messages: apiMessages,
+      temperature: 0.7,
+      max_tokens: 1000,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+    throw new Error(errorData.error?.message || `API 호출 실패: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content?.trim() || '';
+
+  if (!content) {
+    throw new Error('선생님 응답이 비어 있습니다.');
+  }
+
+  return content;
+}
+
 /**
  * 텍스트만으로 ChatGPT API 호출
  */
@@ -2299,14 +2369,15 @@ speakingFluency（说话流畅度）
 - 必须根据 level 调整反馈严格程度与语言难度。
 - 若无明显错误，也需给出轻微改进建议。
 
-输出必须为严格 JSON，不得添加解释或多余文字。`;
+输出语言：overallComment、keyIssue、oneAction 必须全部使用韩文（한국어）书写，面向韩国母语学习者。`;
+
 
   const userPrompt = `level: ${level}
 targetText: ${targetText}
 asrText: ${asrText}
 ${durationSec ? `durationSec: ${durationSec}` : ''}
 
-请生成跟读反馈，JSON 格式：
+请生成跟读反馈，JSON 格式。overallComment、keyIssue、oneAction 必须用韩文填写：
 {
   "scores": {
     "contentAccuracy": 0,
@@ -2326,7 +2397,8 @@ ${durationSec ? `durationSec: ${durationSec}` : ''}
 
 注意：
 - substitutions 数组中的每个元素必须包含 "original" 和 "replaced" 两个字段
-- missing、extra、substitutions 最多各显示3处问题`;
+- missing、extra、substitutions 最多各显示3处问题
+- overallComment、keyIssue、oneAction 必须是韩文（한국어）`;
 
   const response = await fetch(`${apiUrl}/chat/completions`, {
     method: 'POST',
@@ -2492,6 +2564,8 @@ export async function evaluateSentence(
 不直接说"错误"
 
 使用"如果改成……会更自然哦""可以试着说……"等表达
+
+输出语言：全文必须使用韩文（한국어）书写，面向韩国母语学习者。
 
 根据系统提供的学习阶段，自动调整反馈深度：
 

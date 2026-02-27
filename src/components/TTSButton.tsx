@@ -9,9 +9,10 @@ interface TTSButtonProps {
   onClick?: (e: React.MouseEvent) => void;
   label?: string; // 可选：按钮上显示的文字标签
   uiLanguage?: 'ko'; // UI 固定韩文
+  rate?: number; // 语速，默认 0.7，如 0.6 为更慢
 }
 
-export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label, uiLanguage = 'ko' }: TTSButtonProps) => {
+export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label, uiLanguage = 'ko', rate = 0.7 }: TTSButtonProps) => {
   const t = songPageTranslations.ko;
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -97,7 +98,7 @@ export const TTSButton = ({ text, lang = 'zh-CN', className = '', onClick, label
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 0.7; // 固定0.7倍速
+        utterance.rate = rate;
         
         // 设置声音
         if (voiceRef.current) {

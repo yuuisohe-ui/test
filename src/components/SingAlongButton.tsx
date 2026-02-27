@@ -56,6 +56,8 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
   const streamRef = useRef<MediaStream | null>(null);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
+  /** 用户点击「取消」时为 true，onstop 时跳过分析 */
+  const cancelRequestedRef = useRef(false);
 
   // 清理函数
   useEffect(() => {
@@ -95,6 +97,14 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
       };
 
       mediaRecorder.onstop = async () => {
+        if (cancelRequestedRef.current) {
+          cancelRequestedRef.current = false;
+          setHasRecording(false);
+          setFeedback(null);
+          setShowFeedback(false);
+          audioChunksRef.current = [];
+          return;
+        }
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
         const audioUrl = URL.createObjectURL(audioBlob);
         
@@ -361,7 +371,7 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
           </button>
           <button
             onClick={() => {
-              // 取消录音
+              cancelRequestedRef.current = true;
               if (mediaRecorderRef.current && isRecording) {
                 mediaRecorderRef.current.stop();
               }
@@ -379,8 +389,7 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
               setShowFeedback(false);
               setAnalysisProgress(0);
               setIsAnalyzing(false);
-              
-              // 清理录音资源
+              audioChunksRef.current = [];
               if (audioRef.current) {
                 audioRef.current.pause();
                 URL.revokeObjectURL(audioRef.current.src);
@@ -438,85 +447,69 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
 
       {/* AI跟读点评面板 - 非外部渲染时才在此显示；与教学提示同级时由 SentenceCard 渲染 */}
       {!renderFeedbackExternally && showFeedback && feedback && (
-        <div className="absolute bottom-full right-0 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4" style={{ right: 0 }}>
-          {/* 气泡箭头 */}
-          <div className="absolute -bottom-2 right-6 w-4 h-4 bg-white border-r-2 border-b-2 border-purple-300 transform rotate-45"></div>
+        <div className="absolute top-full left-0 mt-2 w-[480px] max-w-[min(480px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-3 z-50">
+          {/* 气泡箭头 - 指向按钮（在上方） */}
+          <div className="absolute -top-2 left-6 w-4 h-4 bg-white border-l-2 border-t-2 border-purple-300 transform rotate-45"></div>
           
-          <div className="flex items-center justify-between border-b pb-2">
-            <h3 className="text-sm font-semibold text-gray-800">{t.aiReadAlongFeedback}</h3>
+          <div className="flex items-center justify-between border-b pb-2 mb-2">
+            <h3 className="text-xs font-semibold text-gray-800">{t.aiReadAlongFeedback}</h3>
             <button
               onClick={() => setShowFeedback(false)}
               className="text-gray-400 hover:text-gray-600"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
-          {/* 一、本次发音表现（雷达图）- 放到第一位 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-600 mb-2">一、本次发音表现</div>
-            <SpeechRadarChart 
-              data={[
-                { subject: '内容准确度', score: feedback.scores.contentAccuracy, fullMark: 100 },
-                { subject: '声调表现', score: feedback.scores.tonePerformance, fullMark: 100 },
-                { subject: '说话流畅度', score: feedback.scores.speakingFluency, fullMark: 100 },
-              ]}
-            />
-          </div>
-
-          {/* 二、整体评价 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-600 mb-1">二、整体评价</div>
-            <div className="text-sm text-gray-800">{feedback.overallComment}</div>
-          </div>
-
-          {/* 三、本次主要问题 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-600 mb-1">三、本次主要问题</div>
-            <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">
-              {feedback.keyIssue}
+          {/* 左右布局：左=雷达图，右=评价与操作 */}
+          <div className="flex gap-3">
+            {/* 左：本次发音表现（雷达图） */}
+            <div className="flex-shrink-0 w-44">
+              <div className="text-xs font-semibold text-gray-600 mb-1">{t.feedbackSection1}</div>
+              <SpeechRadarChart 
+                data={[
+                  { subject: t.scoreContentAccuracy, score: feedback.scores.contentAccuracy, fullMark: 100 },
+                  { subject: t.scoreTonePerformance, score: feedback.scores.tonePerformance, fullMark: 100 },
+                  { subject: t.scoreSpeakingFluency, score: feedback.scores.speakingFluency, fullMark: 100 },
+                ]}
+              />
             </div>
-          </div>
 
-          {/* 四、下一步练习 */}
-          <div>
-            <div className="text-xs font-semibold text-gray-600 mb-1">四、下一步练习</div>
-            <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">
-              {feedback.oneAction}
-            </div>
-          </div>
+            {/* 右：评价文字 + 按钮 */}
+            <div className="flex-1 min-w-0 space-y-3">
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-0.5">{t.feedbackSection2}</div>
+                <div className="text-xs text-gray-800 leading-snug">{feedback.overallComment}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-0.5">{t.feedbackSection3}</div>
+                <div className="text-xs text-gray-800 bg-red-50 border-l-2 border-red-400 pl-1.5 py-0.5">{feedback.keyIssue}</div>
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-gray-600 mb-0.5">{t.feedbackSection4}</div>
+                <div className="text-xs text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-1.5 py-0.5">{feedback.oneAction}</div>
+              </div>
 
-          {/* 底部操作按钮 */}
-          <div className="flex items-center gap-2 pt-2 border-t">
-            <button
-              onClick={restartRecording}
-              className="
-                flex-1 px-3 py-2 rounded-lg
-                bg-purple-100 hover:bg-purple-200
-                text-purple-700 text-sm font-medium
-                transition-colors
-              "
-            >
-              再读一次
-            </button>
-            <button
-              onClick={playRecording}
-              className="
-                flex-1 px-3 py-2 rounded-lg
-                bg-green-100 hover:bg-green-200
-                text-green-700 text-sm font-medium
-                transition-colors
-                flex items-center justify-center gap-1
-              "
-            >
+              {/* 操作按钮 */}
+              <div className="flex gap-1.5 pt-4 border-t">
+                <button
+                  onClick={restartRecording}
+                  className="flex-1 px-2 py-1.5 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium transition-colors"
+                >
+                  {t.readAgain}
+                </button>
+                <button
+                  onClick={playRecording}
+                  className="flex-1 px-2 py-1.5 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-xs font-medium transition-colors flex items-center justify-center gap-1"
+                >
               {isPlaying ? (
                 <>
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
                   </svg>
-                  暂停
+                  {t.pausePlayback}
                 </>
               ) : (
                 <>
@@ -524,10 +517,12 @@ const SingAlongButtonInner = ({ text, userLevel, className = '', onStartRecordin
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  播放我的录音
+                  {t.playMyRecording}
                 </>
               )}
-            </button>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

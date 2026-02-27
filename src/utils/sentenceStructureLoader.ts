@@ -77,10 +77,10 @@ const sentenceStructureModules: Record<string, {
  */
 export function getSentenceStructure(videoId: string, sentenceIndex: number): SentenceStructure | undefined {
   const structureModule = sentenceStructureModules[videoId];
-  if (structureModule) {
+  if (structureModule && typeof structureModule.getSentenceStructure === 'function') {
     return structureModule.getSentenceStructure(sentenceIndex);
   }
-  // 如果没有找到对应的模块，返回undefined
+  // 如果没有找到对应的模块或模块未导出该函数，返回undefined
   return undefined;
 }
 

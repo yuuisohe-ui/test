@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { parseSRT, SubtitleItem } from "../utils/srtParser";
 import { WordAnalysis } from "../data/tianmimiVocab";
 import { getVocabForSentence as getVocabForSentenceUtil, getAllVocab as getAllVocabUtil } from "../utils/vocabLoader";
@@ -11,6 +12,8 @@ import { SentenceView } from "./SentenceView";
 import { Token } from "../types";
 import { SpeechRadarChart } from "./RadarChart";
 import { TTSButton } from "./TTSButton";
+import { songPageTranslations } from "../i18n/songPageTranslations";
+import { youtubePageTranslations } from "../i18n/youtubePageTranslations";
 import { extractLineNumberAndText as extractLineNumberAndTextUtil } from "../utils/srtProcessor";
 
 // YouTube IFrame Player API 类型声明
@@ -102,6 +105,8 @@ export default function YoutubeVideoDetail({
   const [sentencePracticeInput, setSentencePracticeInput] = useState("");
   const [sentencePracticeMessages, setSentencePracticeMessages] = useState<Array<{type: 'user' | 'teacher', content: string}>>([]);
   const [isAnalyzingSentence, setIsAnalyzingSentence] = useState(false);
+  const lyricsCardRef = useRef<HTMLDivElement>(null); // 右侧歌词卡片，用于句式练习弹窗定位到其左侧
+  const [sentenceDialogPosition, setSentenceDialogPosition] = useState<{ left: number; top: number } | null>(null);
   // 声音训练模式跟读功能状态
   const [pronunciationRecording, setPronunciationRecording] = useState<Record<number, boolean>>({}); // 每句的录音状态
   const [pronunciationMediaRecorder, setPronunciationMediaRecorder] = useState<Record<number, MediaRecorder | null>>({}); // 每句的录音器
@@ -149,6 +154,33 @@ export default function YoutubeVideoDetail({
   const totalPausedTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<number | null>(null);
   const isDraggingRecordingRef = useRef<boolean>(false);
+
+  // 句式练习弹窗：定位到右侧歌词卡片左侧
+  const DIALOG_WIDTH = 310;
+  const DIALOG_GAP = 16;
+  useEffect(() => {
+    if (showSentencePracticeDialog === null) {
+      setSentenceDialogPosition(null);
+      return;
+    }
+    const updatePosition = () => {
+      if (!lyricsCardRef.current) return;
+      const rect = lyricsCardRef.current.getBoundingClientRect();
+      setSentenceDialogPosition({
+        left: rect.left - DIALOG_WIDTH - DIALOG_GAP,
+        top: rect.top,
+      });
+    };
+    const raf = requestAnimationFrame(updatePosition);
+    const onResize = () => updatePosition();
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [showSentencePracticeDialog]);
 
   // 解析SRT内容
   useEffect(() => {
@@ -362,7 +394,7 @@ export default function YoutubeVideoDetail({
     try {
       // 检查浏览器支持
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('您的浏览器不支持录音功能，请使用现代浏览器（Chrome、Firefox、Edge等）');
+        alert(youtubePageTranslations.ko.browserNoRecord);
         return;
       }
 
@@ -391,13 +423,13 @@ export default function YoutubeVideoDetail({
         } catch (advancedError: any) {
           // 两种配置都失败，显示错误提示
           console.error('获取麦克风权限失败:', advancedError);
-          let errorMessage = '无法访问麦克风';
+          let errorMessage = songPageTranslations.ko.micAccessFailed;
           if (advancedError.name === 'NotAllowedError' || advancedError.name === 'PermissionDeniedError') {
-            errorMessage = '麦克风权限被拒绝。请点击浏览器地址栏左侧的锁图标，允许麦克风权限，然后刷新页面重试。';
+            errorMessage = youtubePageTranslations.ko.micDenied;
           } else if (advancedError.name === 'NotFoundError' || advancedError.name === 'DevicesNotFoundError') {
-            errorMessage = '未找到麦克风设备，请检查设备连接';
+            errorMessage = youtubePageTranslations.ko.micNotFound;
           } else if (advancedError.name === 'NotReadableError' || advancedError.name === 'TrackStartError') {
-            errorMessage = '麦克风被其他应用占用，请关闭其他使用麦克风的应用后重试';
+            errorMessage = youtubePageTranslations.ko.micInUse;
           }
           alert(errorMessage);
           return; // 直接返回，不抛出错误
@@ -489,7 +521,7 @@ export default function YoutubeVideoDetail({
         console.error('录音错误:', event);
         // 只有在正在录音时才显示错误提示，避免 stop 后误触发
         if (isRecording) {
-          alert('录音过程中发生错误，请重试');
+          alert(youtubePageTranslations.ko.recordingError);
           setIsRecording(false);
           setIsRecordingPaused(false);
         }
@@ -809,7 +841,7 @@ export default function YoutubeVideoDetail({
 
         speak(text, lang = 'zh-CN') {
           if (!('speechSynthesis' in window)) {
-            alert('您的浏览器不支持语音合成功能');
+            alert('이 브라우저는 음성 합성 기능을 지원하지 않아요.');
             return;
           }
           window.speechSynthesis.cancel();
@@ -1163,7 +1195,7 @@ export default function YoutubeVideoDetail({
                       ${word.example ? `
                         <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb;">
                           <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
-                            <span style="color: #6b7280; font-size: 13px;">例句：</span>
+                            <span style="color: #6b7280; font-size: 13px;">예문：</span>
                             <span style="color: #1f2937; font-size: 14px;">${escapeHtml(word.example)}</span>
                             <button class="tts-button" data-tts-text="${escapeHtml(word.example)}" data-tts-lang="zh-CN" style="padding: 2px 6px; font-size: 11px;">🔊</button>
                           </div>
@@ -1395,7 +1427,7 @@ export default function YoutubeVideoDetail({
   // 生成评价（使用真实API）
   const generateEvaluation = async () => {
     if (!recordedAudioBlob) {
-      alert('没有录音文件');
+      alert(youtubePageTranslations.ko.noRecording);
       return;
     }
 
@@ -1481,7 +1513,7 @@ export default function YoutubeVideoDetail({
       setShowEvaluation(true);
     } catch (error) {
       console.error('评分失败:', error);
-      alert(`评分失败：${error instanceof Error ? error.message : '未知错误'}`);
+      alert(`${youtubePageTranslations.ko.scoreFailed} ${error instanceof Error ? error.message : ''}`);
       setIsEvaluating(false);
     }
   };
@@ -1530,7 +1562,7 @@ export default function YoutubeVideoDetail({
       console.error('评价失败:', error);
       setSentencePracticeMessages(prev => [...prev, { 
         type: 'teacher', 
-        content: '抱歉，评价失败，请稍后重试。' 
+        content: youtubePageTranslations.ko.evalFailedSorry 
       }]);
     } finally {
       setIsAnalyzingSentence(false);
@@ -1600,7 +1632,7 @@ export default function YoutubeVideoDetail({
 
       window.speechSynthesis.speak(utterance);
     } else {
-      alert('您的浏览器不支持语音合成功能');
+      alert('이 브라우저는 음성 합성 기능을 지원하지 않아요.');
     }
   };
 
@@ -2066,12 +2098,19 @@ export default function YoutubeVideoDetail({
   const getLevelLabel = (level: 'basic' | 'intermediate' | 'advanced') => {
     switch (level) {
       case 'basic':
-        return '基础';
+        return youtubePageTranslations.ko.tabBasic;
       case 'intermediate':
-        return '中级';
+        return youtubePageTranslations.ko.tabIntermediate;
       case 'advanced':
-        return '高级';
+        return youtubePageTranslations.ko.tabAdvanced;
     }
+  };
+
+  // 句式 level 为 'beginner' | 'intermediate' | 'advanced'，显示韩文
+  const getLevelLabelKr = (level: string) => {
+    if (level === 'beginner' || level === 'basic') return youtubePageTranslations.ko.tabBasic;
+    if (level === 'intermediate') return youtubePageTranslations.ko.tabIntermediate;
+    return youtubePageTranslations.ko.tabAdvanced;
   };
 
   // 获取等级颜色（用于圈起来）
@@ -2092,6 +2131,7 @@ export default function YoutubeVideoDetail({
   }, []);
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* 返回按钮和标题 */}
@@ -2103,37 +2143,37 @@ export default function YoutubeVideoDetail({
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            返回歌曲库
+            {youtubePageTranslations.ko.backToSongLibrary}
           </button>
           <h1 className="text-2xl font-bold text-gray-900">
-            {title} - {titleKr}
+            {titleKr}
           </h1>
           
           {/* 颜色标记系统 - 爱心形状 */}
           <div className="mt-6 flex justify-end">
             <div className="flex items-center gap-6">
-              {/* 基础 - 淡绿色爱心 */}
+              {/* 기초 - 淡绿色爱心 */}
               <div className="relative">
                 <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#86efac" stroke="#4ade80" strokeWidth="1.5"/>
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-green-600">基础</span>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-green-600">{youtubePageTranslations.ko.tabBasic}</span>
               </div>
               
-              {/* 中级 - 淡蓝色爱心 */}
+              {/* 중급 - 淡蓝色爱心 */}
               <div className="relative">
                 <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#93c5fd" stroke="#60a5fa" strokeWidth="1.5"/>
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-blue-600">中级</span>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-blue-600">{youtubePageTranslations.ko.tabIntermediate}</span>
               </div>
               
-              {/* 高级 - 淡紫色爱心 */}
+              {/* 고급 - 淡紫色爱心 */}
               <div className="relative">
                 <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none">
                   <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="#c4b5fd" stroke="#a78bfa" strokeWidth="1.5"/>
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-purple-600">高级</span>
+                <span className="absolute inset-0 flex items-center justify-center text-sm font-semibold text-purple-600">{youtubePageTranslations.ko.tabAdvanced}</span>
               </div>
             </div>
           </div>
@@ -2150,7 +2190,7 @@ export default function YoutubeVideoDetail({
               'col-span-8'
             } bg-white rounded-xl shadow-sm border p-4 transition-all`}>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold text-gray-700">音乐视频</h2>
+                <h2 className="text-lg font-semibold text-gray-700">{youtubePageTranslations.ko.musicVideo}</h2>
                 <div className="flex gap-2">
                   {/* 整首跟唱按钮 - 缩小版 */}
                   {!isSingAlongMode && (
@@ -2159,12 +2199,12 @@ export default function YoutubeVideoDetail({
                         setIsSingAlongMode(true);
                       }}
                       className="px-3 py-1.5 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center gap-1.5"
-                      title="整首跟唱"
+                      title={youtubePageTranslations.ko.singAlongFull}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                       </svg>
-                      <span className="text-xs">整首跟唱</span>
+                      <span className="text-xs">{youtubePageTranslations.ko.singAlongFull}</span>
                     </button>
                   )}
                   <button
@@ -2174,28 +2214,28 @@ export default function YoutubeVideoDetail({
                       else setVideoSize('small');
                     }}
                     className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex items-center gap-2"
-                    title="切换视频大小"
+                    title={youtubePageTranslations.ko.toggleVideoSize}
                   >
                     {videoSize === 'small' ? (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        放大
-                      </>
+{youtubePageTranslations.ko.enlarge}
+                    </>
                     ) : videoSize === 'medium' ? (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                         </svg>
-                        放大
+                        {youtubePageTranslations.ko.enlarge}
                       </>
                     ) : (
                       <>
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                         </svg>
-                        缩小
+                        {youtubePageTranslations.ko.shrink}
                       </>
                     )}
                   </button>
@@ -2206,7 +2246,7 @@ export default function YoutubeVideoDetail({
                   <div className="absolute inset-0 flex items-center justify-center text-white">
                     <div className="text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                      <p>加载播放器...</p>
+                      <p>{youtubePageTranslations.ko.loadingPlayer}</p>
                     </div>
                   </div>
                 ) : (
@@ -2222,7 +2262,7 @@ export default function YoutubeVideoDetail({
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     {/* 静音控制 */}
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-700">视频静音</span>
+                      <span className="text-sm text-gray-700">{youtubePageTranslations.ko.videoMute}</span>
                       <button
                         onClick={() => {
                           if (playerRef.current) {
@@ -2242,7 +2282,7 @@ export default function YoutubeVideoDetail({
                             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                         }`}
                       >
-                        {isVideoMuted ? '取消静音' : '静音'}
+                        {isVideoMuted ? youtubePageTranslations.ko.unmute : youtubePageTranslations.ko.mute}
                       </button>
                     </div>
 
@@ -2255,7 +2295,7 @@ export default function YoutubeVideoDetail({
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                         </svg>
-                        开始录音
+                        {youtubePageTranslations.ko.startRecording}
                       </button>
                     )}
 
@@ -2352,14 +2392,14 @@ export default function YoutubeVideoDetail({
                                   <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                   </svg>
-                                  评分中...
+                                  {youtubePageTranslations.ko.scoringInProgressShort}
                                 </>
                               ) : (
                                 <>
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                   </svg>
-                                  评分
+                                  {songPageTranslations.ko.submitScore}
                                 </>
                               )}
                             </button>
@@ -2371,7 +2411,7 @@ export default function YoutubeVideoDetail({
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                               </svg>
-                              下载录音
+                              {youtubePageTranslations.ko.downloadRecording}
                             </button>
                             <button
                               onClick={restartRecording}
@@ -2457,7 +2497,7 @@ export default function YoutubeVideoDetail({
                               <svg className="w-6 h-6 text-purple-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                               </svg>
-                              <span className="text-lg font-medium text-purple-700">正在评分中，请稍候...</span>
+                              <span className="text-lg font-medium text-purple-700">{youtubePageTranslations.ko.scoringPleaseWait}</span>
                             </div>
                           </div>
                         )}
@@ -2470,7 +2510,7 @@ export default function YoutubeVideoDetail({
                                 <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
                                 </svg>
-                                评分结果
+                                {youtubePageTranslations.ko.scoreResult}
                               </h3>
                               <button
                                 onClick={() => setShowEvaluation(false)}
@@ -2484,14 +2524,14 @@ export default function YoutubeVideoDetail({
 
                             {/* 雷达图 */}
                             <div className="bg-white rounded-lg p-4 border border-purple-100">
-                              <div className="text-xs text-gray-500 mb-3 text-center">发音表现雷达图</div>
+                              <div className="text-xs text-gray-500 mb-3 text-center">{youtubePageTranslations.ko.radarTitle}</div>
                               <SpeechRadarChart
                                 data={[
-                                  { subject: '发音准确度', score: evaluationResult.pronunciation, fullMark: 100 },
-                                  { subject: '节奏感', score: evaluationResult.rhythm, fullMark: 100 },
-                                  { subject: '流畅度', score: Math.round(evaluationResult.pronunciation * 0.9), fullMark: 100 },
-                                  { subject: '情感表达', score: Math.round(evaluationResult.rhythm * 0.85), fullMark: 100 },
-                                  { subject: '整体表现', score: evaluationResult.totalScore, fullMark: 100 },
+                                  { subject: youtubePageTranslations.ko.pronAccuracy, score: evaluationResult.pronunciation, fullMark: 100 },
+                                  { subject: youtubePageTranslations.ko.rhythm, score: evaluationResult.rhythm, fullMark: 100 },
+                                  { subject: youtubePageTranslations.ko.fluency, score: Math.round(evaluationResult.pronunciation * 0.9), fullMark: 100 },
+                                  { subject: youtubePageTranslations.ko.emotion, score: Math.round(evaluationResult.rhythm * 0.85), fullMark: 100 },
+                                  { subject: youtubePageTranslations.ko.overall, score: evaluationResult.totalScore, fullMark: 100 },
                                 ]}
                               />
                             </div>
@@ -2502,13 +2542,13 @@ export default function YoutubeVideoDetail({
                                 {evaluationResult.totalScore}
                                 <span className="text-2xl text-gray-500">/100</span>
                               </div>
-                              <div className="text-sm text-gray-600">综合得分</div>
+                              <div className="text-sm text-gray-600">{youtubePageTranslations.ko.totalScore}</div>
                             </div>
 
                             {/* 分项评分 */}
                             <div className="grid grid-cols-2 gap-3">
                               <div className="bg-white rounded-lg p-3 border border-purple-100">
-                                <div className="text-xs text-gray-500 mb-1">发音准确度</div>
+                                <div className="text-xs text-gray-500 mb-1">{youtubePageTranslations.ko.pronAccuracy}</div>
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                                     <div
@@ -2517,12 +2557,12 @@ export default function YoutubeVideoDetail({
                                     />
                                   </div>
                                   <span className="text-sm font-semibold text-gray-700 w-10 text-right">
-                                    {evaluationResult.pronunciation}分
+                                    {evaluationResult.pronunciation}{youtubePageTranslations.ko.scoreUnit}
                                   </span>
                                 </div>
                               </div>
                               <div className="bg-white rounded-lg p-3 border border-purple-100">
-                                <div className="text-xs text-gray-500 mb-1">节奏感</div>
+                                <div className="text-xs text-gray-500 mb-1">{youtubePageTranslations.ko.rhythm}</div>
                                 <div className="flex items-center gap-2">
                                   <div className="flex-1 bg-gray-200 rounded-full h-2">
                                     <div
@@ -2531,7 +2571,7 @@ export default function YoutubeVideoDetail({
                                     />
                                   </div>
                                   <span className="text-sm font-semibold text-gray-700 w-10 text-right">
-                                    {evaluationResult.rhythm}分
+                                    {evaluationResult.rhythm}{youtubePageTranslations.ko.scoreUnit}
                                   </span>
                                 </div>
                               </div>
@@ -2539,13 +2579,13 @@ export default function YoutubeVideoDetail({
 
                             {/* 整体评价 */}
                             <div className="bg-white rounded-lg p-3 border border-purple-100">
-                              <div className="text-xs text-gray-500 mb-2">整体评价</div>
+                              <div className="text-xs text-gray-500 mb-2">{youtubePageTranslations.ko.overallComment}</div>
                               <div className="text-sm text-gray-700 font-medium">{evaluationResult.overall}</div>
                             </div>
 
                             {/* 改进建议 */}
                             <div className="bg-white rounded-lg p-3 border border-purple-100">
-                              <div className="text-xs text-gray-500 mb-2">改进建议</div>
+                              <div className="text-xs text-gray-500 mb-2">{youtubePageTranslations.ko.improvement}</div>
                               <ul className="space-y-1">
                                 {evaluationResult.suggestions.map((suggestion, index) => (
                                   <li key={index} className="text-sm text-gray-700 flex items-start gap-2">
@@ -2574,7 +2614,7 @@ export default function YoutubeVideoDetail({
                       }}
                       className="w-full px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors"
                     >
-                      退出跟唱
+                      {youtubePageTranslations.ko.exitSingAlong}
                     </button>
                   </div>
                 )}
@@ -2582,12 +2622,14 @@ export default function YoutubeVideoDetail({
             </div>
 
             {/* 右侧：歌词显示区 */}
-            <div className={`${
+            <div
+              ref={lyricsCardRef}
+              className={`${
               videoSize === 'small' ? 'col-span-8' : 
               videoSize === 'medium' ? 'col-span-6' : 
               'col-span-4'
             } bg-white rounded-xl shadow-sm border p-4 transition-all`}>
-              <h2 className="text-lg font-semibold text-gray-700 mb-4">歌词</h2>
+              <h2 className="text-lg font-semibold text-gray-700 mb-4">{youtubePageTranslations.ko.lyrics}</h2>
               
               {/* 模式切换栏 */}
               <div className="mb-4 flex items-center justify-between border-b pb-3">
@@ -2599,7 +2641,7 @@ export default function YoutubeVideoDetail({
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  标准模式
+                  {youtubePageTranslations.ko.modeStandard}
                 </button>
                 <div className="flex gap-2 items-center">
                   <button
@@ -2610,7 +2652,7 @@ export default function YoutubeVideoDetail({
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    词汇训练
+                    {youtubePageTranslations.ko.modeVocab}
                   </button>
                   <button
                     onClick={() => setLyricMode('sentence')}
@@ -2620,7 +2662,7 @@ export default function YoutubeVideoDetail({
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    句式训练
+                    {youtubePageTranslations.ko.modeSentence}
                   </button>
                   <button
                     onClick={() => setLyricMode('pronunciation')}
@@ -2630,7 +2672,7 @@ export default function YoutubeVideoDetail({
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    声音训练
+                    {youtubePageTranslations.ko.modePronunciation}
                   </button>
                 </div>
               </div>
@@ -2663,7 +2705,7 @@ export default function YoutubeVideoDetail({
                           : 'bg-gray-50 border-gray-200 hover:bg-gray-100 hover:border-gray-300'
                       }`}
                     >
-                      {/* 练一练气泡 - 只遮挡该句歌词内容，不影响视频 */}
+                      {/* {youtubePageTranslations.ko.practice}气泡 - 只遮挡该句歌词内容，不影响视频 */}
                       {showPractice === sentenceIndex && vocab.length > 0 && (() => {
                         const questions = getPracticeForSentenceUtil(videoId, sentenceIndex);
                         const currentQuestion = questions[currentQuestionIndex];
@@ -2720,7 +2762,7 @@ export default function YoutubeVideoDetail({
                         return (
                           <div className="absolute top-0 left-0 right-0 bg-white bg-opacity-95 rounded-lg z-50 p-4 shadow-lg border-2 border-purple-300" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-between mb-3">
-                              <h3 className="text-sm font-semibold text-gray-800">本句重点词练习</h3>
+                              <h3 className="text-sm font-semibold text-gray-800">{youtubePageTranslations.ko.sentenceVocabPractice}</h3>
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -2743,9 +2785,9 @@ export default function YoutubeVideoDetail({
                             {totalQuestions > 0 && (
                               <div className="mb-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
                                 <div className="flex items-center justify-between text-xs">
-                                  <span className="text-gray-700">进度：{answeredCount}/{totalQuestions}</span>
-                                  <span className="text-gray-700">正确：{correctCount}/{answeredCount || 1}</span>
-                                  <span className="font-semibold text-blue-700">得分：{score}分</span>
+                                  <span className="text-gray-700">{youtubePageTranslations.ko.progress}: {answeredCount}/{totalQuestions}</span>
+                                  <span className="text-gray-700">{youtubePageTranslations.ko.correct}: {correctCount}/{answeredCount || 1}</span>
+                                  <span className="font-semibold text-blue-700">{youtubePageTranslations.ko.score}: {score}{youtubePageTranslations.ko.scoreUnit}</span>
                                 </div>
                               </div>
                             )}
@@ -3194,7 +3236,7 @@ export default function YoutubeVideoDetail({
                               }}
                               className="text-xs text-gray-600 hover:text-gray-800 flex items-center gap-1"
                             >
-                              <span>本句重点词</span>
+                              <span>{youtubePageTranslations.ko.thisSentenceVocabShort}</span>
                               <svg
                                 className={`w-3 h-3 transition-transform ${expandedVocabSentences.has(sentenceIndex) ? 'rotate-180' : ''}`}
                                 fill="none"
@@ -3204,7 +3246,7 @@ export default function YoutubeVideoDetail({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                               </svg>
                             </button>
-                            {/* 练一练按钮 */}
+                            {/* {youtubePageTranslations.ko.practice}按钮 */}
                             {vocab.length > 0 && (
                               <button
                                 onClick={(e) => {
@@ -3216,7 +3258,7 @@ export default function YoutubeVideoDetail({
                                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
-                                练一练
+                                {youtubePageTranslations.ko.practice}
                               </button>
                             )}
                           </div>
@@ -3286,7 +3328,7 @@ export default function YoutubeVideoDetail({
                                       {/* 显示例句 */}
                                       {word.example && (
                                         <div className="mt-2 pt-2 border-t border-gray-300">
-                                          <div className="text-xs text-gray-500 mb-1">例句：</div>
+                                          <div className="text-xs text-gray-500 mb-1">예문：</div>
                                           <div className="flex items-center gap-2 mb-1">
                                             <span className="text-xs text-gray-800">{word.example}</span>
                                             <button
@@ -3335,7 +3377,7 @@ export default function YoutubeVideoDetail({
                             <div className="mt-2 border-t border-gray-200 pt-2 space-y-2">
                               {/* 句型 - 带收藏按钮 */}
                               <div className="text-xs text-gray-600 flex items-center gap-2">
-                                <span className="font-semibold">句型：</span>
+                                <span className="font-semibold">문형：</span>
                                 <span className="ml-1 flex-1">{structureData.structure}</span>
                                 <button
                                   onClick={(e) => {
@@ -3366,7 +3408,7 @@ export default function YoutubeVideoDetail({
                               {/* 解释 */}
                               {structureData.explanation && (
                                 <div className="text-xs text-gray-500">
-                                  <span className="font-semibold">解释：</span>
+                                  <span className="font-semibold">설명：</span>
                                   <span className="ml-1">{structureData.explanation}</span>
                                 </div>
                               )}
@@ -3374,7 +3416,7 @@ export default function YoutubeVideoDetail({
                               {/* 例句 - 带朗读按钮 */}
                               {structureData.example && (
                                 <div className="text-xs text-gray-600 flex items-center gap-2">
-                                  <span className="font-semibold">例句：</span>
+                                  <span className="font-semibold">예문：</span>
                                   <span className="ml-1 flex-1">{structureData.example}</span>
                                   <button
                                     onClick={(e) => {
@@ -3394,12 +3436,12 @@ export default function YoutubeVideoDetail({
                               {/* 例句韩语翻译 */}
                               {structureData.exampleKr && (
                                 <div className="text-xs text-gray-500">
-                                  <span className="font-semibold">韩语：</span>
+                                  <span className="font-semibold">한국어：</span>
                                   <span className="ml-1">{structureData.exampleKr}</span>
                                 </div>
                               )}
                               
-                              {/* 练习试试按钮 - 放在右边 */}
+                              {/* 연습하기按钮 - 放在右边 */}
                               <div className="flex justify-end">
                                 <button
                                   onClick={(e) => {
@@ -3410,7 +3452,7 @@ export default function YoutubeVideoDetail({
                                   }}
                                   className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
                                 >
-                                  练习试试
+                                  연습하기
                                 </button>
                               </div>
                             </div>
@@ -3423,19 +3465,19 @@ export default function YoutubeVideoDetail({
                             <div className="mt-2 border-t border-gray-200 pt-2 space-y-2">
                               {/* 扩写 */}
                               <div className="text-xs text-gray-600">
-                                <span className="font-semibold">扩写：</span>
+                                <span className="font-semibold">확장：</span>
                                 <span className="ml-1">{structureData.expanded}</span>
                               </div>
                               
                               {/* 韩语翻译 */}
                               {structureData.translationKr && (
                                 <div className="text-xs text-gray-500">
-                                  <span className="font-semibold">韩语：</span>
+                                  <span className="font-semibold">한국어：</span>
                                   <span className="ml-1">{structureData.translationKr}</span>
                                 </div>
                               )}
                               
-                              {/* 练习试试按钮 - 放在右边 */}
+                              {/* 연습하기按钮 - 放在右边 */}
                               <div className="flex justify-end">
                                 <button
                                   onClick={(e) => {
@@ -3446,7 +3488,7 @@ export default function YoutubeVideoDetail({
                                   }}
                                   className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-medium transition-colors"
                                 >
-                                  练习试试
+                                  연습하기
                                 </button>
                               </div>
                             </div>
@@ -3457,127 +3499,7 @@ export default function YoutubeVideoDetail({
                         return null;
                       })()}
                       
-                      {/* 句式练习对话框 - 覆盖当前卡片，聊天形式 */}
-                      {lyricMode === 'sentence' && showSentencePracticeDialog === sentenceIndex && (
-                        <div 
-                          className="absolute inset-0 z-[100] bg-white rounded-lg shadow-xl border-2 border-green-300 p-4 flex flex-col"
-                          onClick={(e) => e.stopPropagation()}
-                          style={{ pointerEvents: 'auto' }}
-                        >
-                          {/* 头部：标题和关闭按钮 */}
-                          <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
-                            <h4 className="text-base font-semibold text-gray-800">造句练习</h4>
-                            <button
-                              onClick={() => {
-                                setShowSentencePracticeDialog(null);
-                                setSentencePracticeInput("");
-                                setSentencePracticeMessages([]);
-                              }}
-                              className="text-gray-400 hover:text-gray-600"
-                            >
-                              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </button>
-                          </div>
-                          
-                          {/* 句型/扩写和韩文翻译 */}
-                          {(() => {
-                            const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
-                            if (!structureData) return null;
-                            return (
-                              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                                {structureData.structure && (
-                                  <div className="text-base text-gray-800 mb-2">
-                                    <span className="font-semibold">句型：</span>
-                                    <span className="ml-2">{structureData.structure}</span>
-                                  </div>
-                                )}
-                                {!structureData.structure && structureData.expanded && (
-                                  <div className="text-base text-gray-800 mb-2">
-                                    <span className="font-semibold">扩写：</span>
-                                    <span className="ml-2">{structureData.expanded}</span>
-                                  </div>
-                                )}
-                                {structureData.translationKr && (
-                                  <div className="text-base text-gray-700">
-                                    <span className="font-semibold">韩语：</span>
-                                    <span className="ml-2">{structureData.translationKr}</span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })()}
-                          
-                          {/* 聊天消息区域 */}
-                          <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[150px] max-h-[250px]">
-                            {sentencePracticeMessages.length === 0 ? (
-                              <div className="text-center text-gray-500 text-base py-8">
-                                请输入你造的句子，老师会为你点评
-                              </div>
-                            ) : (
-                              sentencePracticeMessages.map((msg, idx) => (
-                                <div
-                                  key={idx}
-                                  className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                                >
-                                  <div
-                                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm break-words whitespace-pre-wrap ${
-                                      msg.type === 'user'
-                                        ? 'bg-blue-500 text-white'
-                                        : 'bg-gray-100 text-gray-800'
-                                    }`}
-                                  >
-                                    {msg.content}
-                                  </div>
-                                </div>
-                              ))
-                            )}
-                            {isAnalyzingSentence && (
-                              <div className="flex justify-start">
-                                <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-2">
-                                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  老师正在思考...
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* 输入区域 */}
-                          <div className="border-t border-gray-200 pt-3">
-                            <div className="flex gap-2">
-                              <textarea
-                                value={sentencePracticeInput}
-                                onChange={(e) => setSentencePracticeInput(e.target.value)}
-                                placeholder="输入你造的句子..."
-                                className="flex-1 p-3 border border-gray-300 rounded-lg text-base resize-none"
-                                rows={2}
-                                disabled={isAnalyzingSentence}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    if (sentencePracticeInput.trim() && !isAnalyzingSentence) {
-                                      handleSendMessage(sentenceIndex);
-                                    }
-                                  }
-                                }}
-                              />
-                              <button
-                                onClick={() => handleSendMessage(sentenceIndex)}
-                                disabled={isAnalyzingSentence || !sentencePracticeInput.trim()}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                              >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {/* 句式练习对话框已移至 Portal，显示在右侧歌词卡片左侧 */}
                       
                       {/* 声音训练模式：跟读按钮和评分区域 */}
                       {lyricMode === 'pronunciation' && (
@@ -3593,29 +3515,30 @@ export default function YoutubeVideoDetail({
                                   setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: null }));
                                 }}
                                 className="absolute top-2 right-2 z-10 p-1.5 text-gray-400 hover:text-gray-600 transition-colors bg-white rounded-full shadow-sm hover:bg-gray-50"
-                                title="关闭评分内容"
+                                title={youtubePageTranslations.ko.closeScore}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
                               
-                              <div className="flex items-start gap-3 pr-6">
-                                {/* 雷达图（左边） */}
+                              <div className="flex items-stretch gap-0 pr-6">
+                                {/* 雷达图（左边占卡片 1/3，居中无留白） */}
                                 {pronunciationFeedbackData[sentenceIndex] && (
-                                  <div className="flex-shrink-0 w-32">
+                                  <div className="w-1/3 min-w-0 flex items-center justify-center shrink-0">
                                     <SpeechRadarChart
+                                      compact
                                       data={[
-                                        { subject: '内容准确度', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.contentAccuracy), fullMark: 100 },
-                                        { subject: '声调表现', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.tonePerformance), fullMark: 100 },
-                                        { subject: '说话流畅度', score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.speakingFluency), fullMark: 100 },
+                                        { subject: songPageTranslations.ko.scoreContentAccuracy, score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.contentAccuracy), fullMark: 100 },
+                                        { subject: songPageTranslations.ko.scoreTonePerformance, score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.tonePerformance), fullMark: 100 },
+                                        { subject: songPageTranslations.ko.scoreSpeakingFluency, score: Math.max(50, pronunciationFeedbackData[sentenceIndex]!.scores.speakingFluency), fullMark: 100 },
                                       ]}
                                     />
                                   </div>
                                 )}
-                                {/* 反馈内容（右边） */}
+                                {/* 反馈内容（右边占卡片 2/3） */}
                                 {pronunciationFeedback[sentenceIndex] && (
-                                  <div className="flex-1 p-3 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex-[2] self-start min-w-0 p-3 bg-white rounded-lg border border-gray-200">
                                     <div className="text-sm text-gray-800 whitespace-pre-wrap">{pronunciationFeedback[sentenceIndex]}</div>
                                   </div>
                                 )}
@@ -3677,7 +3600,7 @@ export default function YoutubeVideoDetail({
                                   }, 100);
                                 } catch (error) {
                                   console.error('无法访问麦克风:', error);
-                                  alert('无法访问麦克风，请检查权限设置');
+                                  alert(songPageTranslations.ko.micAccessFailed);
                                 }
                               }}
                               className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition-colors flex items-center gap-1"
@@ -3685,7 +3608,7 @@ export default function YoutubeVideoDetail({
                               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                               </svg>
-                              点击开始跟读
+                              {songPageTranslations.ko.clickToStartShadowing}
                             </button>
                           )}
                           
@@ -3694,7 +3617,7 @@ export default function YoutubeVideoDetail({
                               <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
                                 <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
                                 <span className="text-sm text-red-700 font-medium">
-                                  录音中 {Math.floor((pronunciationRecordingDuration[sentenceIndex] || 0) / 60)}:{((pronunciationRecordingDuration[sentenceIndex] || 0) % 60).toString().padStart(2, '0')}
+                                  {songPageTranslations.ko.recordingInProgressShort} {Math.floor((pronunciationRecordingDuration[sentenceIndex] || 0) / 60)}:{((pronunciationRecordingDuration[sentenceIndex] || 0) % 60).toString().padStart(2, '0')}
                                 </span>
                               </div>
                               <button
@@ -3719,7 +3642,7 @@ export default function YoutubeVideoDetail({
                                 }}
                                 className="px-3 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
                               >
-                                取消
+                                {songPageTranslations.ko.cancel}
                               </button>
                               <button
                                 onClick={(e) => {
@@ -3740,7 +3663,7 @@ export default function YoutubeVideoDetail({
                                 }}
                                 className="px-3 py-2 rounded-lg text-sm font-medium bg-green-500 text-white hover:bg-green-600"
                               >
-                                结束
+                                {songPageTranslations.ko.endRecord}
                               </button>
                             </div>
                           )}
@@ -3794,20 +3717,14 @@ export default function YoutubeVideoDetail({
                                     // 保存完整反馈数据（用于雷达图）
                                     setPronunciationFeedbackData(prev => ({ ...prev, [sentenceIndex]: feedbackData }));
                                     
-                                    // 格式化反馈为文本
-                                    const feedbackText = `${feedbackData.overallComment}\n\n主要问题：${feedbackData.keyIssue}\n\n下一步练习：${feedbackData.oneAction}`;
+                                    // 格式化反馈为文本（韩文标签，API 内容已为韩文）
+                                    const feedbackText = `${feedbackData.overallComment}\n\n${songPageTranslations.ko.labelKeyIssue}: ${feedbackData.keyIssue}\n\n${songPageTranslations.ko.labelNextAction}: ${feedbackData.oneAction}`;
                                     setPronunciationFeedback(prev => ({ ...prev, [sentenceIndex]: feedbackText }));
                                     
-                                    // 评分完成后，滚动到当前句子，使其锁定在中间
-                                    setTimeout(() => {
-                                      const element = document.getElementById(`subtitle-${sentenceIndex}`);
-                                      if (element) {
-                                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                      }
-                                    }, 100);
+                                    // 评分完成后不主动滚动，避免卡片出现时页面跳动
                                   } catch (error) {
                                     console.error('评价失败:', error);
-                                    alert('评价失败，请稍后重试');
+                                    alert(songPageTranslations.ko.evalFailedRetry);
                                     clearInterval(progressInterval);
                                     setPronunciationAnalysisProgress(prev => ({ ...prev, [sentenceIndex]: 0 }));
                                   } finally {
@@ -3823,10 +3740,10 @@ export default function YoutubeVideoDetail({
                                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                     </svg>
-                                    评分中 {pronunciationAnalysisProgress[sentenceIndex] || 0}%
+                                    {songPageTranslations.ko.scoringInProgress} {pronunciationAnalysisProgress[sentenceIndex] || 0}%
                                   </span>
                                 ) : (
-                                  '评分'
+                                  songPageTranslations.ko.submitScore
                                 )}
                               </button>
                               <button
@@ -3839,7 +3756,7 @@ export default function YoutubeVideoDetail({
                                 }}
                                 className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
                               >
-                                重新录音
+                                {songPageTranslations.ko.recordAgain}
                               </button>
                             </div>
                           )}
@@ -3857,19 +3774,19 @@ export default function YoutubeVideoDetail({
           {/* 下方：歌词解析区（左右各占一半） */}
           <div className="bg-white rounded-xl shadow-sm border p-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-700">歌词解析</h2>
+              <h2 className="text-lg font-semibold text-gray-700">{youtubePageTranslations.ko.lyricsParse}</h2>
               <div className="flex items-center gap-3">
                 {/* 下载按钮 - 重新设计 */}
                 <button
                   onClick={() => setShowDownloadDialog(true)}
                   className="group relative px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-medium text-sm shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 overflow-hidden"
-                  title="下载学习资料"
+                  title="학습 자료 다운로드"
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   <svg className="w-4 h-4 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
-                  <span className="relative z-10">下载</span>
+                  <span className="relative z-10">{youtubePageTranslations.ko.download}</span>
                   <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                 </button>
                 {/* 提示文字 */}
@@ -3877,7 +3794,7 @@ export default function YoutubeVideoDetail({
                   <svg className="w-3 h-3 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>下载后可离线观看</span>
+                  <span>{youtubePageTranslations.ko.downloadOffline}</span>
                 </div>
               </div>
             </div>
@@ -3887,7 +3804,7 @@ export default function YoutubeVideoDetail({
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowDownloadDialog(false)}>
                 <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-gray-800">选择下载内容</h3>
+                    <h3 className="text-lg font-semibold text-gray-800">{youtubePageTranslations.ko.downloadTitle}</h3>
                     <button
                       onClick={() => setShowDownloadDialog(false)}
                       className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -3904,8 +3821,8 @@ export default function YoutubeVideoDetail({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <div className="text-sm text-blue-800">
-                        <div className="font-medium mb-1">📥 下载后可离线观看</div>
-                        <div className="text-xs">HTML文件包含完整内容，支持朗读功能，无需网络连接</div>
+                        <div className="font-medium mb-1">📥 {youtubePageTranslations.ko.downloadOffline}</div>
+                        <div className="text-xs">{youtubePageTranslations.ko.htmlFullContent}</div>
                       </div>
                     </div>
                   </div>
@@ -3916,8 +3833,8 @@ export default function YoutubeVideoDetail({
                       className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition-all flex items-center justify-between group"
                     >
                       <div>
-                        <div className="font-medium text-gray-800">标准模式</div>
-                        <div className="text-xs text-gray-500 mt-0.5">完整歌词（重点词和句式标记）、拼音、翻译</div>
+                        <div className="font-medium text-gray-800">{youtubePageTranslations.ko.modeStandard}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">전체 가사(핵심 어휘·문형 표시), 병음, 번역</div>
                       </div>
                       <svg className="w-5 h-5 text-gray-400 group-hover:text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -3929,8 +3846,8 @@ export default function YoutubeVideoDetail({
                       className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-green-500 hover:bg-green-50 transition-all flex items-center justify-between group"
                     >
                       <div>
-                        <div className="font-medium text-gray-800">词汇训练</div>
-                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点词标记）+ 所有词汇及例句</div>
+                        <div className="font-medium text-gray-800">{youtubePageTranslations.ko.modeVocab}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{youtubePageTranslations.ko.allLyrics}(핵심 어휘 표시) + {youtubePageTranslations.ko.allVocab} 및 예문</div>
                       </div>
                       <svg className="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -3942,8 +3859,8 @@ export default function YoutubeVideoDetail({
                       className="w-full px-4 py-3 rounded-lg text-left border-2 border-gray-200 hover:border-purple-500 hover:bg-purple-50 transition-all flex items-center justify-between group"
                     >
                       <div>
-                        <div className="font-medium text-gray-800">句式训练</div>
-                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点句式标记）+ 所有句式及例句</div>
+                        <div className="font-medium text-gray-800">{youtubePageTranslations.ko.modeSentence}</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{youtubePageTranslations.ko.allLyrics}(핵심 문형 표시) + {youtubePageTranslations.ko.allSentences} 및 예문</div>
                       </div>
                       <svg className="w-5 h-5 text-gray-400 group-hover:text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -3956,10 +3873,10 @@ export default function YoutubeVideoDetail({
                     >
                       <div>
                         <div className="font-medium text-gray-800 flex items-center gap-2">
-                          <span>本首歌的歌词+句式</span>
-                          <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-700 rounded">推荐</span>
+                          <span>{youtubePageTranslations.ko.modeLyricSentence}</span>
+                          <span className="text-xs px-2 py-0.5 bg-orange-200 text-orange-700 rounded">추천</span>
                         </div>
-                        <div className="text-xs text-gray-500 mt-0.5">所有歌词（重点词和句式标记）+ 所有词汇解析 + 所有句式解析</div>
+                        <div className="text-xs text-gray-500 mt-0.5">{youtubePageTranslations.ko.allLyrics}(핵심 어휘·문형 표시) + 전체 어휘 해석 + 전체 문형 해석</div>
                       </div>
                       <svg className="w-5 h-5 text-orange-600 group-hover:text-orange-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -3981,7 +3898,7 @@ export default function YoutubeVideoDetail({
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  全部
+                  {youtubePageTranslations.ko.tabAll}
                 </button>
                 <button
                   onClick={() => setSelectedLevel('basic')}
@@ -3991,7 +3908,7 @@ export default function YoutubeVideoDetail({
                       : 'text-green-600 border-green-300 hover:bg-green-50'
                   }`}
                 >
-                  基础
+                  {youtubePageTranslations.ko.tabBasic}
                 </button>
                 <button
                   onClick={() => setSelectedLevel('intermediate')}
@@ -4001,7 +3918,7 @@ export default function YoutubeVideoDetail({
                       : 'text-blue-600 border-blue-300 hover:bg-blue-50'
                   }`}
                 >
-                  中级
+                  {youtubePageTranslations.ko.tabIntermediate}
                 </button>
                 <button
                   onClick={() => setSelectedLevel('advanced')}
@@ -4011,7 +3928,7 @@ export default function YoutubeVideoDetail({
                       : 'text-purple-600 border-purple-300 hover:bg-purple-50'
                   }`}
                 >
-                  高级
+                  {youtubePageTranslations.ko.tabAdvanced}
                 </button>
               </div>
             </div>
@@ -4020,7 +3937,7 @@ export default function YoutubeVideoDetail({
               {/* 左侧：所有词汇 */}
               <div className="border-r border-gray-200 pr-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-700">所有词汇</h3>
+                  <h3 className="text-base font-semibold text-gray-700">{youtubePageTranslations.ko.allVocab}</h3>
             </div>
 
             {/* 词汇列表 */}
@@ -4114,17 +4031,17 @@ export default function YoutubeVideoDetail({
           </div>
         </div>
 
-              {/* 右侧：所有句式 */}
+              {/* 右侧：전체 문형 */}
               <div className="pl-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-base font-semibold text-gray-700">所有句式</h3>
+                  <h3 className="text-base font-semibold text-gray-700">{youtubePageTranslations.ko.allSentences}</h3>
                 </div>
 
                 {/* 句式列表 */}
                 <div className="h-[400px] overflow-y-auto space-y-3">
                   {getAllSentenceStructures.length === 0 ? (
                     <div className="text-center text-gray-400 py-8">
-                      暂无句式数据
+                      {youtubePageTranslations.ko.noSentenceData}
                     </div>
                   ) : (
                     getAllSentenceStructures.map((item, idx) => {
@@ -4153,7 +4070,7 @@ export default function YoutubeVideoDetail({
                                   ? 'text-blue-500 border-blue-500'
                                   : 'text-purple-500 border-purple-500'
                               }`}>
-                                {structure.level === 'beginner' ? '基础' : structure.level === 'intermediate' ? '中级' : '高级'}
+                                {getLevelLabelKr(structure.level)}
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
@@ -4226,5 +4143,131 @@ export default function YoutubeVideoDetail({
         </div>
       </div>
     </div>
+
+    {/* 句式练习弹窗：Portal 渲染到 body，定位在右侧歌词卡片左侧 */}
+    {lyricMode === 'sentence' && showSentencePracticeDialog !== null && sentenceDialogPosition !== null && createPortal(
+      (() => {
+        const sentenceIndex = showSentencePracticeDialog;
+        const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
+        return (
+          <div
+            className="bg-white rounded-lg shadow-xl border-2 border-green-300 p-4 flex flex-col z-[100]"
+            style={{
+              position: 'fixed',
+              left: sentenceDialogPosition.left,
+              top: sentenceDialogPosition.top,
+              width: DIALOG_WIDTH,
+              maxHeight: '90vh',
+              pointerEvents: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-200">
+              <h4 className="text-base font-semibold text-gray-800">문장 만들기 연습</h4>
+              <button
+                onClick={() => {
+                  setShowSentencePracticeDialog(null);
+                  setSentencePracticeInput("");
+                  setSentencePracticeMessages([]);
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            {structureData && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                {structureData.structure && (
+                  <div className="text-base text-gray-800 mb-2">
+                    <span className="font-semibold">문형：</span>
+                    <span className="ml-2">{structureData.structure}</span>
+                  </div>
+                )}
+                {!structureData.structure && structureData.expanded && (
+                  <div className="text-base text-gray-800 mb-2">
+                    <span className="font-semibold">확장：</span>
+                    <span className="ml-2">{structureData.expanded}</span>
+                  </div>
+                )}
+                {structureData.translationKr && (
+                  <div className="text-base text-gray-700">
+                    <span className="font-semibold">한국어：</span>
+                    <span className="ml-2">{structureData.translationKr}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[150px] max-h-[250px]">
+              {sentencePracticeMessages.length === 0 ? (
+                <div className="text-center text-gray-500 text-base py-8">
+                  만든 문장을 입력해 주세요. 선생님이 첨삭해 드립니다.
+                </div>
+              ) : (
+                sentencePracticeMessages.map((msg, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm break-words whitespace-pre-wrap ${
+                        msg.type === 'user'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {msg.content}
+                    </div>
+                  </div>
+                ))
+              )}
+              {isAnalyzingSentence && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    老师正在思考...
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="border-t border-gray-200 pt-3">
+              <div className="flex gap-2">
+                <textarea
+                  value={sentencePracticeInput}
+                  onChange={(e) => setSentencePracticeInput(e.target.value)}
+                  placeholder="输入你造的句子..."
+                  className="flex-1 p-3 border border-gray-300 rounded-lg text-base resize-none"
+                  rows={2}
+                  disabled={isAnalyzingSentence}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (sentencePracticeInput.trim() && !isAnalyzingSentence) {
+                        handleSendMessage(sentenceIndex);
+                      }
+                    }
+                  }}
+                />
+                <button
+                  onClick={() => handleSendMessage(sentenceIndex)}
+                  disabled={isAnalyzingSentence || !sentencePracticeInput.trim()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })(),
+      document.body
+    )}
+    </>
   );
 }

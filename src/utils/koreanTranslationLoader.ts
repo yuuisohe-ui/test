@@ -76,10 +76,10 @@ const koreanTranslationModules: Record<string, {
  */
 export function getKoreanTranslation(videoId: string, sentenceIndex: number): string {
   const koreanModule = koreanTranslationModules[videoId];
-  if (koreanModule) {
+  if (koreanModule && typeof koreanModule.getKoreanTranslation === 'function') {
     return koreanModule.getKoreanTranslation(sentenceIndex);
   }
-  // 如果没有找到对应的模块，返回空字符串
+  // 如果没有找到对应的模块或模块未导出该函数，返回空字符串
   return '';
 }
 

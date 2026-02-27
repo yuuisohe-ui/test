@@ -10,67 +10,111 @@ export default function WordReviewPage() {
   const [gameType, setGameType] = useState<GameType>(null);
   const [gameStarted, setGameStarted] = useState(false);
   
-  // 收藏的单词
-  const [starredWords, setStarredWords] = useState<Word[]>(() => {
-    const saved = localStorage.getItem('starredWords');
-    if (saved) {
+  // 合并收藏：主题词汇（starredWords）+ 从歌词页收藏的单词（starredWordsCustom）
+  const loadMergedStarredWords = (): Word[] => {
+    const allTheme = Object.values(themeWords).flat();
+    const themeIds: string[] = (() => {
       try {
-        const wordIds = JSON.parse(saved);
-        // 从所有主题词汇中查找收藏的单词
-        const allWords = Object.values(themeWords).flat();
-        return wordIds.map((id: string) => allWords.find(w => w.id === id)).filter(Boolean) as Word[];
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  });
+        const saved = localStorage.getItem('starredWords');
+        return saved ? JSON.parse(saved) : [];
+      } catch { return []; }
+    })();
+    const custom: { word: string; pinyin: string; korean: string }[] = (() => {
+      try {
+        const saved = localStorage.getItem('starredWordsCustom');
+        return saved ? JSON.parse(saved) : [];
+      } catch { return []; }
+    })();
+    const themeWordsList = themeIds.map((id: string) => allTheme.find(w => w.id === id)).filter(Boolean) as Word[];
+    // starredWords에 있지만 테마에 없는 id = 다른 페이지에서 저장한 단어(문자열)
+    const rawWordIds = themeIds.filter((id: string) => !allTheme.some(w => w.id === id));
+    const rawAsWord: Word[] = rawWordIds.map((id: string, i: number) => ({
+      id: 'raw-' + id + '-' + i,
+      word: id,
+      pinyin: '',
+      korean: '',
+      chinese: id,
+      hskLevel: '',
+      frequency: 0,
+      examples: [],
+    }));
+    const customAsWord: Word[] = custom.map((w, i) => ({
+      id: 'custom-' + w.word + '-' + i,
+      word: w.word,
+      pinyin: w.pinyin || '',
+      korean: w.korean || '',
+      chinese: w.word,
+      hskLevel: '',
+      frequency: 0,
+      examples: [],
+    }));
+    return [...themeWordsList, ...rawAsWord, ...customAsWord];
+  };
 
-  // 监听 localStorage 变化
+  const [starredWords, setStarredWords] = useState<Word[]>(loadMergedStarredWords);
+  const [collectionSubTab, setCollectionSubTab] = useState<'vocab' | 'pattern'>('vocab');
+
   useEffect(() => {
-    const handleStorageChange = () => {
-      const saved = localStorage.getItem('starredWords');
-      if (saved) {
-        try {
-          const wordIds = JSON.parse(saved);
-          const allWords = Object.values(themeWords).flat();
-          setStarredWords(wordIds.map((id: string) => allWords.find(w => w.id === id)).filter(Boolean) as Word[]);
-        } catch {
-          setStarredWords([]);
-        }
-      } else {
-        setStarredWords([]);
-      }
-    };
-
+    const handleStorageChange = () => setStarredWords(loadMergedStarredWords());
     window.addEventListener('storage', handleStorageChange);
     const interval = setInterval(handleStorageChange, 500);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, []);
 
-  // 收藏单词
+  // 收藏单词（主题词更新 starredWords，歌词收藏词更新 starredWordsCustom）
   const toggleStar = (word: Word) => {
-    const saved = localStorage.getItem('starredWords') || '[]';
-    const wordIds = JSON.parse(saved);
-    const index = wordIds.indexOf(word.id);
-    
-    if (index > -1) {
-      wordIds.splice(index, 1);
+    if (word.id.startsWith('custom-')) {
+      const list: { word: string; pinyin: string; korean: string }[] = (() => {
+        try {
+          const saved = localStorage.getItem('starredWordsCustom');
+          return saved ? JSON.parse(saved) : [];
+        } catch { return []; }
+      })();
+      const next = list.filter((x: { word: string }) => x.word !== word.word);
+      localStorage.setItem('starredWordsCustom', JSON.stringify(next));
+    } else if (word.id.startsWith('raw-')) {
+      const saved = localStorage.getItem('starredWords') || '[]';
+      const wordIds: string[] = JSON.parse(saved);
+      const next = wordIds.filter((id: string) => id !== word.word);
+      localStorage.setItem('starredWords', JSON.stringify(next));
     } else {
-      wordIds.push(word.id);
+      const saved = localStorage.getItem('starredWords') || '[]';
+      const wordIds: string[] = JSON.parse(saved);
+      const index = wordIds.indexOf(word.id);
+      if (index > -1) wordIds.splice(index, 1);
+      else wordIds.push(word.id);
+      localStorage.setItem('starredWords', JSON.stringify(wordIds));
     }
-    
-    localStorage.setItem('starredWords', JSON.stringify(wordIds));
-    const allWords = Object.values(themeWords).flat();
-    setStarredWords(wordIds.map((id: string) => allWords.find(w => w.id === id)).filter(Boolean) as Word[]);
+    setStarredWords(loadMergedStarredWords());
   };
 
   const isStarred = (wordId: string) => {
     return starredWords.some(w => w.id === wordId);
+  };
+
+  // 문형 저장: 전 페이지에서 저장한 문형 (localStorage starredStructures)
+  const loadStarredStructures = (): string[] => {
+    try {
+      const saved = localStorage.getItem('starredStructures');
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  };
+  const [starredStructures, setStarredStructures] = useState<string[]>(loadStarredStructures);
+
+  useEffect(() => {
+    const handleStorageChange = () => setStarredStructures(loadStarredStructures());
+    const interval = setInterval(handleStorageChange, 500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const toggleStructure = (pattern: string) => {
+    const list = loadStarredStructures();
+    const next = list.filter(p => p !== pattern);
+    localStorage.setItem('starredStructures', JSON.stringify(next));
+    setStarredStructures(next);
   };
 
   return (
@@ -101,7 +145,7 @@ export default function WordReviewPage() {
               setGameStarted(false);
             }}
           >
-            我的收藏
+            나의 저장
           </button>
           <button
             className={`px-6 py-3 font-medium transition-colors border-b-2 ${
@@ -137,7 +181,15 @@ export default function WordReviewPage() {
 
         {/* 内容区域 */}
         {activeTab === 'collection' && (
-          <CollectionTab starredWords={starredWords} isStarred={isStarred} toggleStar={toggleStar} />
+          <CollectionTab
+            subTab={collectionSubTab}
+            setSubTab={setCollectionSubTab}
+            starredWords={starredWords}
+            isStarred={isStarred}
+            toggleStar={toggleStar}
+            starredStructures={starredStructures}
+            toggleStructure={toggleStructure}
+          />
         )}
 
         {activeTab === 'theme' && (
@@ -163,39 +215,104 @@ export default function WordReviewPage() {
   );
 }
 
-// 我的收藏Tab
-function CollectionTab({ 
-  starredWords, 
-  isStarred, 
-  toggleStar 
-}: { 
+// 나의 저장 Tab：어휘 저장 + 문형 저장
+function CollectionTab({
+  subTab,
+  setSubTab,
+  starredWords,
+  isStarred,
+  toggleStar,
+  starredStructures,
+  toggleStructure,
+}: {
+  subTab: 'vocab' | 'pattern';
+  setSubTab: (t: 'vocab' | 'pattern') => void;
   starredWords: Word[];
   isStarred: (id: string) => boolean;
   toggleStar: (word: Word) => void;
+  starredStructures: string[];
+  toggleStructure: (pattern: string) => void;
 }) {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">我的收藏单词</h2>
-        <div className="text-sm text-gray-600">
-          共 {starredWords.length} 个单词
-        </div>
+      <div className="flex gap-2 mb-6 border-b border-gray-200">
+        <button
+          type="button"
+          onClick={() => setSubTab('vocab')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 -mb-px ${
+            subTab === 'vocab' ? 'text-[#7a4f2d] border-[#7a4f2d]' : 'text-gray-500 border-transparent hover:text-[#7a4f2d]'
+          }`}
+        >
+          어휘 저장 ({starredWords.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setSubTab('pattern')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 -mb-px ${
+            subTab === 'pattern' ? 'text-[#7a4f2d] border-[#7a4f2d]' : 'text-gray-500 border-transparent hover:text-[#7a4f2d]'
+          }`}
+        >
+          문형 저장 ({starredStructures.length})
+        </button>
       </div>
 
-      {starredWords.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">📚</div>
-          <div className="text-gray-500 text-lg mb-2">暂无收藏的单词</div>
-          <div className="text-gray-400 text-sm">
-            在 Song Page 或主题词汇中收藏单词后，会显示在这里
+      {subTab === 'vocab' && (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">모든 페이지에서 저장한 단어</h2>
+            <span className="text-sm text-gray-600">총 {starredWords.length}개</span>
           </div>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {starredWords.map((word) => (
-            <WordCard key={word.id} word={word} isStarred={true} toggleStar={() => toggleStar(word)} />
-          ))}
-        </div>
+          {starredWords.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-5xl mb-4">📚</div>
+              <div className="text-gray-500 text-base mb-2">저장한 단어가 없어요</div>
+              <div className="text-gray-400 text-sm">가사 페이지·유튜브·테마 어휘에서 하트를 누르면 여기에 모여요</div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {starredWords.map((word) => (
+                <WordCard key={word.id} word={word} isStarred={true} toggleStar={() => toggleStar(word)} />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {subTab === 'pattern' && (
+        <>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">모든 페이지에서 저장한 문형</h2>
+            <span className="text-sm text-gray-600">총 {starredStructures.length}개</span>
+          </div>
+          {starredStructures.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400 text-5xl mb-4">📝</div>
+              <div className="text-gray-500 text-base mb-2">저장한 문형이 없어요</div>
+              <div className="text-gray-400 text-sm">가사 페이지·유튜브에서 문형 하트를 누르면 여기에 모여요</div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {starredStructures.map((pattern, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  <span className="font-medium text-gray-800 break-all flex-1">{pattern}</span>
+                  <button
+                    type="button"
+                    onClick={() => toggleStructure(pattern)}
+                    className="flex-shrink-0 p-1.5 rounded transition-colors text-red-500 hover:bg-red-50"
+                    title="저장 해제"
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

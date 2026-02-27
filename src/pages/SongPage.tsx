@@ -28,7 +28,7 @@ function normalizeLanguage(lang: string | null | undefined): 'ko' | 'zh' | null 
 import { opalMockOk } from "../data/opalMock";
 import { SentenceView } from "../components/SentenceView";
 import { AnalysisTable } from "../components/AnalysisTable";
-import { type ReadingFeedback, type SingAlongButtonHandle } from "../components/SingAlongButton";
+import { SingAlongButton, type ReadingFeedback, type SingAlongButtonHandle } from "../components/SingAlongButton";
 import { SpeechRadarChart } from "../components/RadarChart";
 import { TTSButton } from "../components/TTSButton";
 import { AudioPlayer } from "../components/AudioPlayer";
@@ -404,9 +404,30 @@ function opalLineToSentenceData(line: any): SentenceData {
     }];
   })();
 
+  // 与分段学习一致：用 chunkSegments 为每个 token 填正确的拼音（按字/词对应）
+  const firstChunk = chunks[0] as { chunkSegments?: Array<{ chunkZh: string; pinyin: string; tones?: string }> } | undefined;
+  const segs = firstChunk?.chunkSegments || [];
+  if (segs.length > 0 && tokens.length > 0) {
+    tokens.forEach((token: any) => {
+      const seg = segs.find((s: any) => (s.chunkZh || '').includes(token.text || ''));
+      if (!seg || !token.text) return;
+      const chunkZh = seg.chunkZh || '';
+      const pinyinStr = (seg.pinyin || '').trim();
+      const zhChars = chunkZh.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c));
+      const pinyinParts = pinyinStr.split(/\s+/).filter((p: string) => p.length > 0);
+      if (zhChars.length !== pinyinParts.length) return;
+      const idx = chunkZh.indexOf(token.text);
+      if (idx === -1) return;
+      const before = chunkZh.slice(0, idx).split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c)).length;
+      const tokenCharCount = token.text.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c)).length;
+      const slice = pinyinParts.slice(before, before + tokenCharCount);
+      if (slice.length > 0) token.pinyin = slice.join(' ');
+    });
+  }
+
   return {
     sentence: zhSentence,
-    tokens: tokens, // 使用分词后的 tokens（如果为空或只包含整句，已在上方进行分词处理）
+    tokens: tokens,
     chunks: chunks.length > 0 ? chunks : [
       {
         text: zhSentence,
@@ -1577,9 +1598,17 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
     // 词汇展开状态：控制每个组的展开/收起
     const [vocabGroupExpanded, setVocabGroupExpanded] = useState({
       current: true,    // 当前重点默认展开
-      advanced: false,  // 提升词默认收起
-      basic: false     // 基础词默认收起
+      advanced: true,   // 提升词默认展开
+      basic: true      // 基础词默认展开
     });
+    const [isReadAlongMode, setIsReadAlongMode] = useState(false);
+    // 整段 따라 읽기 分析结果由外部渲染，避免被滚动区域裁切
+    const [readAlongFeedback, setReadAlongFeedback] = useState<ReadingFeedback | null>(null);
+    const [showReadAlongFeedback, setShowReadAlongFeedback] = useState(false);
+    const fullReadAlongRef = useRef<SingAlongButtonHandle | null>(null);
+    // 按句连续播放模式：点某句后从该句起一句句播，播完自动播下一句
+    const sentenceChainRef = useRef<boolean>(false);
+    const currentChainLineNoRef = useRef<number | null>(null);
 
     // 时间格式化函数：将秒数转换为 "分:秒" 格式
     const formatTime = (seconds: number): string => {
@@ -1607,26 +1636,27 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
       return 'bg-purple-100';
     };
 
-    // 获取句子的拼音（从 tokens 或 chunks 中提取）
+    // 获取句子的拼音：与分段学习显示一致（优先 chunkSegments，再 tokens）
     const getPinyinForSentence = (line: any): string => {
       const data = opalLineToSentenceData(line);
-      // 优先从 tokens 中提取拼音
+      const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
+      if (chunkSegments.length > 0) {
+        const parts = chunkSegments
+          .map((seg: any) => (seg.pinyin || '').trim())
+          .filter((p: string) => p.length > 0);
+        if (parts.length > 0) return parts.join(' ');
+      }
       if (data.tokens && data.tokens.length > 0) {
         const pinyinArray = data.tokens
           .map((token: any) => token.pinyin || '')
           .filter((p: string) => p.trim().length > 0);
-        if (pinyinArray.length > 0) {
-          return pinyinArray.join(' ');
-        }
+        if (pinyinArray.length > 0) return pinyinArray.join(' ');
       }
-      // 如果 tokens 没有拼音，从 chunks 中提取
       if (data.chunks && data.chunks.length > 0) {
         const pinyinArray = data.chunks
           .map((chunk: any) => chunk.pinyin || '')
           .filter((p: string) => p.trim().length > 0);
-        if (pinyinArray.length > 0) {
-          return pinyinArray.join(' ');
-        }
+        if (pinyinArray.length > 0) return pinyinArray.join(' ');
       }
       return '';
     };
@@ -1665,34 +1695,60 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
       audio.addEventListener('pause', handlePause);
 
       audio.addEventListener('timeupdate', () => {
-        // 更新当前播放时间（只有在不拖动时才更新，避免拖动时闪烁）
         if (!isDragging) {
           setCurrentTime(audio.currentTime);
         }
 
-        // 找到当前播放时间对应的句子
+        const t = audio.currentTime;
+
+        // 按句连续播放模式：当前句播完后自动播下一句
+        if (sentenceChainRef.current && currentChainLineNoRef.current != null) {
+          const curLine = linesAll.find((l: any) => Number(l?.lineNo ?? 0) === currentChainLineNoRef.current);
+          const endSec = curLine != null ? (curLine?.endSec ?? 0) : 0;
+          if (curLine != null && t >= endSec - 0.05) {
+            const idx = linesAll.findIndex((l: any) => Number(l?.lineNo ?? 0) === currentChainLineNoRef.current);
+            const nextLine = idx >= 0 && idx < linesAll.length - 1 ? linesAll[idx + 1] : null;
+            if (nextLine) {
+              const nextStart = nextLine?.startSec ?? 0;
+              const nextNo = Number(nextLine?.lineNo ?? 0);
+              audio.currentTime = nextStart;
+              setCurrentTime(nextStart);
+              currentChainLineNoRef.current = nextNo;
+              setCurrentPlayingLineNo(nextNo);
+              scrollToCurrentLine(nextNo);
+            } else {
+              audio.pause();
+              sentenceChainRef.current = false;
+              currentChainLineNoRef.current = null;
+              setCurrentPlayingLineNo(null);
+              setIsPlaying(false);
+            }
+          }
+          return;
+        }
+
+        // 全体播放模式：根据时间高亮当前句
         const currentLine = linesAll.find((line: any) => {
           const startSec = line?.startSec ?? 0;
           const endSec = line?.endSec ?? 0;
-          return audio.currentTime >= startSec && audio.currentTime < endSec;
+          return t >= startSec && t < endSec;
         });
-
         if (currentLine) {
           const lineNo = Number(currentLine?.lineNo ?? 0);
           if (lineNo !== currentPlayingLineNo) {
             setCurrentPlayingLineNo(lineNo);
-            // 自动滚动到当前句
             scrollToCurrentLine(lineNo);
           }
         } else {
-          // 如果找不到匹配的行，可能是播放到最后了
-          if (audio.currentTime >= audio.duration - 0.1) {
+          if (t >= audio.duration - 0.1) {
             setCurrentPlayingLineNo(null);
           }
         }
       });
 
       audio.addEventListener('ended', () => {
+        sentenceChainRef.current = false;
+        currentChainLineNoRef.current = null;
         setIsPlaying(false);
         setCurrentPlayingLineNo(null);
         setCurrentTime(0);
@@ -1764,17 +1820,22 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
       });
     };
 
-    // 播放/暂停控制
+    // 全体播放/暂停：点击时退出按句连续模式，从头播放整段
     const togglePlay = async () => {
       if (!audioRef.current) return;
       
       try {
         if (isPlaying) {
-          // 暂停当前音频
           audioManager.pauseCurrentAudio();
           setIsPlaying(false);
+          sentenceChainRef.current = false;
+          currentChainLineNoRef.current = null;
         } else {
-          // 使用 audioManager 播放（会自动停止其他音频）
+          sentenceChainRef.current = false;
+          currentChainLineNoRef.current = null;
+          audioRef.current.currentTime = 0;
+          setCurrentTime(0);
+          setCurrentPlayingLineNo(null);
           audioManager.playAudio(audioRef.current);
           setIsPlaying(true);
         }
@@ -1866,49 +1927,50 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
       }
     };
 
-    // 处理句子点击：跳转到该句子的起始位置并开始播放（只在点击空白处时触发）
+    // 处理句子点击：暂停全体播放，从该句起按句连续播放（与 문장별 학습 一致，后续句自动续播）
     const handleLineClick = (e: React.MouseEvent<HTMLElement>, lineNo: number) => {
-      // 检查点击的目标元素，如果是词卡相关元素或TTS按钮，则不触发音频跳转
       const target = e.target as HTMLElement;
       if (target && (
-        target.closest('[data-word]') || // 词卡元素
-        target.closest('[data-word-tooltip]') || // 词卡工具提示
-        target.hasAttribute('data-word') || // 直接点击词卡
-        target.closest('.word-tooltip') || // 词卡容器
-        target.closest('button') && target.closest('button')?.querySelector('svg') // TTS按钮
+        target.closest('[data-word]') ||
+        target.closest('[data-word-tooltip]') ||
+        target.hasAttribute('data-word') ||
+        target.closest('.word-tooltip') ||
+        target.closest('button') && target.closest('button')?.querySelector('svg')
       )) {
-        // 点击的是词卡或按钮，不触发音频跳转
         return;
       }
       
       const line = linesAll.find((l: any) => Number(l?.lineNo ?? 0) === lineNo);
-      if (!line) return;
+      if (!line || !audioRef.current) return;
       
-      // 默认情况下，如果有原唱，播放原唱
-      if (audioRef.current) {
-        const startSec = line?.startSec ?? 0;
-        if (startSec >= 0 && startSec < audioDuration) {
-          audioRef.current.currentTime = startSec;
-          setCurrentTime(startSec);
-          setCurrentPlayingLineNo(lineNo);
-          scrollToCurrentLine(lineNo);
-          
-          // 使用 audioManager 播放（会自动停止其他音频和TTS）
-          audioManager.playAudio(audioRef.current);
-          setIsPlaying(true);
-        }
-      }
+      const startSec = line?.startSec ?? 0;
+      const endSec = line?.endSec ?? 0;
+      if (endSec <= startSec) return;
+      
+      // 暂停全体播放
+      audioManager.pauseCurrentAudio();
+      if (audioRef.current) audioRef.current.pause();
+      setIsPlaying(false);
+      
+      // 进入按句连续播放：从本句播到 endSec，然后 timeupdate 会自动播下一句
+      sentenceChainRef.current = true;
+      currentChainLineNoRef.current = lineNo;
+      audioRef.current.currentTime = startSec;
+      setCurrentTime(startSec);
+      setCurrentPlayingLineNo(lineNo);
+      scrollToCurrentLine(lineNo);
+      audioManager.playAudio(audioRef.current);
+      setIsPlaying(true);
     };
 
-    // 汇总所有词汇（去重）
+    // 汇总词汇：仅包含分段播放中按难度标记过的词（有 hskLevel 的 token），与整段播放颜色一致
     const allVocabulary = useMemo(() => {
       const vocabMap = new Map<string, any>();
-      
       linesAll.forEach((line: any) => {
         const data = opalLineToSentenceData(line);
-        // 从 tokens 中提取词汇
         if (data.tokens && data.tokens.length > 0) {
           data.tokens.forEach((token: any) => {
+            if (token.hskLevel == null) return; // 只保留分段里标过难度的词
             const word = token.text?.trim();
             if (word && !vocabMap.has(word)) {
               vocabMap.set(word, {
@@ -1916,28 +1978,12 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                 pinyin: token.pinyin || "",
                 korean: token.glossKr || "",
                 example: token.example || "",
-                hskLevel: token.hskLevel || 1,
-              });
-            }
-          });
-        }
-        // 从 chunks 中提取词汇
-        if (data.chunks && data.chunks.length > 0) {
-          data.chunks.forEach((chunk: any) => {
-            const word = chunk.text?.trim();
-            if (word && !vocabMap.has(word)) {
-              vocabMap.set(word, {
-                word: word,
-                pinyin: chunk.pinyin || "",
-                korean: chunk.explanation || "",
-                example: "",
-                hskLevel: chunk.hskLevel || 1,
+                hskLevel: token.hskLevel,
               });
             }
           });
         }
       });
-      
       return Array.from(vocabMap.values());
     }, [linesAll]);
 
@@ -2041,6 +2087,7 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
             if (pattern && !patternMap.has(pattern)) {
               patternMap.set(pattern, {
                 pattern: pattern,
+                pinyin: chunk.pinyin || "",
                 korean: chunk.explanation || "",
                 chineseExample: "",
                 koreanExample: "",
@@ -2129,9 +2176,146 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
       const searchLower = patternSearch.toLowerCase();
       return allPatterns.filter(pattern => 
         pattern.pattern.toLowerCase().includes(searchLower) ||
-        pattern.korean.toLowerCase().includes(searchLower)
+        (pattern.korean && pattern.korean.toLowerCase().includes(searchLower))
       );
     }, [allPatterns, patternSearch]);
+
+    // 词汇汇总单项：序号 + 爱心收藏（存入 어휘 트레이닝 我的收藏）+ 中文旁 0.6 倍速朗读
+    function VocabSummaryItem({ vocab, index }: { vocab: { word: string; pinyin?: string; korean?: string }; index?: number }) {
+      const getCustomStarred = (): { word: string; pinyin: string; korean: string }[] => {
+        try {
+          const raw = localStorage.getItem('starredWordsCustom');
+          return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
+      };
+      const [starred, setStarred] = useState(() => getCustomStarred().some((x: { word: string }) => x.word === vocab.word));
+      const toggleStar = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const list = getCustomStarred();
+        const idx = list.findIndex((x: { word: string }) => x.word === vocab.word);
+        const next = idx >= 0 ? list.filter((_, i) => i !== idx) : [...list, { word: vocab.word, pinyin: vocab.pinyin || '', korean: vocab.korean || '' }];
+        localStorage.setItem('starredWordsCustom', JSON.stringify(next));
+        setStarred(idx < 0);
+      };
+      return (
+        <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {index != null && <span className="text-gray-500 font-medium flex-shrink-0">{index}.</span>}
+              <span className="font-medium text-gray-800">{vocab.word}</span>
+              <TTSButton text={vocab.word} lang="zh-CN" rate={0.6} className="w-5 h-5 flex-shrink-0" />
+            </div>
+            {vocab.pinyin && <div className="text-sm text-gray-600">{vocab.pinyin}</div>}
+            {vocab.korean && <div className="text-sm text-gray-500">{vocab.korean}</div>}
+          </div>
+          <button
+            type="button"
+            onClick={toggleStar}
+            className={`flex-shrink-0 p-1 rounded transition-colors ${starred ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+            title={starred ? songPageTranslations['ko'].unstarVocab : songPageTranslations['ko'].starVocab}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill={starred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </button>
+        </div>
+      );
+    }
+
+    // 句型汇总单项：序号 + 爱心收藏 + 拼音、韩文 + 0.6 倍速朗读
+    function PatternSummaryItem({ pattern, index }: { pattern: { pattern: string; pinyin?: string; korean?: string }; index?: number }) {
+      const getStarredStructures = (): string[] => {
+        try {
+          const raw = localStorage.getItem('starredStructures');
+          return raw ? JSON.parse(raw) : [];
+        } catch { return []; }
+      };
+      const [starred, setStarred] = useState(() => getStarredStructures().includes(pattern.pattern));
+      const toggleStar = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        const list = getStarredStructures();
+        const next = list.includes(pattern.pattern) ? list.filter(p => p !== pattern.pattern) : [...list, pattern.pattern];
+        localStorage.setItem('starredStructures', JSON.stringify(next));
+        setStarred(!list.includes(pattern.pattern));
+      };
+      return (
+        <div className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {index != null && <span className="text-gray-500 font-medium flex-shrink-0">{index}.</span>}
+              <span className="font-medium text-gray-800">{pattern.pattern}</span>
+              <TTSButton text={pattern.pattern} lang="zh-CN" rate={0.6} className="w-5 h-5 flex-shrink-0" />
+            </div>
+            {pattern.pinyin && <div className="text-sm text-gray-600">{pattern.pinyin}</div>}
+            {pattern.korean && <div className="text-sm text-gray-700">{pattern.korean}</div>}
+          </div>
+          <button
+            type="button"
+            onClick={toggleStar}
+            className={`flex-shrink-0 p-1 rounded transition-colors ${starred ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+            title={starred ? songPageTranslations['ko'].unstarPattern : songPageTranslations['ko'].starPattern}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill={starred ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+            </svg>
+          </button>
+        </div>
+      );
+    }
+
+    const escapeHtml = (s: string) => String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+    const handleDownloadVocabHTML = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const parts: string[] = [];
+      parts.push('<h1 style="font-size:1.25rem;margin-bottom:1rem;">' + escapeHtml(songPageTranslations['ko'].keyVocabSummary) + '</h1>');
+      if (vocabularyGroups.current.length > 0) {
+        parts.push('<h2 style="font-size:1rem;margin:0.75rem 0 0.25rem;color:#7c3aed;">' + escapeHtml(songPageTranslations['ko'].currentFocus) + '</h2><ol style="margin:0 0 1rem 1.25rem;">');
+        vocabularyGroups.current.forEach((v) => {
+          parts.push('<li style="margin:0.25rem 0;">' + escapeHtml(v.word) + (v.pinyin ? ' <span style="color:#4b5563;">' + escapeHtml(v.pinyin) + '</span>' : '') + (v.korean ? ' — ' + escapeHtml(v.korean) : '') + '</li>');
+        });
+        parts.push('</ol>');
+      }
+      if (vocabularyGroups.advanced.length > 0) {
+        parts.push('<h2 style="font-size:1rem;margin:0.75rem 0 0.25rem;color:#2563eb;">' + escapeHtml(songPageTranslations['ko'].advancedWords) + '</h2><ol style="margin:0 0 1rem 1.25rem;">');
+        vocabularyGroups.advanced.forEach((v) => {
+          parts.push('<li style="margin:0.25rem 0;">' + escapeHtml(v.word) + (v.pinyin ? ' <span style="color:#4b5563;">' + escapeHtml(v.pinyin) + '</span>' : '') + (v.korean ? ' — ' + escapeHtml(v.korean) : '') + '</li>');
+        });
+        parts.push('</ol>');
+      }
+      if (vocabularyGroups.basic.length > 0) {
+        parts.push('<h2 style="font-size:1rem;margin:0.75rem 0 0.25rem;color:#16a34a;">' + escapeHtml(songPageTranslations['ko'].basicWords) + '</h2><ol style="margin:0 0 1rem 1.25rem;">');
+        vocabularyGroups.basic.forEach((v) => {
+          parts.push('<li style="margin:0.25rem 0;">' + escapeHtml(v.word) + (v.pinyin ? ' <span style="color:#4b5563;">' + escapeHtml(v.pinyin) + '</span>' : '') + (v.korean ? ' — ' + escapeHtml(v.korean) : '') + '</li>');
+        });
+        parts.push('</ol>');
+      }
+      const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escapeHtml(songPageTranslations['ko'].keyVocabSummary) + '</title></head><body style="font-family:sans-serif;padding:1.5rem;max-width:720px;">' + parts.join('') + '</body></html>';
+      downloadHtml('vocab-summary.html', html);
+    };
+
+    const handleDownloadPatternHTML = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      const parts: string[] = [];
+      parts.push('<h1 style="font-size:1.25rem;margin-bottom:1rem;">' + escapeHtml(songPageTranslations['ko'].keyPatternSummary) + '</h1>');
+      Object.keys(patternsByHSK)
+        .sort((a, b) => Number(b) - Number(a))
+        .forEach((level) => {
+          const list = patternsByHSK[Number(level)].filter(p => filteredPatterns.includes(p));
+          if (list.length === 0) return;
+          parts.push('<h2 style="font-size:1rem;margin:0.75rem 0 0.25rem;color:#0d9488;">HSK ' + escapeHtml(String(level)) + '</h2><ol style="margin:0 0 1rem 1.25rem;">');
+          list.forEach((p) => {
+            parts.push('<li style="margin:0.25rem 0;">' + escapeHtml(p.pattern) + (p.pinyin ? ' <span style="color:#4b5563;">' + escapeHtml(p.pinyin) + '</span>' : '') + (p.korean ? ' — ' + escapeHtml(p.korean) : '') + '</li>');
+          });
+          parts.push('</ol>');
+        });
+      const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + escapeHtml(songPageTranslations['ko'].keyPatternSummary) + '</title></head><body style="font-family:sans-serif;padding:1.5rem;max-width:720px;">' + parts.join('') + '</body></html>';
+      downloadHtml('pattern-summary.html', html);
+    };
 
     if (linesAll.length === 0) {
       return null;
@@ -2182,6 +2366,21 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                   <h3 className="text-lg font-semibold">{songPageTranslations['ko'].wholeParagraphLyrics}</h3>
                   <p className="text-sm text-blue-100">{translate('totalSentences', { count: linesAll.length })}</p>
                 </div>
+                {!isReadAlongMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsReadAlongMode(true);
+                    }}
+                    className="px-3 py-1.5 text-sm bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors flex items-center gap-1.5 border border-white/40"
+                    title={songPageTranslations['ko'].readAlongFull}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                    <span className="text-xs">{songPageTranslations['ko'].readAlongFull}</span>
+                  </button>
+                )}
               </div>
               <div className="flex items-center gap-3">
                 {/* 原唱按钮 */}
@@ -2296,6 +2495,92 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                 scrollbarColor: '#cbd5e0 #f7fafc',
               }}
             >
+              {/* 전체 따라 읽기 模式面板（与 Youtube 整首跟唱一致）；sticky 使滚动歌词时面板固定不随动 */}
+              {isReadAlongMode && (
+                <div className="sticky top-0 z-10 bg-gray-50 rounded-lg p-4 space-y-3 mb-4 border border-gray-200 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">{songPageTranslations['ko'].readAlongFull}</span>
+                    <button
+                      onClick={() => setIsReadAlongMode(false)}
+                      className="px-3 py-1.5 text-sm bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg transition-colors"
+                    >
+                      {songPageTranslations['ko'].exitReadAlong}
+                    </button>
+                  </div>
+                  <div className="flex justify-center relative">
+                    <SingAlongButton
+                      ref={fullReadAlongRef}
+                      text={originalText || linesAll.map((line: any) => String(line?.zhSentence ?? opalLineToSentenceData(line).sentence ?? '')).filter(Boolean).join('\n')}
+                      userLevel={userLevel}
+                      uiLanguage="ko"
+                      renderFeedbackExternally
+                      onFeedbackReady={(feedback) => {
+                        setReadAlongFeedback(feedback);
+                        setShowReadAlongFeedback(true);
+                      }}
+                    />
+                    {/* 跟读分析结果：与 SentenceCard 反馈卡一致（576px、左右布局） */}
+                    {showReadAlongFeedback && readAlongFeedback && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-[576px] max-w-[min(576px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4">
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-l-2 border-t-2 border-purple-300 transform rotate-45" />
+                        <div className="flex items-center justify-between border-b pb-2">
+                          <h3 className="text-sm font-semibold text-gray-800">{songPageTranslations['ko'].aiReadAlongFeedback}</h3>
+                          <button
+                            onClick={() => setShowReadAlongFeedback(false)}
+                            className="text-gray-400 hover:text-gray-600"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                        <div className="flex gap-3">
+                          <div className="flex-shrink-0 w-[42%]">
+                            <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection1}</div>
+                            <div className="-mb-2">
+                              <SpeechRadarChart
+                                data={[
+                                  { subject: songPageTranslations['ko'].scoreContentAccuracy, score: readAlongFeedback.scores.contentAccuracy, fullMark: 100 },
+                                  { subject: songPageTranslations['ko'].scoreTonePerformance, score: readAlongFeedback.scores.tonePerformance, fullMark: 100 },
+                                  { subject: songPageTranslations['ko'].scoreSpeakingFluency, score: readAlongFeedback.scores.speakingFluency, fullMark: 100 },
+                                ]}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection2}</div>
+                              <div className="text-sm text-gray-800">{readAlongFeedback.overallComment}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection3}</div>
+                              <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">{readAlongFeedback.keyIssue}</div>
+                            </div>
+                            <div>
+                              <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection4}</div>
+                              <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">{readAlongFeedback.oneAction}</div>
+                            </div>
+                            <div className="flex items-center gap-2 pt-2 border-t">
+                              <button
+                                onClick={() => { fullReadAlongRef.current?.restartRecording(); setShowReadAlongFeedback(false); }}
+                                className="flex-1 px-3 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium transition-colors"
+                              >
+                                {songPageTranslations['ko'].readAgain}
+                              </button>
+                              <button
+                                onClick={() => fullReadAlongRef.current?.playRecording()}
+                                className="flex-1 px-3 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium transition-colors"
+                              >
+                                {songPageTranslations['ko'].playMyRecording}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               {linesAll.map((line: any, index: number) => {
                 const lineNo = Number(line?.lineNo ?? index + 1);
                 const isCurrentLine = currentPlayingLineNo === lineNo;
@@ -2333,76 +2618,16 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                         <div className="text-base text-gray-700 leading-relaxed">
                           {displayLine}
                         </div>
-                        {/* 中文+拼音：按语义分段对齐 */}
+                        {/* 中文+拼音：与分段播放一致，仅对有难度等级的 token 上色 */}
                         <div className="flex items-start gap-2 leading-relaxed">
                           <div className="flex-1 flex flex-wrap items-end gap-x-1 gap-y-2">
                           {(() => {
-                            // 优先使用 chunkSegments（语义分段）
-                            const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
-                            
-                            if (chunkSegments.length > 0) {
-                              // 按语义分段显示
-                              return chunkSegments.map((seg: any, segIdx: number) => {
-                                const chunkZh = seg.chunkZh || '';
-                                const segPinyin = seg.pinyin || '';
-                                
-                                // 将 chunkZh 按字符拆分（只保留中文字符）
-                                const zhChars = chunkZh.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c));
-                                // 将拼音按空格拆分
-                                const pinyinWords = segPinyin.split(/\s+/).filter((p: string) => p.trim());
-                                
-                                const segBg = getHskBgClass(data.chunks?.[0]?.hskLevel);
-                                // 如果字符数和拼音数一致，逐字对齐
-                                if (zhChars.length === pinyinWords.length && zhChars.length > 0) {
-                                  return (
-                                    <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-wrap items-end gap-x-1 rounded px-0.5 ${segBg}`}>
-                                      {zhChars.map((char: string, charIdx: number) => (
-                                        <div
-                                          key={`char-${lineNo}-${segIdx}-${charIdx}`}
-                                          className="inline-flex flex-col items-center justify-end"
-                                        >
-                                          {/* 拼音 */}
-                                          {pinyinWords[charIdx] && (
-                                            <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
-                                              {pinyinWords[charIdx]}
-                                            </span>
-                                          )}
-                                          {/* 中文 */}
-                                          <span className="text-xl font-medium text-gray-900">
-                                            {char}
-                                          </span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  );
-                                } else {
-                                  // 如果不一致，显示整个分段（拼音在上，汉字在下）
-                                  return (
-                                    <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-col items-center justify-end mx-1 rounded px-0.5 ${segBg}`}>
-                                      {/* 拼音 */}
-                                      {segPinyin && (
-                                        <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">
-                                          {segPinyin}
-                                        </span>
-                                      )}
-                                      {/* 中文 */}
-                                      <span className="text-xl font-medium text-gray-900">
-                                        {chunkZh}
-                                      </span>
-                                    </div>
-                                  );
-                                }
-                              });
-                            }
-                            
-                            // 如果没有 chunkSegments，回退到 tokens（按 token 难度背景色）
+                            // 优先按 token 渲染（与分段播放一致，只有带 hskLevel 的词才有颜色）
                             if (data.tokens && data.tokens.length > 0) {
                               return data.tokens.map((token: any, tokenIdx: number) => {
                                 const tokenText = token.text || '';
                                 const tokenPinyin = token.pinyin || '';
-                                
                                 if (!tokenText.trim()) return null;
-                                
                                 const tokenBg = getHskBgClass(token.hskLevel);
                                 return (
                                   <div
@@ -2421,15 +2646,39 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                                 );
                               });
                             }
-                            
-                            // 最后回退到原来的显示方式
+                            // 无 tokens 时使用 chunkSegments（语义分段，整段不按词上色）
+                            const chunkSegments = data.chunks?.[0]?.chunkSegments || [];
+                            if (chunkSegments.length > 0) {
+                              return chunkSegments.map((seg: any, segIdx: number) => {
+                                const chunkZh = seg.chunkZh || '';
+                                const segPinyin = seg.pinyin || '';
+                                const zhChars = chunkZh.split('').filter((c: string) => /[\u4e00-\u9fff]/.test(c));
+                                const pinyinWords = segPinyin.split(/\s+/).filter((p: string) => p.trim());
+                                const segBg = getHskBgClass(data.chunks?.[0]?.hskLevel);
+                                if (zhChars.length === pinyinWords.length && zhChars.length > 0) {
+                                  return (
+                                    <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-wrap items-end gap-x-1 rounded px-0.5 ${segBg}`}>
+                                      {zhChars.map((char: string, charIdx: number) => (
+                                        <div key={`char-${lineNo}-${segIdx}-${charIdx}`} className="inline-flex flex-col items-center justify-end">
+                                          {pinyinWords[charIdx] && <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">{pinyinWords[charIdx]}</span>}
+                                          <span className="text-xl font-medium text-gray-900">{char}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div key={`seg-${lineNo}-${segIdx}`} className={`inline-flex flex-col items-center justify-end mx-1 rounded px-0.5 ${segBg}`}>
+                                    {segPinyin && <span className="text-xs text-gray-500 leading-tight mb-0.5 whitespace-nowrap">{segPinyin}</span>}
+                                    <span className="text-xl font-medium text-gray-900">{chunkZh}</span>
+                                  </div>
+                                );
+                              });
+                            }
+                            // 最后回退
                             return (
                               <>
-                                {pinyin && (
-                                  <div className="text-sm text-gray-500 leading-relaxed w-full">
-                                    {pinyin}
-                                  </div>
-                                )}
+                                {pinyin && <div className="text-sm text-gray-500 leading-relaxed w-full">{pinyin}</div>}
                                 <div className="text-xl font-medium text-gray-900 leading-relaxed w-full">
                                   <SentenceView
                                     sentence={zhSentence}
@@ -2461,65 +2710,6 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
           )}
         </div>
 
-        {/* 整段学习分析表 */}
-        <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">{songPageTranslations['ko'].wholeAnalysisTable}</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-32">{songPageTranslations['ko'].difficultyLevel}</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 min-w-[300px]">{songPageTranslations['ko'].sentencePinyin}</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700 w-48">{songPageTranslations['ko'].sentenceTonePattern}</th>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700 w-32">{songPageTranslations['ko'].audio}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-gray-100">
-                  <td className="px-4 py-4">
-                    <div className="flex gap-1">
-                      {Array.from({ length: 6 }).map((_, i) => (
-                        <div
-                          key={i}
-                          className={`w-3 h-3 rounded-full ${
-                            i < overallHSKLevel ? 'bg-green-500' : 'bg-gray-200'
-                          }`}
-                        />
-                      ))}
-                      <span className="ml-2 text-sm text-gray-600">HSK {overallHSKLevel}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-4 text-base text-gray-700 min-w-[300px] text-center">
-                    {mergedPinyin || '—'}
-                  </td>
-                  <td className="px-4 py-4">
-                    {mergedTones ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-50 text-blue-700">
-                        {mergedTones}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-4 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      {(audioFile || audioUrl) && (
-                        <AudioPlayer
-                          audioFile={audioFile || null}
-                          audioUrl={audioUrl}
-                          startSec={0}
-                          endSec={audioDuration}
-                        />
-                      )}
-                      <TTSButton text={linesAll.map((l: any) => l?.zhSentence || "").join(" ")} />
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
         {/* 重点词汇汇总 */}
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
           <div 
@@ -2532,14 +2722,23 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                 <h3 className="text-lg font-semibold">{songPageTranslations['ko'].keyVocabSummary}</h3>
                 <span className="text-sm text-purple-100">({allVocabulary.length} 개)</span>
               </div>
-              <svg 
-                className={`w-6 h-6 transition-transform ${showVocabSummary ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadVocabHTML}
+                  className="px-2 py-1 rounded text-xs font-medium bg-white/20 hover:bg-white/30 transition-colors"
+                >
+                  {songPageTranslations['ko'].downloadAsHTML}
+                </button>
+                <svg 
+                  className={`w-6 h-6 transition-transform ${showVocabSummary ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
           {showVocabSummary && (
@@ -2571,15 +2770,11 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                         {vocabularyGroups.current
                           .filter(v => !vocabSearch.trim() || 
                             v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                            (v.pinyin && v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase())) ||
+                            (v.korean && v.korean.toLowerCase().includes(vocabSearch.toLowerCase()))
                           )
                           .map((vocab, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                              <div className="font-medium text-gray-800">{vocab.word}</div>
-                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
-                              <div className="text-sm text-gray-500">{vocab.korean}</div>
-                            </div>
+                            <VocabSummaryItem key={idx} vocab={vocab} index={idx + 1} />
                           ))}
                       </div>
                     )}
@@ -2603,15 +2798,11 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                         {vocabularyGroups.advanced
                           .filter(v => !vocabSearch.trim() || 
                             v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                            (v.pinyin && v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase())) ||
+                            (v.korean && v.korean.toLowerCase().includes(vocabSearch.toLowerCase()))
                           )
                           .map((vocab, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                              <div className="font-medium text-gray-800">{vocab.word}</div>
-                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
-                              <div className="text-sm text-gray-500">{vocab.korean}</div>
-                            </div>
+                            <VocabSummaryItem key={idx} vocab={vocab} index={idx + 1} />
                           ))}
                       </div>
                     )}
@@ -2635,15 +2826,11 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                         {vocabularyGroups.basic
                           .filter(v => !vocabSearch.trim() || 
                             v.word.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase()) ||
-                            v.korean.toLowerCase().includes(vocabSearch.toLowerCase())
+                            (v.pinyin && v.pinyin.toLowerCase().includes(vocabSearch.toLowerCase())) ||
+                            (v.korean && v.korean.toLowerCase().includes(vocabSearch.toLowerCase()))
                           )
                           .map((vocab, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                              <div className="font-medium text-gray-800">{vocab.word}</div>
-                              <div className="text-sm text-gray-600">{vocab.pinyin}</div>
-                              <div className="text-sm text-gray-500">{vocab.korean}</div>
-                            </div>
+                            <VocabSummaryItem key={idx} vocab={vocab} index={idx + 1} />
                           ))}
                       </div>
                     )}
@@ -2654,7 +2841,7 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
           )}
         </div>
 
-        {/* 重点句型汇总 */}
+        {/* 전체 가사 보기：每句一行，中文+拼音+韩文+朗读+下载 */}
         <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden">
           <div 
             className="bg-gradient-to-r from-green-500 to-teal-500 text-white p-4 cursor-pointer"
@@ -2662,18 +2849,49 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">📝</span>
-                <h3 className="text-lg font-semibold">{songPageTranslations['ko'].keyPatternSummary}</h3>
-                <span className="text-sm text-green-100">({allPatterns.length}개)</span>
+                <span className="text-2xl">📖</span>
+                <h3 className="text-lg font-semibold">{songPageTranslations['ko'].fullLyricsView}</h3>
+                <span className="text-sm text-green-100">({linesAll.length}문장)</span>
               </div>
-              <svg 
-                className={`w-6 h-6 transition-transform ${showPatternSummary ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const parts: string[] = [];
+                    parts.push('<h1 style="font-size:1.25rem;margin-bottom:1rem;">' + (songPageTranslations['ko'].fullLyricsView || '전체 가사 보기') + '</h1>');
+                    parts.push('<ol style="margin:0;padding-left:1.5rem;">');
+                    linesAll.forEach((line: any, idx: number) => {
+                      const zh = String(line?.zhSentence ?? opalLineToSentenceData(line).sentence ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                      const py = (getPinyinForSentence(line) || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                      const kr = String(line?.displayLine ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                      parts.push('<li style="margin:0.5rem 0;">' + zh + (py ? ' <span style="color:#4b5563;">' + py + '</span>' : '') + (kr ? ' — ' + kr : '') + '</li>');
+                    });
+                    parts.push('</ol>');
+                    const html = '<!DOCTYPE html><html><head><meta charset="utf-8"><title>' + (songPageTranslations['ko'].fullLyricsView || '전체 가사 보기') + '</title></head><body style="font-family:sans-serif;padding:1.5rem;max-width:720px;">' + parts.join('') + '</body></html>';
+                    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'full-lyrics.html';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="px-2 py-1 rounded text-xs font-medium bg-white/20 hover:bg-white/30 transition-colors"
+                >
+                  {songPageTranslations['ko'].downloadAsHTML}
+                </button>
+                <svg 
+                  className={`w-6 h-6 transition-transform ${showPatternSummary ? 'rotate-180' : ''}`}
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
             </div>
           </div>
           {showPatternSummary && (
@@ -2683,29 +2901,35 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                   type="text"
                   value={patternSearch}
                   onChange={(e) => setPatternSearch(e.target.value)}
-                  placeholder={songPageTranslations['ko'].searchPatternPlaceholder}
+                  placeholder="문장 검색..."
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                 />
               </div>
-              <div className="space-y-4">
-                {Object.keys(patternsByHSK)
-                  .sort((a, b) => Number(b) - Number(a))
-                  .map((level) => {
-                    const patternList = patternsByHSK[Number(level)].filter(p => 
-                      filteredPatterns.includes(p)
-                    );
-                    if (patternList.length === 0) return null;
-                    
+              <div className="space-y-3">
+                {linesAll
+                  .filter((line: any) => {
+                    if (!patternSearch.trim()) return true;
+                    const zh = String(line?.zhSentence ?? '').toLowerCase();
+                    const kr = String(line?.displayLine ?? '').toLowerCase();
+                    const py = getPinyinForSentence(line).toLowerCase();
+                    const q = patternSearch.trim().toLowerCase();
+                    return zh.includes(q) || kr.includes(q) || py.includes(q);
+                  })
+                  .map((line: any, index: number) => {
+                    const lineNo = Number(line?.lineNo ?? index + 1);
+                    const zhSentence = String(line?.zhSentence ?? opalLineToSentenceData(line).sentence ?? '');
+                    const pinyin = getPinyinForSentence(line);
+                    const displayLine = String(line?.displayLine ?? '');
                     return (
-                      <div key={level} className="border-l-4 border-green-400 pl-4">
-                        <h4 className="font-semibold text-gray-700 mb-2">HSK {level}</h4>
-                        <div className="space-y-3">
-                          {patternList.map((pattern, idx) => (
-                            <div key={idx} className="p-3 bg-gray-50 rounded-lg">
-                              <div className="font-medium text-gray-800 mb-1">{pattern.pattern}</div>
-                              <div className="text-sm text-gray-600">{pattern.korean}</div>
-                            </div>
-                          ))}
+                      <div key={`full-lyrics-line-${lineNo}`} className="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-gray-500 font-medium flex-shrink-0">{lineNo}.</span>
+                            <span className="font-medium text-gray-900">{zhSentence}</span>
+                            <TTSButton text={zhSentence} lang="zh-CN" className="w-5 h-5 flex-shrink-0 text-gray-600 hover:text-green-600" />
+                          </div>
+                          {pinyin && <div className="text-sm text-gray-600">{pinyin}</div>}
+                          {displayLine && <div className="text-sm text-gray-500">{displayLine}</div>}
                         </div>
                       </div>
                     );
@@ -2734,14 +2958,6 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
     const [practiceInput, setPracticeInput] = useState("");
     const [practiceFeedback, setPracticeFeedback] = useState<string | null>(null);
     const [isAnalyzingSentence, setIsAnalyzingSentence] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-    const [practiceRecordingDuration, setPracticeRecordingDuration] = useState(0);
-    const [hasPracticeRecording, setHasPracticeRecording] = useState(false);
-    const [practiceAudioBlob, setPracticeAudioBlob] = useState<Blob | null>(null);
-    const practiceStreamRef = useRef<MediaStream | null>(null);
-    const practiceDurationIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const practiceStartTimeRef = useRef<number>(0);
     const [readAlongFeedback, setReadAlongFeedback] = useState<ReadingFeedback | null>(null);
     const [showReadAlongFeedback, setShowReadAlongFeedback] = useState(false);
     const [readAlongIsPlaying, setReadAlongIsPlaying] = useState(false);
@@ -2750,29 +2966,12 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
     // ✅ 添加清理逻辑：组件卸载时重置状态
     useEffect(() => {
       return () => {
-        // 组件卸载时重置所有状态
         setIsGeneratingTipForThis(false);
         setShowTeachingTip(false);
         setShowPracticeDialog(false);
         setIsAnalyzingSentence(false);
-        setIsRecording(false);
-        setHasPracticeRecording(false);
-        // 清理录音相关的资源
-        if (practiceStreamRef.current) {
-          practiceStreamRef.current.getTracks().forEach(track => track.stop());
-        }
-        if (practiceDurationIntervalRef.current) {
-          clearInterval(practiceDurationIntervalRef.current);
-        }
-        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-          try {
-            mediaRecorder.stop();
-          } catch (e) {
-            console.warn('停止录音失败:', e);
-          }
-        }
       };
-    }, [mediaRecorder]);
+    }, []);
 
     // ✅ 添加超时保护：如果状态卡住超过30秒，自动重置
     useEffect(() => {
@@ -3282,7 +3481,7 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  生成中... {teachingTipProgress > 0 && `${teachingTipProgress}%`}
+                  {songPageTranslations['ko'].generatingTip} {teachingTipProgress > 0 && `${teachingTipProgress}%`}
                 </>
               ) : showTeachingTip ? (
                 <>
@@ -3300,7 +3499,7 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                       d="M5 15l7-7 7 7"
                     />
                   </svg>
-                  收起
+                  {songPageTranslations['ko'].collapse}
                 </>
               ) : (
                 <>
@@ -3396,130 +3595,6 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                     rows={3}
                     disabled={isAnalyzingSentence}
                   />
-                  
-                  {/* 发送语音按钮 */}
-                  <div className="mt-2">
-                    {!isRecording && !hasPracticeRecording && (
-                      <button
-                        onClick={async () => {
-                          try {
-                            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                            practiceStreamRef.current = stream;
-                            const recorder = new MediaRecorder(stream);
-                            const chunks: Blob[] = [];
-                            
-                            recorder.ondataavailable = (e) => {
-                              if (e.data.size > 0) {
-                                chunks.push(e.data);
-                              }
-                            };
-                            
-                            recorder.onstop = async () => {
-                              const blob = new Blob(chunks, { type: 'audio/wav' });
-                              setPracticeAudioBlob(blob);
-                              setHasPracticeRecording(true);
-                              if (practiceStreamRef.current) {
-                                practiceStreamRef.current.getTracks().forEach(track => track.stop());
-                              }
-                              if (practiceDurationIntervalRef.current) {
-                                clearInterval(practiceDurationIntervalRef.current);
-                                practiceDurationIntervalRef.current = null;
-                              }
-                            };
-                            
-                            recorder.start();
-                            setMediaRecorder(recorder);
-                            setIsRecording(true);
-                            setPracticeRecordingDuration(0);
-                            practiceStartTimeRef.current = Date.now();
-                            
-                            // 开始计时
-                            practiceDurationIntervalRef.current = setInterval(() => {
-                              setPracticeRecordingDuration(Math.floor((Date.now() - practiceStartTimeRef.current) / 1000));
-                            }, 100);
-                          } catch (error) {
-                            console.error('无法访问麦克风:', error);
-                            alert(songPageTranslations['ko'].alertMicFailed);
-                          }
-                        }}
-                        className="w-full px-3 py-2 rounded-lg text-sm font-medium transition-colors bg-green-500 text-white hover:bg-green-600 flex items-center justify-center gap-2"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                        </svg>
-                        发送语音
-                      </button>
-                    )}
-                    
-                    {isRecording && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
-                          <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
-                          <span className="text-sm text-red-700 font-medium">
-                            录音中 {Math.floor(practiceRecordingDuration / 60)}:{(practiceRecordingDuration % 60).toString().padStart(2, '0')}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                              mediaRecorder.stop();
-                            }
-                            setIsRecording(false);
-                            if (practiceStreamRef.current) {
-                              practiceStreamRef.current.getTracks().forEach(track => track.stop());
-                            }
-                            if (practiceDurationIntervalRef.current) {
-                              clearInterval(practiceDurationIntervalRef.current);
-                              practiceDurationIntervalRef.current = null;
-                            }
-                          }}
-                          className="px-3 py-2 rounded-lg text-sm font-medium bg-red-500 text-white hover:bg-red-600"
-                        >
-                          结束录音
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                              mediaRecorder.stop();
-                            }
-                            if (practiceStreamRef.current) {
-                              practiceStreamRef.current.getTracks().forEach(track => track.stop());
-                            }
-                            if (practiceDurationIntervalRef.current) {
-                              clearInterval(practiceDurationIntervalRef.current);
-                              practiceDurationIntervalRef.current = null;
-                            }
-                            // 取消录音，不进行分析
-                            setIsRecording(false);
-                            setPracticeRecordingDuration(0);
-                            setHasPracticeRecording(false);
-                            setPracticeAudioBlob(null);
-                          }}
-                          className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
-                        >
-                          取消
-                        </button>
-                      </div>
-                    )}
-                    
-                    {hasPracticeRecording && !isRecording && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 px-3 py-2 rounded-lg bg-green-50 border border-green-200 text-sm text-green-700">
-                          录音完成 ({Math.floor(practiceRecordingDuration / 60)}:{(practiceRecordingDuration % 60).toString().padStart(2, '0')})
-                        </div>
-                        <button
-                          onClick={() => {
-                            setHasPracticeRecording(false);
-                            setPracticeAudioBlob(null);
-                            setPracticeRecordingDuration(0);
-                          }}
-                          className="px-3 py-2 rounded-lg text-sm font-medium bg-gray-500 text-white hover:bg-gray-600"
-                        >
-                          重新录音
-                        </button>
-                      </div>
-                    )}
-                  </div>
                 </div>
                 
                 {/* 提交按钮 */}
@@ -3566,58 +3641,6 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                       )}
                     </button>
                   )}
-                  
-                  {hasPracticeRecording && practiceAudioBlob && (
-                    <button
-                      onClick={async () => {
-                        if (!userLevel) {
-                          alert(songPageTranslations['ko'].alertSelectLevel);
-                          return;
-                        }
-                        
-                        setIsAnalyzingSentence(true);
-                        setPracticeFeedback(null);
-                        
-                        try {
-                          // 先转写音频
-                          const { transcribeAudio } = await import('../services/chatgptApi');
-                          const asrText = await transcribeAudio(practiceAudioBlob);
-                          
-                          // 使用跟读反馈API（和打字点评使用相同的提示词逻辑）
-                          const { generateReadingFeedback } = await import('../services/chatgptApi');
-                          const feedbackData = await generateReadingFeedback(
-                            userLevel,
-                            zhSentence || data.sentence || "",
-                            asrText,
-                            practiceRecordingDuration
-                          );
-                          
-                          // 格式化反馈为文本（和打字点评格式一致）
-                          const feedbackText = `${feedbackData.overallComment}\n\n主要问题：${feedbackData.keyIssue}\n\n下一步练习：${feedbackData.oneAction}`;
-                          setPracticeFeedback(feedbackText);
-                        } catch (error) {
-                          console.error('评价失败:', error);
-                          alert(songPageTranslations['ko'].alertEvalFailed);
-                        } finally {
-                          setIsAnalyzingSentence(false);
-                        }
-                      }}
-                      disabled={isAnalyzingSentence}
-                      className="flex-1 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                    >
-                      {isAnalyzingSentence ? (
-                        <>
-                          <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          {songPageTranslations['ko'].analyzing}
-                        </>
-                      ) : (
-                        songPageTranslations['ko'].sendVoiceEvaluation
-                      )}
-                    </button>
-                  )}
                 </div>
                 
                 {/* 反馈显示 - 在按钮上方 */}
@@ -3651,78 +3674,84 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
             />
             {/* 跟读反馈面板 - 相对表格定位，出现在表格正上方 */}
             {showReadAlongFeedback && readAlongFeedback && (
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-96 max-w-[min(384px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4">
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-[576px] max-w-[min(576px,calc(100vw-2rem))] bg-white rounded-lg shadow-xl border-2 border-purple-300 p-4 z-50 space-y-4">
                 <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-r-2 border-b-2 border-purple-300 transform rotate-45" />
-              <div className="flex items-center justify-between border-b pb-2">
-                <h3 className="text-sm font-semibold text-gray-800">{songPageTranslations['ko'].aiReadAlongFeedback}</h3>
-                <button
-                  onClick={() => setShowReadAlongFeedback(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-gray-600 mb-2">一、本次发音表现</div>
-                <SpeechRadarChart
-                  data={[
-                    { subject: '内容准确度', score: readAlongFeedback.scores.contentAccuracy, fullMark: 100 },
-                    { subject: '声调表现', score: readAlongFeedback.scores.tonePerformance, fullMark: 100 },
-                    { subject: '说话流畅度', score: readAlongFeedback.scores.speakingFluency, fullMark: 100 },
-                  ]}
-                />
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-gray-600 mb-1">二、整体评价</div>
-                <div className="text-sm text-gray-800">{readAlongFeedback.overallComment}</div>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-gray-600 mb-1">三、本次主要问题</div>
-                <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">
-                  {readAlongFeedback.keyIssue}
+                <div className="flex items-center justify-between border-b pb-2">
+                  <h3 className="text-sm font-semibold text-gray-800">{songPageTranslations['ko'].aiReadAlongFeedback}</h3>
+                  <button
+                    onClick={() => setShowReadAlongFeedback(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="flex gap-3">
+                  <div className="flex-shrink-0 w-[42%]">
+                    <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection1}</div>
+                    <div className="-mb-2">
+                      <SpeechRadarChart
+                        data={[
+                          { subject: songPageTranslations['ko'].scoreContentAccuracy, score: readAlongFeedback.scores.contentAccuracy, fullMark: 100 },
+                          { subject: songPageTranslations['ko'].scoreTonePerformance, score: readAlongFeedback.scores.tonePerformance, fullMark: 100 },
+                          { subject: songPageTranslations['ko'].scoreSpeakingFluency, score: readAlongFeedback.scores.speakingFluency, fullMark: 100 },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection2}</div>
+                      <div className="text-sm text-gray-800">{readAlongFeedback.overallComment}</div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection3}</div>
+                      <div className="text-sm text-gray-800 bg-red-50 border-l-2 border-red-400 pl-2 py-1">
+                        {readAlongFeedback.keyIssue}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-600 mb-1">{songPageTranslations['ko'].feedbackSection4}</div>
+                      <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">
+                        {readAlongFeedback.oneAction}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2 border-t">
+                      <button
+                        onClick={() => {
+                          singAlongRef.current?.restartRecording();
+                          setShowReadAlongFeedback(false);
+                        }}
+                        className="flex-1 px-3 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium transition-colors"
+                      >
+                        {songPageTranslations['ko'].readAgain}
+                      </button>
+                      <button
+                        onClick={() => singAlongRef.current?.playRecording()}
+                        className="flex-1 px-3 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium transition-colors flex items-center justify-center gap-1"
+                      >
+                        {readAlongIsPlaying ? (
+                          <>
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                            </svg>
+                            {songPageTranslations['ko'].pausePlayback}
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            {songPageTranslations['ko'].playMyRecording}
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <div>
-                <div className="text-xs font-semibold text-gray-600 mb-1">四、下一步练习</div>
-                <div className="text-sm text-gray-800 bg-blue-50 border-l-2 border-blue-400 pl-2 py-1">
-                  {readAlongFeedback.oneAction}
-                </div>
-              </div>
-              <div className="flex items-center gap-2 pt-2 border-t">
-                <button
-                  onClick={() => {
-                    singAlongRef.current?.restartRecording();
-                    setShowReadAlongFeedback(false);
-                  }}
-                  className="flex-1 px-3 py-2 rounded-lg bg-purple-100 hover:bg-purple-200 text-purple-700 text-sm font-medium transition-colors"
-                >
-                  再读一次
-                </button>
-                <button
-                  onClick={() => singAlongRef.current?.playRecording()}
-                  className="flex-1 px-3 py-2 rounded-lg bg-green-100 hover:bg-green-200 text-green-700 text-sm font-medium transition-colors flex items-center justify-center gap-1"
-                >
-                  {readAlongIsPlaying ? (
-                    <>
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                      </svg>
-                      暂停
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      播放我的录音
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
           )}
           </div>
         </div>
@@ -4041,6 +4070,19 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                                 }}
                               />
                             </div>
+                          </div>
+                        )}
+                        {audioHint && !isLoading && (
+                          <div style={{
+                            marginTop: 12,
+                            padding: '10px 16px',
+                            borderRadius: 8,
+                            fontSize: 14,
+                            background: audioHint.startsWith('✅') ? '#f0fdf4' : '#f9fafb',
+                            color: audioHint.startsWith('✅') ? '#166534' : '#374151',
+                            border: `1px solid ${audioHint.startsWith('✅') ? '#bbf7d0' : '#e5e7eb'}`,
+                          }}>
+                            {audioHint}
                           </div>
                         )}
                       </div>

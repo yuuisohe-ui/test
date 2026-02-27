@@ -78,10 +78,10 @@ const vocabModules: Record<string, {
  */
 export function getVocabForSentence(videoId: string, sentenceIndex: number): WordAnalysis[] {
   const vocabModule = vocabModules[videoId];
-  if (vocabModule) {
+  if (vocabModule && typeof vocabModule.getVocabForSentence === 'function') {
     return vocabModule.getVocabForSentence(sentenceIndex);
   }
-  // 如果没有找到对应的模块，返回空数组
+  // 如果没有找到对应的模块或模块未导出该函数，返回空数组
   return [];
 }
 
@@ -92,10 +92,10 @@ export function getVocabForSentence(videoId: string, sentenceIndex: number): Wor
  */
 export function getAllVocab(videoId: string): WordAnalysis[] {
   const vocabModule = vocabModules[videoId];
-  if (vocabModule) {
+  if (vocabModule && typeof vocabModule.getAllVocab === 'function') {
     return vocabModule.getAllVocab();
   }
-  // 如果没有找到对应的模块，返回空数组
+  // 如果没有找到对应的模块或模块未导出该函数，返回空数组
   return [];
 }
 

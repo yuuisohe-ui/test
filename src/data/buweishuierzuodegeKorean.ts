@@ -38,3 +38,8 @@ export const buweishuierzuodegeKoreanTranslations: Record<number, string> = {
   34: "그는 대체 누구일까요"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return buweishuierzuodegeKoreanTranslations[sentenceIndex] || '';
+}
+

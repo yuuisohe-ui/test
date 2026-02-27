@@ -672,28 +672,39 @@ export default function DynastyDetailPage({ dynasty, onBack, onNavigateToDynasty
   // 收藏词汇功能
   const [favoriteWords, setFavoriteWords] = useState<Set<string>>(new Set())
   
-  // 加载收藏的词汇
+  // 加载收藏的词汇（与 어휘드레이너 共用：从 starredWordsCustom 同步，保证两边一致）
   useEffect(() => {
-    const saved = localStorage.getItem('favoriteWords')
-    if (saved) {
-      try {
-        setFavoriteWords(new Set(JSON.parse(saved)))
-      } catch (e) {
-        console.error('Failed to load favorite words:', e)
-      }
+    try {
+      const saved = localStorage.getItem('starredWordsCustom')
+      const list: { word: string; pinyin?: string; korean?: string }[] = saved ? JSON.parse(saved) : []
+      setFavoriteWords(new Set(list.map((x) => x.word)))
+    } catch (e) {
+      console.error('Failed to load favorite words:', e)
     }
   }, [])
-  
-  // 切换收藏状态
+
+  // 切换收藏状态，并同步到 어휘드레이너（starredWordsCustom）
   const toggleFavorite = (word: string) => {
-    const newFavorites = new Set(favoriteWords)
-    if (newFavorites.has(word)) {
-      newFavorites.delete(word)
-    } else {
-      newFavorites.add(word)
-    }
-    setFavoriteWords(newFavorites)
-    localStorage.setItem('favoriteWords', JSON.stringify(Array.from(newFavorites)))
+    const info = WORD_DICT[word]
+    const pinyin = info?.pinyin ?? ''
+    const korean = info?.desc ?? info?.typeKr ?? ''
+
+    const customList: { word: string; pinyin: string; korean: string }[] = (() => {
+      try {
+        const saved = localStorage.getItem('starredWordsCustom')
+        return saved ? JSON.parse(saved) : []
+      } catch {
+        return []
+      }
+    })()
+
+    const exists = customList.some((x) => x.word === word)
+    const nextCustom = exists
+      ? customList.filter((x) => x.word !== word)
+      : [...customList, { word, pinyin, korean }]
+
+    localStorage.setItem('starredWordsCustom', JSON.stringify(nextCustom))
+    setFavoriteWords(new Set(nextCustom.map((x) => x.word)))
   }
   
   // Refs

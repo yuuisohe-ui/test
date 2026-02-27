@@ -380,3 +380,8 @@ export const buweishuierzuodegeSentenceStructures: Record<number, SentenceStruct
   }
 };
 
+// 获取指定句子的句式结构
+export function getSentenceStructure(sentenceIndex: number): SentenceStructure | undefined {
+  return buweishuierzuodegeSentenceStructures[sentenceIndex] ?? undefined;
+}
+

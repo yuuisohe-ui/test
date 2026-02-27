@@ -289,6 +289,7 @@ export default function TimelinePage({ onNavigateToDetail, onExpandedChange }: T
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [aiPanelMessages, setAiPanelMessages] = useState<Message[]>([]); // 右侧AI面板消息
   const [aiPanelInput, setAiPanelInput] = useState(""); // 右侧AI面板输入
+  const [showAiPanelForDynastyId, setShowAiPanelForDynastyId] = useState<string | null>(null); // 仅点击金色字后才显示 AI 面板
   const [speechBubbleId, setSpeechBubbleId] = useState<string | null>(null); // 对话气泡显示的朝代ID
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [visibleCards, setVisibleCards] = useState<Set<number>>(new Set());
@@ -376,10 +377,11 @@ export default function TimelinePage({ onNavigateToDetail, onExpandedChange }: T
     });
     setPlayingVideoId(null);
 
-    // 展开新卡片时清空AI面板消息
+    // 展开新卡片时清空AI面板消息并隐藏面板（只有点击金色字后才再显示）
     if (!isCurrentlyExpanded) {
       setAiPanelMessages([]);
       setAiPanelInput("");
+      setShowAiPanelForDynastyId(null);
     }
 
     // 显示对话气泡（在卡片对面）
@@ -419,8 +421,9 @@ export default function TimelinePage({ onNavigateToDetail, onExpandedChange }: T
     return result;
   };
 
-  // 处理成语点击 - 在右侧AI面板显示
+  // 处理成语点击 - 在右侧AI面板显示（点击金色字后才显示面板）
   const handleIdiomClick = (idiom: string, dynastyId: string) => {
+    setShowAiPanelForDynastyId(dynastyId);
     // 如果是"一去不复返"，显示固定消息并朗读
     if (idiom === "一去不复返") {
       // 朗读"一去啊不归还"，0.7倍速
@@ -915,7 +918,7 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                   inset: 0,
                   backgroundColor: "#c9a84c",
                   transform: buttonHovered ? "translateX(0)" : "translateX(-100%)",
-                  transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+                  transition: "transform 1s cubic-bezier(0.16, 1, 0.3, 1)",
                 }}
               ></span>
             </button>
@@ -1359,79 +1362,42 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                 </div>
                 <div
                   ref={messagesEndRef}
-                  style={{ flex: 1, overflowY: "auto", marginBottom: "16px", display: "flex", flexDirection: "column", gap: "12px" }}
+                  style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: "12px" }}
                 >
-                  {aiPanelMessages.length === 0 ? (
-                    <div style={{ fontSize: "12px", color: "#6b5520", textAlign: "center", padding: "20px", fontFamily: "'Noto Serif KR', serif" }}>
-                      금색 단어를 클릭해보세요 ✦
+                  {aiPanelMessages.map((message) => (
+                    <div key={message.id} style={{
+                      padding: "14px 16px",
+                      background: message.type === "ai" ? "rgba(201,168,76,0.06)" : "rgba(201,168,76,0.1)",
+                      border: "1px solid rgba(201,168,76,0.1)",
+                      borderRadius: "0 6px 6px 6px",
+                      fontSize: "12px", color: "#c0b8a0", lineHeight: 2,
+                      whiteSpace: "pre-line", fontFamily: "'Noto Serif KR', serif",
+                    }}>
+                      {message.content}
                     </div>
-                  ) : (
-                    <>
-                      {aiPanelMessages.map((message) => (
-                        <div key={message.id} style={{
-                          padding: "14px 16px",
-                          background: message.type === "ai" ? "rgba(201,168,76,0.06)" : "rgba(201,168,76,0.1)",
-                          border: "1px solid rgba(201,168,76,0.1)",
-                          borderRadius: "0 6px 6px 6px",
-                          fontSize: "12px", color: "#c0b8a0", lineHeight: 2,
-                          whiteSpace: "pre-line", fontFamily: "'Noto Serif KR', serif",
-                        }}>
-                          {message.content}
-                        </div>
-                      ))}
-                      {aiPanelMessages.length > 0 &&
-                        aiPanelMessages[0].content.includes("一去不复返") &&
-                        aiPanelMessages.length === 1 && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
-                            {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map((question) => (
-                              <button
-                                key={question}
-                                onClick={() => handleQuickQuestion(question)}
-                                style={{
-                                  border: "1px solid rgba(201,168,76,0.2)", background: "transparent",
-                                  color: "#6b5520", fontSize: "10px", padding: "8px 12px",
-                                  cursor: "pointer", borderRadius: 0, textAlign: "left",
-                                  fontFamily: "'Noto Serif KR', serif", transition: "all 0.3s",
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a84c"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.color = "#6b5520"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; }}
-                              >
-                                {question}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                    </>
-                  )}
-                </div>
-                <div style={{ display: "flex", gap: "8px" }}>
-                  <input
-                    type="text"
-                    value={aiPanelInput}
-                    onChange={(e) => setAiPanelInput(e.target.value)}
-                    onKeyPress={(e) => { if (e.key === "Enter") handleSendAIPanelMessage(); }}
-                    placeholder="더 물어보세요..."
-                    style={{
-                      flex: 1, padding: "10px 12px",
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(201,168,76,0.15)",
-                      borderRadius: 0, color: "#f0ead8", fontSize: "12px",
-                      fontFamily: "'Noto Serif KR', serif",
-                    }}
-                  />
-                  <button
-                    onClick={handleSendAIPanelMessage}
-                    style={{
-                      padding: "10px 16px", background: "transparent",
-                      border: "1px solid rgba(201,168,76,0.15)",
-                      color: "#c9a84c", cursor: "pointer", fontSize: "12px",
-                      borderRadius: 0, fontFamily: "'Noto Serif KR', serif",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(201,168,76,0.15)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    전송
-                  </button>
+                  ))}
+                  {aiPanelMessages.length > 0 &&
+                    aiPanelMessages[0].content.includes("一去不复返") &&
+                    aiPanelMessages.length === 1 && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "12px" }}>
+                        {["荆轲가 누구야?", "비슷한 성어 알려줘", "이 노래 더 배우고 싶어"].map((question) => (
+                          <button
+                            key={question}
+                            onClick={() => handleQuickQuestion(question)}
+                            style={{
+                              border: "1px solid rgba(201,168,76,0.2)", background: "transparent",
+                              color: "#6b5520", fontSize: "10px", padding: "8px 12px",
+                              cursor: "pointer", borderRadius: 0, textAlign: "left",
+                              fontFamily: "'Noto Serif KR', serif", transition: "all 0.3s",
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#c9a84c"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.5)"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#6b5520"; e.currentTarget.style.borderColor = "rgba(201,168,76,0.2)"; }}
+                          >
+                            {question}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                 </div>
               </div>
             );
@@ -1511,7 +1477,7 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                     {isLeft ? expandedContent : (
                       <div style={{ paddingTop: "16px" }}>
                         {speechBubble}
-                        {aiPanel}
+                        {showAiPanelForDynastyId === dynasty.id && aiPanel}
                       </div>
                     )}
                   </div>
@@ -1522,7 +1488,7 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
                     {!isLeft ? expandedContent : (
                       <div style={{ paddingTop: "16px" }}>
                         {speechBubble}
-                        {aiPanel}
+                        {showAiPanelForDynastyId === dynasty.id && aiPanel}
                       </div>
                     )}
                   </div>

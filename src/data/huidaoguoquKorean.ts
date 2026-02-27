@@ -52,3 +52,8 @@ export const huidaoguoquKoreanTranslations: Record<number, string> = {
   48: "과거로 돌아가고 싶어"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return huidaoguoquKoreanTranslations[sentenceIndex] || '';
+}
+

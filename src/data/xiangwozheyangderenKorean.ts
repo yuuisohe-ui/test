@@ -30,3 +30,8 @@ export const xiangwozheyangderenKoreanTranslations: Record<number, string> = {
   27: "누군가 마음 아파해 줄까요"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return xiangwozheyangderenKoreanTranslations[sentenceIndex] || '';
+}
+

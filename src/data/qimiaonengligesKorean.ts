@@ -38,3 +38,8 @@ export const qimiaonengligesKoreanTranslations: Record<number, string> = {
   34: "화려한 과시를 원하며 당신을 원한다"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return qimiaonengligesKoreanTranslations[sentenceIndex] || '';
+}
+

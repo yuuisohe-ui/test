@@ -369,3 +369,8 @@ export const xiaochouSentenceStructures: Record<number, SentenceStructure> = {
   }
 };
 
+// 获取指定句子的句式结构
+export function getSentenceStructure(sentenceIndex: number): SentenceStructure | undefined {
+  return xiaochouSentenceStructures[sentenceIndex] ?? undefined;
+}
+

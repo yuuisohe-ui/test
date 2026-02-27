@@ -97,7 +97,7 @@ export default function HomePage({ onNavigate }: HomePageProps) {
           <div style={{ position: "absolute", right: 0, top: "50%", transform: "translateY(-50%)", fontFamily: "'Noto Serif KR', serif", fontSize: "clamp(110px,13vw,190px)", color: COLORS.brownPale, opacity: 0.28, lineHeight: 1, userSelect: "none", pointerEvents: "none" }}>樂</div>
 
           <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: 10, letterSpacing: "3px", textTransform: "uppercase", color: COLORS.brownLight, opacity: 0.75, marginBottom: 14 }}>중국 대중음악 기반 학습 플랫폼</div>
+            <div style={{ fontSize: 10, letterSpacing: "3px", textTransform: "uppercase", color: COLORS.brownLight, opacity: 0.75, marginBottom: 14 }}>노래 기반 중국어 학습 플랫폼</div>
             <h1 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: "clamp(38px,5.5vw,68px)", fontWeight: 700, lineHeight: 1.06, color: COLORS.ink, marginBottom: 10 }}>
               노래<br /><span style={{ color: COLORS.brown }}>중국어</span>
             </h1>
@@ -149,8 +149,8 @@ export default function HomePage({ onNavigate }: HomePageProps) {
 
       {/* FOOTER */}
       <div style={{ borderTop: `1px solid ${COLORS.brownPale}`, padding: "18px 6vw", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, color: COLORS.ink2 }}>노래 중국어</span>
-        <span style={{ fontSize: 11, color: COLORS.ink3 }}>© 2025 노래 중국어 · 중국 대중음악 기반 통합 중국어 학습 플랫폼</span>
+        <span style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 14, color: COLORS.ink2 }}>개발자 문의：yuuisohe@hufs.ac.kr</span>
+        <span style={{ fontSize: 11, color: COLORS.ink3 }}>© 2025 노래 기반 통합 중국어 학습 플랫폼</span>
       </div>
 
       {/* 학습 수준 선택 안내 모달 - 카드 클릭 시 미선택이면 표시 */}

@@ -384,3 +384,20 @@ export const tongzhuodeniVocabAnalysis: Record<number, WordAnalysis[]> = {
   33: []
 };
 
+// 获取指定句子的词汇分析
+export function getVocabForSentence(sentenceIndex: number): WordAnalysis[] {
+  return tongzhuodeniVocabAnalysis[sentenceIndex] || [];
+}
+
+// 获取所有词汇（去重）
+export function getAllVocab(): WordAnalysis[] {
+  const allWords = Object.values(tongzhuodeniVocabAnalysis).flat();
+  const uniqueWords = new Map<string, WordAnalysis>();
+  allWords.forEach(word => {
+    if (!uniqueWords.has(word.word)) {
+      uniqueWords.set(word.word, word);
+    }
+  });
+  return Array.from(uniqueWords.values());
+}
+

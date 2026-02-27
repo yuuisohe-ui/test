@@ -292,3 +292,8 @@ export const xiangwozheyangderenSentenceStructures: Record<number, SentenceStruc
   }
 };
 
+// 获取指定句子的句式结构
+export function getSentenceStructure(sentenceIndex: number): SentenceStructure | undefined {
+  return xiangwozheyangderenSentenceStructures[sentenceIndex] ?? undefined;
+}
+

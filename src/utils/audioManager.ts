@@ -10,6 +10,14 @@ class AudioManager {
 
   // 播放音频（会停止之前的音频）
   playAudio(audio: HTMLAudioElement) {
+    // 若是同一个音频元素（例如同一首歌内点击另一句），只恢复播放，不重置 currentTime
+    if (this.currentAudio === audio) {
+      if (this.onAudioChange) {
+        this.onAudioChange(audio);
+      }
+      audio.play();
+      return;
+    }
     // 停止当前音频
     this.stopCurrentAudio();
     // 停止当前TTS

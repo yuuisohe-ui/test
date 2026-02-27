@@ -37,3 +37,8 @@ export const xiaochouKoreanTranslations: Record<number, string> = {
   33: "깨어 있는 사람이 가장 황당하다네"
 };
 
+// 获取指定句子的韩语翻译
+export function getKoreanTranslation(sentenceIndex: number): string {
+  return xiaochouKoreanTranslations[sentenceIndex] || '';
+}
+

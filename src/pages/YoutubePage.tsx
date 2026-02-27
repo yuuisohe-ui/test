@@ -30,6 +30,7 @@ import { buweishuierzuodegeSRT } from "../data/buweishuierzuodegeSRT";
 import { geiwoyishougedeshijianSRT } from "../data/geiwoyishougedeshijianSRT";
 import { qimiaonengligesRT } from "../data/qimiaonengligesRT";
 import { niyaodequannazousRT } from "../data/niyaodequannazousRT";
+import { youtubePageTranslations, getLevelLabelKo, getStyleLabelKo } from "../i18n/youtubePageTranslations";
 
 // 歌曲数据类型
 interface Song {
@@ -81,12 +82,12 @@ const handleYouTubeThumbnailError = (e: React.SyntheticEvent<HTMLImageElement, E
 };
 
 export default function YoutubePage() {
-  // 筛选状态（只保存在本地状态）
-  const [level, setLevel] = useState<string>("");
+  // 筛选状态（只保存在本地状态）；等级以首页「나의 수준」为准（localStorage nz_level）
   const [style, setStyle] = useState<string>("");
   const [age, setAge] = useState<string>("");
-  const [studyTime, setStudyTime] = useState<string>("");
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [showRecommendationSection, setShowRecommendationSection] = useState(false);
+  const [recommendationRefreshKey, setRecommendationRefreshKey] = useState(0);
   
   // 每个等级的展开状态
   const [expandedLevels, setExpandedLevels] = useState<Record<string, boolean>>({
@@ -96,8 +97,7 @@ export default function YoutubePage() {
     expert: false,
   });
 
-  // 检查是否所有筛选都已选择
-  const isAllFiltersSelected = level && style && age && studyTime;
+  // 「바로 시작」点击后显示「나에게 맞는 노래 추천」，无需先选筛选
 
   // 切换等级展开状态
   const toggleLevel = (level: string) => {
@@ -123,23 +123,23 @@ export default function YoutubePage() {
     songs.push({
       id: "1",
       name: "两只老虎",
-      nameKr: "두 마리 호랑이-两只老虎",
+      nameKr: "두 마리 호랑이",
       videoId: "0P0aApWogd0",
       level: "初级",
-      style: "童谣",
-      age: "六岁以上",
+      style: "欢快",
+      age: "6세 이상",
       difficulty: 1,
-      tags: ["童谣"],
+      tags: ["欢快"],
       srtContent: liangzhilaohuSRT,
     });
     songs.push({
       id: "2",
       name: "月亮代表我的心",
-      nameKr: "달은 내 마음을 대신해-月亮代表我的心",
+      nameKr: "달은 내 마음을 대신해",
       videoId: "FhIXtvJbr3o",
       level: "初级",
       style: "抒情",
-      age: "13岁以上",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: yueliangSRT,
@@ -147,11 +147,11 @@ export default function YoutubePage() {
     songs.push({
       id: "3",
       name: "朋友",
-      nameKr: "친구-朋友",
+      nameKr: "친구",
       videoId: "6lbPgfKK7m4",
       level: "初级",
-      style: "抒情",
-      age: "13岁以上",
+      style: "欢快",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: pengyouSRT,
@@ -159,11 +159,11 @@ export default function YoutubePage() {
     songs.push({
       id: "4",
       name: "一闪一闪亮晶晶",
-      nameKr: "반짝반짝 작은 별-一闪一闪亮晶晶",
+      nameKr: "반짝반짝 작은 별",
       videoId: "_WTao2TJ2C8",
       level: "初级",
-      style: "童谣",
-      age: "六岁以上",
+      style: "欢快",
+      age: "6세 이상",
       difficulty: 1,
       tags: ["童谣"],
       srtContent: yishanyishanSRT,
@@ -171,11 +171,11 @@ export default function YoutubePage() {
     songs.push({
       id: "5",
       name: "后来",
-      nameKr: "나중에-后来",
+      nameKr: "나중에",
       videoId: "t0igPuDjYUE",
       level: "初级",
-      style: "抒情",
-      age: "15岁以上",
+      style: "悲伤",
+      age: "15세 이상",
       difficulty: 3,
       tags: ["抒情"],
       srtContent: houlaiSRT,
@@ -183,11 +183,11 @@ export default function YoutubePage() {
     songs.push({
       id: "6",
       name: "宁夏",
-      nameKr: "닝샤-宁夏",
+      nameKr: "닝샤",
       videoId: "MmtVl9CssYE",
       level: "初级",
       style: "抒情",
-      age: "12岁以上",
+      age: "12세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: ningxiaSRT,
@@ -198,8 +198,8 @@ export default function YoutubePage() {
       nameKr: "새로운 못 다한 사랑-新不了情",
       videoId: "3QfpuxVpTFo",
       level: "初级",
-      style: "抒情",
-      age: "13岁以上",
+      style: "悲伤",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: xinbuliaoSRT,
@@ -211,7 +211,7 @@ export default function YoutubePage() {
       videoId: "w2_FycTdzVI",
       level: "初级",
       style: "抒情",
-      age: "13岁以上",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: qiasiniSRT,
@@ -222,8 +222,8 @@ export default function YoutubePage() {
       nameKr: "해상의 꽃-海上花",
       videoId: "dkak-3Ej6iE",
       level: "初级",
-      style: "抒情",
-      age: "13岁以上",
+      style: "悲伤",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: haishanghuaSRT,
@@ -234,8 +234,8 @@ export default function YoutubePage() {
       nameKr: "옆자리의 너-同桌的你",
       videoId: "xqYMWyOpSFI",
       level: "初级",
-      style: "抒情",
-      age: "13岁以上",
+      style: "欢快",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: tongzhuodeniSRT,
@@ -248,7 +248,7 @@ export default function YoutubePage() {
       nameKr: "첨밀밀-甜蜜蜜",
       videoId: "OMVlGjmppeY",
       level: "中级",
-      style: "抒情",
+      style: "悲伤",
       age: "19-30",
       difficulty: 3,
       tags: ["抒情"],
@@ -260,8 +260,8 @@ export default function YoutubePage() {
       nameKr: "할머니의 펑후만-外婆的澎湖湾",
       videoId: "PjrsETvz7QQ",
       level: "中级",
-      style: "抒情",
-      age: "6岁以上",
+      style: "欢快",
+      age: "6세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: waipoSRT,
@@ -273,7 +273,7 @@ export default function YoutubePage() {
       videoId: "mGeiABBB5f8",
       level: "中级",
       style: "悲伤",
-      age: "13岁以上",
+      age: "13세 이상",
       difficulty: 3,
       tags: ["悲伤"],
       srtContent: paomoSRT,
@@ -285,7 +285,7 @@ export default function YoutubePage() {
       videoId: "fa0naBdR_q0",
       level: "中级",
       style: "悲伤",
-      age: "13岁以上",
+      age: "13세 이상",
       difficulty: 4,
       tags: ["悲伤"],
       srtContent: yuaiSRT,
@@ -296,8 +296,8 @@ export default function YoutubePage() {
       nameKr: "지문-指纹",
       videoId: "KSSWVSpuf4E",
       level: "中级",
-      style: "R&B",
-      age: "15岁以上",
+      style: "抒情",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["R&B"],
       srtContent: zhivenSRT,
@@ -308,8 +308,8 @@ export default function YoutubePage() {
       nameKr: "작은 행운-小幸运",
       videoId: "4DNi2UTOAdw",
       level: "中级",
-      style: "抒情",
-      age: "10岁以上",
+      style: "欢快",
+      age: "10세 이상",
       difficulty: 3,
       tags: ["抒情"],
       srtContent: xiaoxingyunSRT,
@@ -320,8 +320,8 @@ export default function YoutubePage() {
       nameKr: "내가 그리워하는-我怀念的",
       videoId: "1hVkS2ldRhw",
       level: "中级",
-      style: "抒情",
-      age: "15岁以上",
+      style: "悲伤",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: wohuainianSRT,
@@ -332,8 +332,8 @@ export default function YoutubePage() {
       nameKr: "광년지외-光年之外",
       videoId: "HjPGELNH-00",
       level: "中级",
-      style: "流行",
-      age: "15岁以上",
+      style: "抒情",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["流行"],
       srtContent: guangnianSRT,
@@ -344,8 +344,8 @@ export default function YoutubePage() {
       nameKr: "용기-勇气",
       videoId: "EaJM58fOsSQ",
       level: "中级",
-      style: "抒情",
-      age: "13岁以上",
+      style: "欢快",
+      age: "13세 이상",
       difficulty: 2,
       tags: ["抒情"],
       srtContent: yongqiSRT,
@@ -357,7 +357,7 @@ export default function YoutubePage() {
       videoId: "5V_aWacv6-Q",
       level: "中级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 3,
       tags: ["抒情"],
       srtContent: buweishuierzuodegeSRT,
@@ -371,7 +371,7 @@ export default function YoutubePage() {
       videoId: "G_uWYkLtiwI",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: haizailiulangSRT,
@@ -382,8 +382,8 @@ export default function YoutubePage() {
       nameKr: "평범한 길-平凡之路",
       videoId: "wk9R0ugm5AE",
       level: "高级",
-      style: "励志",
-      age: "15岁以上",
+      style: "欢快",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["励志"],
       srtContent: pingfanSRT,
@@ -394,8 +394,8 @@ export default function YoutubePage() {
       nameKr: "야곡-夜曲",
       videoId: "OyDYW8mZXXg",
       level: "高级",
-      style: "流行",
-      age: "15岁以上",
+      style: "悲伤",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["流行"],
       srtContent: yequSRT,
@@ -407,7 +407,7 @@ export default function YoutubePage() {
       videoId: "WqN-zGDV2uw",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: yanhuayilengSRT,
@@ -419,7 +419,7 @@ export default function YoutubePage() {
       videoId: "dim33vVuBQ0",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: xiangwozheyangderenSRT,
@@ -430,8 +430,8 @@ export default function YoutubePage() {
       nameKr: "근심을 없애다-消愁",
       videoId: "ZHGN3ViWrns",
       level: "高级",
-      style: "抒情",
-      age: "15岁以上",
+      style: "悲伤",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: xiaochouSRT,
@@ -443,7 +443,7 @@ export default function YoutubePage() {
       videoId: "lt7BhxrUGfY",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: huidaoguoquSRT,
@@ -455,7 +455,7 @@ export default function YoutubePage() {
       videoId: "HtB0Ym9uZXE",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: geiwoyishougedeshijianSRT,
@@ -467,7 +467,7 @@ export default function YoutubePage() {
       videoId: "me6-2E1BEbA",
       level: "高级",
       style: "抒情",
-      age: "15岁以上",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: qimiaonengligesRT,
@@ -478,8 +478,8 @@ export default function YoutubePage() {
       nameKr: "원하는 건 다 가져가-你要的全拿走",
       videoId: "9HDHnU-Vl0g",
       level: "高级",
-      style: "抒情",
-      age: "15岁以上",
+      style: "悲伤",
+      age: "15세 이상",
       difficulty: 4,
       tags: ["抒情"],
       srtContent: niyaodequannazousRT,
@@ -489,15 +489,27 @@ export default function YoutubePage() {
   };
 
   // 随机选择推荐歌曲（选择足够多的歌曲用于自动滚动）
-  const recommendedSongs = useMemo(() => {
+  // 根据首页「나의 수준」(nz_level) 推荐 3 首：主等级优先 + 次等级若干，随机
+  const recommendedSongs = useMemo((): Song[] => {
+    if (!showRecommendationSection) return [];
+    const userLevelKo = typeof window !== "undefined" ? (localStorage.getItem("nz_level") || "중급") : "중급";
     const allSongs = getAllSongs();
-    // 随机打乱数组并选择足够多的歌曲（至少9首，确保可以循环滚动）
-    const shuffled = [...allSongs].sort(() => Math.random() - 0.5);
-    // 为了无限循环，我们需要复制数组
-    const selected = shuffled.slice(0, Math.min(9, shuffled.length));
-    // 复制数组以实现无缝循环
-    return [...selected, ...selected, ...selected];
-  }, []);
+    const levelMap: Record<string, { primary: string; secondary: string }> = {
+      "초급": { primary: "初级", secondary: "中级" },
+      "중급": { primary: "中级", secondary: "初级" },
+      "고급": { primary: "高级", secondary: "中级" },
+    };
+    const { primary, secondary } = levelMap[userLevelKo] || levelMap["중급"];
+    const primarySongs = allSongs.filter((s) => s.level === primary);
+    const secondarySongs = allSongs.filter((s) => s.level === secondary);
+    const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
+    // 尽量主等级为主：2 或 3 首来自主等级，不足时用次等级补足
+    const primaryCount = 2 + Math.floor(Math.random() * 2); // 2 或 3
+    const fromPrimary = shuffle(primarySongs).slice(0, Math.min(primaryCount, primarySongs.length));
+    const need = Math.max(0, 3 - fromPrimary.length);
+    const fromSecondary = shuffle(secondarySongs).slice(0, need);
+    return shuffle([...fromPrimary, ...fromSecondary]);
+  }, [showRecommendationSection, recommendationRefreshKey]);
 
   // 滚动容器引用
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -589,61 +601,43 @@ export default function YoutubePage() {
         {/* 顶部区域（Hero 区） */}
         <div className="text-center mb-8 py-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-3" style={{ color: '#7a4f2d' }}>
-            听见中文，说出自然
+            {youtubePageTranslations.ko.heroTitle}
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-6">
-            从一首歌开始
+            {youtubePageTranslations.ko.heroSubtitle}
           </p>
 
-          {/* 筛选区域 */}
+          {/* 筛选区域（仅风格、年龄；等级以首页 나의 수준 为准） */}
           <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md border p-6 mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* 等级筛选 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  等级
-                </label>
-                <select
-                  value={level}
-                  onChange={(e) => setLevel(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
-                >
-                  <option value="">请选择等级</option>
-                  <option value="初级">初级</option>
-                  <option value="中级">中级</option>
-                  <option value="高级">高级</option>
-                  <option value="进阶">进阶</option>
-                </select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* 风格筛选 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  风格
+                  {youtubePageTranslations.ko.labelStyle}
                 </label>
                 <select
                   value={style}
                   onChange={(e) => setStyle(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
-                  <option value="">请选择风格</option>
-                  <option value="欢快">欢快</option>
-                  <option value="悲伤">悲伤</option>
-                  <option value="抒情">抒情</option>
+                  <option value="">{youtubePageTranslations.ko.pleaseSelectStyle}</option>
+                  <option value="欢快">{youtubePageTranslations.ko.styleLively}</option>
+                  <option value="悲伤">{youtubePageTranslations.ko.styleSad}</option>
+                  <option value="抒情">{youtubePageTranslations.ko.styleLyrical}</option>
                 </select>
               </div>
 
               {/* 年龄筛选 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  年龄
+                  {youtubePageTranslations.ko.labelAge}
                 </label>
                 <select
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
                 >
-                  <option value="">请选择年龄</option>
+                  <option value="">{youtubePageTranslations.ko.pleaseSelectAge}</option>
                   <option value="7-12">7-12</option>
                   <option value="13-18">13-18</option>
                   <option value="19-30">19-30</option>
@@ -651,62 +645,34 @@ export default function YoutubePage() {
                   <option value="50+">50+</option>
                 </select>
               </div>
-
-              {/* 今日学习时长 */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  今日学习时长
-                </label>
-                <select
-                  value={studyTime}
-                  onChange={(e) => setStudyTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7a4f2d]"
-                >
-                  <option value="">请选择时长</option>
-                  <option value="10分钟">10分钟</option>
-                  <option value="20分钟">20分钟</option>
-                  <option value="30分钟">30分钟</option>
-                  <option value="45分钟">45分钟</option>
-                </select>
-              </div>
             </div>
           </div>
 
-          {/* 立即开始按钮 */}
-          <button 
-            disabled={!isAllFiltersSelected}
-            className={`px-8 py-4 text-lg font-semibold rounded-lg transition-all ${
-              isAllFiltersSelected
-                ? 'text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 bg-[#7a4f2d] hover:bg-[#a06c3e]'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
+          {/* 바로 시작：点击后下方显示「나에게 맞는 노래 추천」 */}
+          <button
+            onClick={() => setShowRecommendationSection(true)}
+            className="px-8 py-4 text-lg font-semibold rounded-lg transition-all text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 bg-[#7a4f2d] hover:bg-[#a06c3e]"
           >
-            立即开始
+            {youtubePageTranslations.ko.startNow}
           </button>
-          {!isAllFiltersSelected && (
-            <p className="mt-2 text-sm text-gray-500">
-              请完成所有筛选选项
-            </p>
-          )}
         </div>
 
-        {/* 模块一：🎵 今日推荐 */}
+        {/* 点击「바로 시작」后显示：나에게 맞는 노래 추천（3 首，按首页等级） */}
+        {showRecommendationSection && (
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">🎵 今日推荐</h2>
-          {/* 横向滚动容器 - 每次显示3个卡片 */}
-          <div className="relative">
-            <div 
-              ref={scrollContainerRef}
-              className="overflow-x-auto pb-4 recommend-scroll"
-              style={{
-                WebkitOverflowScrolling: 'touch',
-                scrollBehavior: 'smooth',
-                width: '100%',
-                maxWidth: '1008px', // 3个卡片宽度: 3 * 320px + 2 * 24px (gap) = 1008px
-                margin: '0 auto',
-              }}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-gray-900">{youtubePageTranslations.ko.recommendForMe}</h2>
+            <button
+              type="button"
+              onClick={() => setRecommendationRefreshKey((k) => k + 1)}
+              className="px-4 py-2 text-sm font-medium rounded-lg transition-colors text-[#7a4f2d] hover:text-white hover:bg-[#7a4f2d] border border-[#7a4f2d]"
             >
-              <div className="flex gap-6">
+              {youtubePageTranslations.ko.otherRecommend}
+            </button>
+          </div>
+          <div className="relative">
+            <div className="overflow-x-auto pb-4 recommend-scroll" style={{ width: '100%', margin: '0 auto' }}>
+              <div className="flex gap-6 flex-wrap justify-center">
                 {recommendedSongs.map((song, index) => (
                   <div
                     key={`${song.id}-${index}`}
@@ -731,41 +697,39 @@ export default function YoutubePage() {
                           song.level === '高级' ? 'bg-[#f0e6dc] text-[#7a4f2d]' :
                           'bg-red-100 text-red-700'
                         }`}>
-                          {song.level}
+                          {getLevelLabelKo(song.level)}
                         </span>
                         <span className="text-xs text-yellow-500">
                           {'★'.repeat(song.difficulty)}{'☆'.repeat(5 - song.difficulty)}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-600 mb-2">风格：{song.style}</p>
-                      <p className="text-sm text-gray-600 mb-4">适合：{song.age}</p>
+                      <p className="text-sm text-gray-600 mb-2">{youtubePageTranslations.ko.labelStyleColon}: {getStyleLabelKo(song.style)}</p>
+                      <p className="text-sm text-gray-600 mb-4">{youtubePageTranslations.ko.labelSuitable}: {song.age}</p>
                       <button className="w-full px-4 py-2 text-white rounded-lg transition-colors bg-[#7a4f2d] hover:bg-[#a06c3e]">
-                        开始学习
+                        {youtubePageTranslations.ko.startLearning}
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-            {/* 渐变遮罩效果，提示可以滚动 */}
-            <div className="absolute right-0 top-0 bottom-4 w-20 bg-gradient-to-l from-[#faf6f0] to-transparent pointer-events-none"></div>
-            <div className="absolute left-0 top-0 bottom-4 w-20 bg-gradient-to-r from-[#faf6f0] to-transparent pointer-events-none"></div>
           </div>
         </div>
+        )}
 
-        {/* 模块二：🔥 歌曲库 */}
+        {/* 模块二：歌曲库 */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">🔥 歌曲库</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{youtubePageTranslations.ko.songLibrary}</h2>
 
           {/* 初级 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">初级</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{youtubePageTranslations.ko.sectionBeginner}</h3>
               <button
                 onClick={() => toggleLevel('beginner')}
                 className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
-                {expandedLevels.beginner ? '收起' : '展开更多'}
+                {expandedLevels.beginner ? youtubePageTranslations.ko.collapse : youtubePageTranslations.ko.expandMore}
                 <svg
                   className={`w-4 h-4 transition-transform ${expandedLevels.beginner ? 'rotate-180' : ''}`}
                   fill="none"
@@ -777,12 +741,12 @@ export default function YoutubePage() {
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: expandedLevels.beginner ? 10 : 5 })
+              {Array.from({ length: expandedLevels.beginner ? 10 : 8 })
                 .map((_, idx) => {
                   // 检查这个位置是否有配置的歌曲
                   const hasConfiguredSong = configuredSongs.beginner.includes(idx);
                   // 如果未展开且超过5个，或者没有配置的歌曲且未展开，不显示
-                  if (!expandedLevels.beginner && (!hasConfiguredSong || idx >= 5)) {
+                  if (!expandedLevels.beginner && (!hasConfiguredSong || idx >= 8)) {
                     return null;
                   }
                   // 如果展开后没有配置的歌曲，显示占位符
@@ -792,16 +756,16 @@ export default function YoutubePage() {
                       <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <span className="text-gray-400 text-sm">待添加</span>
+                            <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                           </div>
                         </div>
                         <div className="p-4">
-                          <h4 className="font-semibold text-gray-400 mb-2 text-sm">歌曲 {idx + 1}</h4>
+                          <h4 className="font-semibold text-gray-400 mb-2 text-sm">{youtubePageTranslations.ko.songN} {idx + 1}</h4>
                           <div className="text-xs text-gray-300 mb-2">☆☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">待定</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">{youtubePageTranslations.ko.placeholderTbd}</span>
                           </div>
-                          <p className="text-xs text-gray-400">待添加</p>
+                          <p className="text-xs text-gray-400">{youtubePageTranslations.ko.placeholderAddLater}</p>
                         </div>
                       </div>
                     );
@@ -814,8 +778,8 @@ export default function YoutubePage() {
                       nameKr: "두 마리 호랑이-两只老虎",
                       videoId: "0P0aApWogd0",
                       level: "初级",
-                      style: "童谣",
-                      age: "六岁以上",
+                      style: "欢快",
+                      age: "6세 이상",
                       difficulty: 1,
                       tags: ["童谣"],
                       srtContent: liangzhilaohuSRT,
@@ -838,9 +802,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">두 마리 호랑이-两只老虎</h4>
                           <div className="text-xs text-yellow-500 mb-2">★☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">童谣</span>
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{getStyleLabelKo(liangzhilaohu.style)}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -854,7 +818,7 @@ export default function YoutubePage() {
                       videoId: "FhIXtvJbr3o",
                       level: "初级",
                       style: "抒情",
-                      age: "13岁以上",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: yueliangSRT,
@@ -877,9 +841,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">달은 내 마음을 대신해-月亮代表我的心</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -892,8 +856,8 @@ export default function YoutubePage() {
                       nameKr: "친구-朋友",
                       videoId: "6lbPgfKK7m4",
                       level: "初级",
-                      style: "抒情",
-                      age: "13岁以上",
+                      style: "欢快",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: pengyouSRT,
@@ -916,9 +880,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">친구-朋友</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -931,8 +895,8 @@ export default function YoutubePage() {
                       nameKr: "반짝반짝 작은 별-一闪一闪亮晶晶",
                       videoId: "_WTao2TJ2C8",
                       level: "初级",
-                      style: "童谣",
-                      age: "六岁以上",
+                      style: "欢快",
+                      age: "6세 이상",
                       difficulty: 1,
                       tags: ["童谣"],
                       srtContent: yishanyishanSRT,
@@ -955,9 +919,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">반짝반짝 작은 별-一闪一闪亮晶晶</h4>
                           <div className="text-xs text-yellow-500 mb-2">★☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">童谣</span>
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{getStyleLabelKo("童谣")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -970,8 +934,8 @@ export default function YoutubePage() {
                       nameKr: "그 후에-后来",
                       videoId: "t0igPuDjYUE",
                       level: "初级",
-                      style: "抒情",
-                      age: "15岁以上",
+                      style: "悲伤",
+                      age: "15세 이상",
                       difficulty: 3,
                       tags: ["抒情"],
                       srtContent: houlaiSRT,
@@ -994,9 +958,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">그 후에-后来</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1010,7 +974,7 @@ export default function YoutubePage() {
                       videoId: "MmtVl9CssYE",
                       level: "初级",
                       style: "抒情",
-                      age: "12岁以上",
+                      age: "12세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: ningxiaSRT,
@@ -1033,9 +997,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">닝샤-宁夏</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1048,8 +1012,8 @@ export default function YoutubePage() {
                       nameKr: "새로운 못 다한 사랑-新不了情",
                       videoId: "3QfpuxVpTFo",
                       level: "初级",
-                      style: "抒情",
-                      age: "13岁以上",
+                      style: "悲伤",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: xinbuliaoSRT,
@@ -1072,9 +1036,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">새로운 못 다한 사랑-新不了情</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1088,7 +1052,7 @@ export default function YoutubePage() {
                       videoId: "w2_FycTdzVI",
                       level: "初级",
                       style: "抒情",
-                      age: "13岁以上",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: qiasiniSRT,
@@ -1111,9 +1075,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">너의 부드러움처럼-恰似你的温柔</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1126,8 +1090,8 @@ export default function YoutubePage() {
                       nameKr: "해상의 꽃-海上花",
                       videoId: "dkak-3Ej6iE",
                       level: "初级",
-                      style: "抒情",
-                      age: "13岁以上",
+                      style: "悲伤",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: haishanghuaSRT,
@@ -1150,9 +1114,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">해상의 꽃-海上花</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1165,8 +1129,8 @@ export default function YoutubePage() {
                       nameKr: "옆자리의 너-同桌的你",
                       videoId: "xqYMWyOpSFI",
                       level: "初级",
-                      style: "抒情",
-                      age: "13岁以上",
+                      style: "欢快",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: tongzhuodeniSRT,
@@ -1189,9 +1153,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">옆자리의 너-同桌的你</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1201,7 +1165,7 @@ export default function YoutubePage() {
                     <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">待添加</span>
+                          <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                         </div>
                       </div>
                       <div className="p-4">
@@ -1210,7 +1174,7 @@ export default function YoutubePage() {
                         <div className="flex flex-wrap gap-1 mb-2">
                           <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">Rap</span>
                         </div>
-                        <p className="text-xs text-gray-500">YouTube 链接：待添加</p>
+                        <p className="text-xs text-gray-500">{youtubePageTranslations.ko.youtubeLinkAddLater}</p>
                       </div>
                     </div>
                   );
@@ -1221,12 +1185,12 @@ export default function YoutubePage() {
           {/* 中级 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">中级</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{youtubePageTranslations.ko.sectionIntermediate}</h3>
               <button
                 onClick={() => toggleLevel('intermediate')}
                 className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
-                {expandedLevels.intermediate ? '收起' : '展开更多'}
+                {expandedLevels.intermediate ? youtubePageTranslations.ko.collapse : youtubePageTranslations.ko.expandMore}
                 <svg
                   className={`w-4 h-4 transition-transform ${expandedLevels.intermediate ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1238,12 +1202,12 @@ export default function YoutubePage() {
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: expandedLevels.intermediate ? 10 : 5 })
+              {Array.from({ length: expandedLevels.intermediate ? 10 : 8 })
                 .map((_, idx) => {
                   // 检查这个位置是否有配置的歌曲
                   const hasConfiguredSong = configuredSongs.intermediate.includes(idx);
                   // 如果未展开且超过5个，或者没有配置的歌曲且未展开，不显示
-                  if (!expandedLevels.intermediate && (!hasConfiguredSong || idx >= 5)) {
+                  if (!expandedLevels.intermediate && (!hasConfiguredSong || idx >= 8)) {
                     return null;
                   }
                   // 如果展开后没有配置的歌曲，显示占位符
@@ -1253,16 +1217,16 @@ export default function YoutubePage() {
                       <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <span className="text-gray-400 text-sm">待添加</span>
+                            <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                           </div>
                         </div>
                         <div className="p-4">
                           <h4 className="font-semibold text-gray-400 mb-2 text-sm">歌曲 {idx + 9}</h4>
                           <div className="text-xs text-gray-300 mb-2">☆☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">待定</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">{youtubePageTranslations.ko.placeholderTbd}</span>
                           </div>
-                          <p className="text-xs text-gray-400">待添加</p>
+                          <p className="text-xs text-gray-400">{youtubePageTranslations.ko.placeholderAddLater}</p>
                         </div>
                       </div>
                     );
@@ -1275,7 +1239,7 @@ export default function YoutubePage() {
                       nameKr: "첨밀밀-甜蜜蜜",
                       videoId: "OMVlGjmppeY",
                       level: "中级",
-                      style: "抒情",
+                      style: "悲伤",
                       age: "19-30",
                       difficulty: 3,
                       tags: ["抒情"],
@@ -1299,9 +1263,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">첨밀밀-甜蜜蜜</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1314,8 +1278,8 @@ export default function YoutubePage() {
                       nameKr: "할머니의 펑후만-外婆的澎湖湾",
                       videoId: "PjrsETvz7QQ",
                       level: "中级",
-                      style: "抒情",
-                      age: "6岁以上",
+                      style: "欢快",
+                      age: "6세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: waipoSRT,
@@ -1338,9 +1302,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">할머니의 펑후만-外婆的澎湖湾</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1354,7 +1318,7 @@ export default function YoutubePage() {
                       videoId: "mGeiABBB5f8",
                       level: "中级",
                       style: "悲伤",
-                      age: "13岁以上",
+                      age: "13세 이상",
                       difficulty: 4,
                       tags: ["悲伤"],
                       srtContent: paomoSRT,
@@ -1377,9 +1341,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">거품-泡沫</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">悲伤</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo("悲伤")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1393,7 +1357,7 @@ export default function YoutubePage() {
                       videoId: "fa0naBdR_q0",
                       level: "中级",
                       style: "悲伤",
-                      age: "13岁以上",
+                      age: "13세 이상",
                       difficulty: 4,
                       tags: ["悲伤"],
                       srtContent: yuaiSRT,
@@ -1416,9 +1380,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">우애-雨爱</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">悲伤</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo("悲伤")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1431,8 +1395,8 @@ export default function YoutubePage() {
                       nameKr: "지문-指纹",
                       videoId: "KSSWVSpuf4E",
                       level: "中级",
-                      style: "R&B",
-                      age: "15岁以上",
+                      style: "抒情",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["R&B"],
                       srtContent: zhivenSRT,
@@ -1457,7 +1421,7 @@ export default function YoutubePage() {
                           <div className="flex flex-wrap gap-1 mb-2">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1470,8 +1434,8 @@ export default function YoutubePage() {
                       nameKr: "작은 행운-小幸运",
                       videoId: "4DNi2UTOAdw",
                       level: "中级",
-                      style: "抒情",
-                      age: "10岁以上",
+                      style: "欢快",
+                      age: "10세 이상",
                       difficulty: 3,
                       tags: ["抒情"],
                       srtContent: xiaoxingyunSRT,
@@ -1494,9 +1458,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">작은 행운-小幸运</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1509,8 +1473,8 @@ export default function YoutubePage() {
                       nameKr: "내가 그리워하는 것-我怀念的",
                       videoId: "1hVkS2ldRhw",
                       level: "中级",
-                      style: "抒情",
-                      age: "15岁以上",
+                      style: "悲伤",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: wohuainianSRT,
@@ -1533,9 +1497,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">내가 그리워하는 것-我怀念的</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1548,8 +1512,8 @@ export default function YoutubePage() {
                       nameKr: "광년 밖에서-光年之外",
                       videoId: "HjPGELNH-00",
                       level: "中级",
-                      style: "R&B",
-                      age: "15岁以上",
+                      style: "抒情",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["R&B"],
                       srtContent: guangnianSRT,
@@ -1574,7 +1538,7 @@ export default function YoutubePage() {
                           <div className="flex flex-wrap gap-1 mb-2">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1587,8 +1551,8 @@ export default function YoutubePage() {
                       nameKr: "용기-勇气",
                       videoId: "EaJM58fOsSQ",
                       level: "中级",
-                      style: "抒情",
-                      age: "13岁以上",
+                      style: "欢快",
+                      age: "13세 이상",
                       difficulty: 2,
                       tags: ["抒情"],
                       srtContent: yongqiSRT,
@@ -1611,9 +1575,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">용기-勇气</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1627,7 +1591,7 @@ export default function YoutubePage() {
                       videoId: "5V_aWacv6-Q",
                       level: "中级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 3,
                       tags: ["抒情"],
                       srtContent: buweishuierzuodegeSRT,
@@ -1650,9 +1614,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">누구를 위해 만든 노래도 아니야-不为谁做的歌</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1662,7 +1626,7 @@ export default function YoutubePage() {
                     <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">待添加</span>
+                          <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                         </div>
                       </div>
                       <div className="p-4">
@@ -1671,7 +1635,7 @@ export default function YoutubePage() {
                         <div className="flex flex-wrap gap-1 mb-2">
                           <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">古诗</span>
                         </div>
-                        <p className="text-xs text-gray-500">YouTube 链接：待添加</p>
+                        <p className="text-xs text-gray-500">{youtubePageTranslations.ko.youtubeLinkAddLater}</p>
                       </div>
                     </div>
                   );
@@ -1682,12 +1646,12 @@ export default function YoutubePage() {
           {/* 高级 */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">高级</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{youtubePageTranslations.ko.sectionAdvanced}</h3>
               <button
                 onClick={() => toggleLevel('advanced')}
                 className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
-                {expandedLevels.advanced ? '收起' : '展开更多'}
+                {expandedLevels.advanced ? youtubePageTranslations.ko.collapse : youtubePageTranslations.ko.expandMore}
                 <svg
                   className={`w-4 h-4 transition-transform ${expandedLevels.advanced ? 'rotate-180' : ''}`}
                   fill="none"
@@ -1699,12 +1663,12 @@ export default function YoutubePage() {
               </button>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: expandedLevels.advanced ? 10 : 5 })
+              {Array.from({ length: expandedLevels.advanced ? 10 : 8 })
                 .map((_, idx) => {
                   // 检查这个位置是否有配置的歌曲
                   const hasConfiguredSong = configuredSongs.advanced.includes(idx);
                   // 如果未展开且超过5个，或者没有配置的歌曲且未展开，不显示
-                  if (!expandedLevels.advanced && (!hasConfiguredSong || idx >= 5)) {
+                  if (!expandedLevels.advanced && (!hasConfiguredSong || idx >= 8)) {
                     return null;
                   }
                   // 如果展开后没有配置的歌曲，显示占位符
@@ -1714,16 +1678,16 @@ export default function YoutubePage() {
                       <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                            <span className="text-gray-400 text-sm">待添加</span>
+                            <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                           </div>
                         </div>
                         <div className="p-4">
                           <h4 className="font-semibold text-gray-400 mb-2 text-sm">歌曲 {idx + 17}</h4>
                           <div className="text-xs text-gray-300 mb-2">☆☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">待定</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-400 text-xs rounded">{youtubePageTranslations.ko.placeholderTbd}</span>
                           </div>
-                          <p className="text-xs text-gray-400">待添加</p>
+                          <p className="text-xs text-gray-400">{youtubePageTranslations.ko.placeholderAddLater}</p>
                         </div>
                       </div>
                     );
@@ -1736,8 +1700,8 @@ export default function YoutubePage() {
                       nameKr: "여전히 방황 중이야-还在流浪",
                       videoId: "G_uWYkLtiwI",
                       level: "高级",
-                      style: "R&B",
-                      age: "15岁以上",
+                      style: "抒情",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["R&B"],
                       srtContent: haizailiulangSRT,
@@ -1762,7 +1726,7 @@ export default function YoutubePage() {
                           <div className="flex flex-wrap gap-1 mb-2">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1775,7 +1739,7 @@ export default function YoutubePage() {
                       nameKr: "평범한 길-平凡之路",
                       videoId: "wk9R0ugm5AE",
                       level: "高级",
-                      style: "抒情",
+                      style: "欢快",
                       age: "19-30",
                       difficulty: 4,
                       tags: ["抒情"],
@@ -1799,9 +1763,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">평범한 길-平凡之路</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1814,8 +1778,8 @@ export default function YoutubePage() {
                       nameKr: "야상곡-夜曲",
                       videoId: "OyDYW8mZXXg",
                       level: "高级",
-                      style: "R&B",
-                      age: "15岁以上",
+                      style: "悲伤",
+                      age: "15세 이상",
                       difficulty: 5,
                       tags: ["R&B"],
                       srtContent: yequSRT,
@@ -1840,7 +1804,7 @@ export default function YoutubePage() {
                           <div className="flex flex-wrap gap-1 mb-2">
                             <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1854,7 +1818,7 @@ export default function YoutubePage() {
                       videoId: "WqN-zGDV2uw",
                       level: "高级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: yanhuayilengSRT,
@@ -1877,9 +1841,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">불꽃은 쉽게 식는다-烟花易冷</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1893,7 +1857,7 @@ export default function YoutubePage() {
                       videoId: "dim33vVuBQ0",
                       level: "高级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: xiangwozheyangderenSRT,
@@ -1916,9 +1880,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">나 같은 사람-像我这样的人</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1931,8 +1895,8 @@ export default function YoutubePage() {
                       nameKr: "근심을 없애다-消愁",
                       videoId: "ZHGN3ViWrns",
                       level: "高级",
-                      style: "抒情",
-                      age: "15岁以上",
+                      style: "悲伤",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: xiaochouSRT,
@@ -1955,9 +1919,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">근심을 없애다-消愁</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -1971,7 +1935,7 @@ export default function YoutubePage() {
                       videoId: "lt7BhxrUGfY",
                       level: "高级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: huidaoguoquSRT,
@@ -1994,9 +1958,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">과거로 돌아가-回到过去</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">点击开始学习</p>
+                          <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
                       </div>
                     );
@@ -2010,7 +1974,7 @@ export default function YoutubePage() {
                       videoId: "HtB0Ym9uZXE",
                       level: "高级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: geiwoyishougedeshijianSRT,
@@ -2033,9 +1997,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">노래 한 곡만큼의 시간-给我一首歌的时间</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">15岁以上</p>
+                          <p className="text-xs text-gray-500">15세 이상</p>
                         </div>
                       </div>
                     );
@@ -2049,7 +2013,7 @@ export default function YoutubePage() {
                       videoId: "me6-2E1BEbA",
                       level: "高级",
                       style: "抒情",
-                      age: "15岁以上",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: qimiaonengligesRT,
@@ -2072,9 +2036,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">기묘한 능력의 노래-奇妙能力歌</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">15岁以上</p>
+                          <p className="text-xs text-gray-500">15세 이상</p>
                         </div>
                       </div>
                     );
@@ -2087,8 +2051,8 @@ export default function YoutubePage() {
                       nameKr: "원하는 건 다 가져가-你要的全拿走",
                       videoId: "9HDHnU-Vl0g",
                       level: "高级",
-                      style: "抒情",
-                      age: "15岁以上",
+                      style: "悲伤",
+                      age: "15세 이상",
                       difficulty: 4,
                       tags: ["抒情"],
                       srtContent: niyaodequannazousRT,
@@ -2111,9 +2075,9 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">원하는 건 다 가져가-你要的全拿走</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">抒情</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
                           </div>
-                          <p className="text-xs text-gray-500">15岁以上</p>
+                          <p className="text-xs text-gray-500">15세 이상</p>
                         </div>
                       </div>
                     );
@@ -2123,7 +2087,7 @@ export default function YoutubePage() {
                     <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">待添加</span>
+                          <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                         </div>
                       </div>
                       <div className="p-4">
@@ -2132,7 +2096,7 @@ export default function YoutubePage() {
                         <div className="flex flex-wrap gap-1 mb-2">
                           <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">口语</span>
                         </div>
-                        <p className="text-xs text-gray-500">YouTube 链接：待添加</p>
+                        <p className="text-xs text-gray-500">{youtubePageTranslations.ko.youtubeLinkAddLater}</p>
                       </div>
                     </div>
                   );
@@ -2140,15 +2104,16 @@ export default function YoutubePage() {
             </div>
           </div>
 
-          {/* 进阶 */}
+          {/* 进阶（심화）暂时隐藏 */}
+          {false && (
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-gray-800">进阶</h3>
+              <h3 className="text-xl font-semibold text-gray-800">{youtubePageTranslations.ko.sectionExpert}</h3>
               <button
                 onClick={() => toggleLevel('expert')}
                 className="px-4 py-2 text-sm rounded-lg transition-colors flex items-center gap-2 text-[#7a4f2d] hover:text-[#a06c3e] hover:bg-[#f5ede3]"
               >
-                {expandedLevels.expert ? '收起' : '展开更多'}
+                {expandedLevels.expert ? youtubePageTranslations.ko.collapse : youtubePageTranslations.ko.expandMore}
                 <svg
                   className={`w-4 h-4 transition-transform ${expandedLevels.expert ? 'rotate-180' : ''}`}
                   fill="none"
@@ -2168,7 +2133,7 @@ export default function YoutubePage() {
                     <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                          <span className="text-gray-400 text-sm">待添加</span>
+                          <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
                         </div>
                       </div>
                       <div className="p-4">
@@ -2178,16 +2143,18 @@ export default function YoutubePage() {
                           <span className="px-2 py-1 bg-red-100 text-red-700 text-xs rounded">Rap</span>
                           <span className="px-2 py-1 bg-orange-100 text-orange-700 text-xs rounded">口语</span>
                         </div>
-                        <p className="text-xs text-gray-500">YouTube 链接：待添加</p>
+                        <p className="text-xs text-gray-500">{youtubePageTranslations.ko.youtubeLinkAddLater}</p>
                       </div>
                     </div>
                   );
                 })}
             </div>
           </div>
+          )}
         </div>
 
-        {/* 模块三：📈 我的训练统计 */}
+        {/* 模块三：📈 我的训练统计（暂时隐藏） */}
+        {false && (
         <div className="mb-12">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">📈 我的训练统计</h2>
           <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -2207,6 +2174,7 @@ export default function YoutubePage() {
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );
