@@ -76,17 +76,51 @@ VITE_OPENAI_API_URL=https://api.openai.com/v1
 
 3. 重启开发服务器：`npm run dev`
 
-### Vercel 部署
+### Vercel + GitHub 部署（推荐）
 
-在 Vercel 项目设置中添加以下环境变量：
+#### 第一步：把代码推到 GitHub
 
-1. 进入 Vercel 项目 Dashboard
-2. 进入 Settings → Environment Variables
-3. 添加以下变量：
-   - `VITE_OPENAI_API_KEY`: 你的 OpenAI API 密钥
-   - `VITE_OPENAI_API_URL`: `https://api.openai.com/v1` (可选，默认值)
+确保项目已推送到你的 GitHub 仓库（你当前远程为 `yuuisohe-ui/test`）：
 
-4. 重新部署项目
+```bash
+git add .
+git commit -m "准备部署"
+git push origin main
+```
+
+（若主分支叫 `master`，把 `main` 改成 `master`。）
+
+#### 第二步：用 GitHub 登录并导入 Vercel
+
+1. 打开 [vercel.com](https://vercel.com)，点击 **Sign Up** 或 **Log In**。
+2. 选择 **Continue with GitHub**，按提示授权 Vercel 访问你的 GitHub。
+3. 登录后点击 **Add New…** → **Project**。
+4. 在 **Import Git Repository** 里找到并选择 `yuuisohe-ui/test`（或你放本项目的仓库），点击 **Import**。
+
+#### 第三步：配置项目（一般不用改）
+
+Vercel 会根据仓库里的 `vercel.json` 自动填好：
+
+- **Framework Preset**: Vite  
+- **Build Command**: `npm run build`  
+- **Output Directory**: `dist`  
+- **Install Command**: `npm install`  
+
+直接点击 **Deploy** 即可。若已有配置且无误，无需修改。
+
+#### 第四步：配置环境变量（使用 OpenAI 时必填）
+
+在 Vercel 项目页：
+
+1. 进入 **Settings** → **Environment Variables**。
+2. 添加变量：
+   - **Name**: `VITE_OPENAI_API_KEY`，**Value**: 你的 OpenAI API 密钥（Production / Preview 都勾选）。
+   - **Name**: `VITE_OPENAI_API_URL`，**Value**: `https://api.openai.com/v1`（可选，不填会用默认）。
+3. 保存后，在 **Deployments** 里对最新部署点 **⋯** → **Redeploy**，让新环境变量生效。
+
+#### 之后：自动部署
+
+以后每次执行 `git push origin main`（或你的主分支），Vercel 都会自动重新构建并部署。
 
 ## 后续开发
 
