@@ -603,8 +603,8 @@ export default function YoutubePage() {
   if (selectedSong) {
     return (
       <YoutubeVideoDetail
-        videoId={selectedSong.videoId}
-        title={selectedSong.name}
+        videoId={selectedSong.videoId ?? ''}
+        title={selectedSong.name ?? ''}
         titleKr={selectedSong.nameKr ?? ''}
         srtContent={selectedSong.srtContent || ""}
         onBack={() => setSelectedSong(null)}
@@ -1640,7 +1640,7 @@ export default function YoutubePage() {
                   }
                   const songId = `intermediate-${idx + 9}`;
                   return (
-                    <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
@@ -1692,7 +1692,7 @@ export default function YoutubePage() {
                   if (expandedLevels.advanced && !hasConfiguredSong) {
                     const songId = `advanced-${idx + 13}`;
                     return (
-                      <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                      <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
@@ -2101,7 +2101,7 @@ export default function YoutubePage() {
                   }
                   const songId = `advanced-${idx + 13}`;
                   return (
-                    <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
@@ -2147,7 +2147,7 @@ export default function YoutubePage() {
                 .map((idx) => {
                   const songId = `expert-${idx + 25}`;
                   return (
-                    <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>

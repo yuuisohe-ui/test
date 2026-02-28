@@ -87,8 +87,8 @@ function chooseBestBreakIndex(s: string, min: number = 12, max: number = 22): nu
     }
     
     // 4. 避免切断常见结构 -80
-    const beforeText = s.substring(0, i);
-    const afterText = s.substring(i);
+    const _beforeText = s.substring(0, i);
+    const _afterText = s.substring(i);
     for (const struct of structures) {
       const fullMatch = s.match(struct.pattern);
       if (fullMatch) {
@@ -395,7 +395,7 @@ function refineSegment(
  */
 async function segmentTextBySemantics(
   text: string,
-  sourceLang: 'ko' | 'zh'
+  _sourceLang: 'ko' | 'zh'
 ): Promise<string[]> {
   const apiKey = import.meta.env.VITE_OPENAI_API_KEY || OPENAI_API_KEY;
   const apiUrl = import.meta.env.VITE_OPENAI_API_URL || OPENAI_API_URL;
@@ -517,12 +517,12 @@ export async function callChatGPTApi(request: ChatGPTRequest, signal?: AbortSign
 
     // 오디오 파일 분석 (Whisper API 사용)
     if (request.audioFile) {
-      return await analyzeAudioWithChatGPT(request.audioFile, request.sourceLang || 'ko', signal);
+      return await analyzeAudioWithChatGPT(request.audioFile, request.sourceLang || 'ko');
     }
 
     // 오디오 URL 분석
     if (request.audioUrl) {
-      return await analyzeAudioUrlWithChatGPT(request.audioUrl, request.sourceLang || 'ko', signal);
+      return await analyzeAudioUrlWithChatGPT(request.audioUrl, request.sourceLang || 'ko');
     }
 
     throw new Error('분석할 텍스트 또는 오디오가 제공되지 않았습니다.');
@@ -1615,11 +1615,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
         if (punctuationSplit.length > 1) {
           console.log('✅ [Single Segment] 标点分段成功，分为', punctuationSplit.length, '段');
           console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
-          // 为每个分段找到对应的 words
-          // 构建完整的 words 文本（去除空格和标点），用于匹配
-          const _fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
-          let _currentWordIdx = 0; // 当前已匹配到的 word 索引
-          
+          // 为每个分段找到对应的 words（word-level 匹配逻辑在 map 内）
           finalSegments = punctuationSplit.map((text, index) => {
             // 移除标点和空格，用于匹配
             const normalizedText = text.replace(/[。！？\n.!?;:\s]+/g, '');
@@ -1761,10 +1757,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
             if (semanticSegments.length > 1) {
               console.log('✅ [Single Segment] 语义分段成功，分为', semanticSegments.length, '段');
               console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
-              // 为每个分段找到对应的 words
-              // 构建完整的 words 文本（去除空格和标点），用于匹配
-              const _fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
-              
+              // 为每个分段找到对应的 words（word-level 匹配逻辑在 map 内）
               finalSegments = semanticSegments.map((text, index) => {
                 // 移除标点和空格，用于匹配
                 const normalizedText = text.replace(/[。！？\n.!?;:\s]+/g, '');
