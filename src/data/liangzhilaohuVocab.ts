@@ -10,7 +10,7 @@ export const liangzhilaohuVocabAnalysis: Record<number, WordAnalysis[]> = {
       meaning: "tiger",
       meaningKr: "호랑이",
       example: "动物园里有两只大老虎。",
-      exampleKr: ""
+      exampleKr: "동물원에 큰 호랑이 두 마리가 있어요."
     }
   ],
   2: [

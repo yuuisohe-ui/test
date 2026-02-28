@@ -239,27 +239,175 @@ export const xiaoxingyunPracticeData: SentencePractice[] = [
       { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他终于", "鼓起勇气", "向她表白了。"], correctAnswer: "他终于鼓起勇气向她表白了。", explanation: "주어+부사 + 술어1(목적어포함) + 술어2 순입니다.", difficulty: "medium" }
     ]
   },
-  { sentenceIndex: 22, questions: [] },
-  { sentenceIndex: 23, questions: [] },
-  { sentenceIndex: 24, questions: [] },
-  { sentenceIndex: 25, questions: [] },
-  { sentenceIndex: 26, questions: [] },
-  { sentenceIndex: 27, questions: [] },
-  { sentenceIndex: 28, questions: [] },
-  { sentenceIndex: 29, questions: [] },
-  { sentenceIndex: 30, questions: [] },
-  { sentenceIndex: 31, questions: [] },
   {
-    sentenceIndex: 32,
+    sentenceIndex: 22,
     questions: [
-      { type: "multipleChoice", question: "'双翼'의 올바른 병음은 무엇입니까?", options: ["shuāng yì", "shuāng yí", "shuàng yì", "shuāng yìng"], correctAnswer: "shuāng yì", explanation: "双翼의 병음은 shuāng yì입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'双翼'의 성조 조합은 무엇입니까?", options: ["1-4", "1-2", "2-4", "1-1"], correctAnswer: "1-4", explanation: "双(1성)과 翼(4성)의 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'双翼'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "장소 표현", "时间 표현"], correctAnswer: "대상 표현", explanation: "독수리가 펼치는 대상인 날개를 나타냅니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["雄鹰", "张开双翼", "在高空", "翱翔。"], correctAnswer: "雄鹰张开双翼在高空翱翔。", explanation: "주어 + 술어1 + 장소부사어 + 술어2 순입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'也许'의 올바른 병음은 무엇입니까?", options: ["yě xǔ", "yè xǔ", "yě xū", "ye xǔ"], correctAnswer: "yě xǔ", explanation: "성조(3-3)와 분절을 확인하세요.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'也许'의 성조 조합은 무엇입니까?", options: ["3-3", "4-3", "3-1", "2-3"], correctAnswer: "3-3", explanation: "yě(3) + xǔ(3)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'也许'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "확실하지 않은 추측(가능성)을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我还不懂。", "当时", "也许", "也许当时"], correctAnswer: "也许当时我还不懂。", explanation: "부사(也许) + 시간(当时) + 주어/서술 순서입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'当时'의 올바른 병음은 무엇입니까?", options: ["dāng shí", "dàng shí", "dāng shì", "dang shí"], correctAnswer: "dāng shí", explanation: "둘 다 성조를 포함해 정확히 고르세요.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'当时'의 성조 조합은 무엇입니까?", options: ["1-2", "4-2", "1-4", "2-2"], correctAnswer: "1-2", explanation: "dāng(1) + shí(2)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'当时'는 위 문장에서 어떤 역할을 합니까?", options: ["시간 표현", "장소 표현", "동작 표현", "수량 표현"], correctAnswer: "시간 표현", explanation: "'그때/당시'라는 시간을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["也许", "当时", "我还不懂。", "当时我还不懂。"], correctAnswer: "也许当时我还不懂。", explanation: "시간 성분(当时)은 주어 앞에서 상황을 제시합니다.", difficulty: "easy" }
     ]
   },
-  { sentenceIndex: 33, questions: [] },
-  { sentenceIndex: 34, questions: [] },
+  {
+    sentenceIndex: 23,
+    questions: [
+      { type: "multipleChoice", question: "'忙着'의 올바른 병음은 무엇입니까?", options: ["máng zhe", "mǎng zhe", "máng zhè", "mang zhe"], correctAnswer: "máng zhe", explanation: "'着'는 보통 경성(무성조)로 발음합니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'忙着'의 성조 조합은 무엇입니까?", options: ["2-0", "3-0", "2-4", "2-2"], correctAnswer: "2-0", explanation: "máng(2) + zhe(경성=0)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'忙着'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "'~하느라 바쁜 상태'로 뒤 동작을 이끕니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["忙着追逐天空中的流星。", "忙着微笑和哭泣，", "微笑和哭泣，忙着", "追逐天空中的流星。"], correctAnswer: "忙着微笑和哭泣，忙着追逐天空中的流星。", explanation: "두 절이 쉼표로 연결된 구조를 유지하세요.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'追逐'의 올바른 병음은 무엇입니까?", options: ["zhuī zhú", "zhuì zhú", "zhuī zhǔ", "zhui zhú"], correctAnswer: "zhuī zhú", explanation: "각 음절의 성조(1,2)를 구분하세요.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'追逐'의 성조 조합은 무엇입니까?", options: ["1-2", "4-2", "1-3", "2-2"], correctAnswer: "1-2", explanation: "zhuī(1) + zhú(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'追逐'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'쫓다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["追逐", "天空中的", "流星。", "忙着"], correctAnswer: "忙着追逐天空中的流星。", explanation: "'忙着' 뒤에 동작(追逐)이 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'流星'의 올바른 병음은 무엇입니까?", options: ["liú xīng", "liǔ xīng", "liú xíng", "liu xīng"], correctAnswer: "liú xīng", explanation: "성조(2-1)와 분절을 확인하세요.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'流星'의 성조 조합은 무엇입니까?", options: ["2-1", "3-1", "2-2", "1-1"], correctAnswer: "2-1", explanation: "liú(2) + xīng(1)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'流星'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "상태 묘사"], correctAnswer: "대상 표현", explanation: "'追逐'의 목적어(무엇을 쫓는가)입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["忙着追逐", "流星。", "天空中的"], correctAnswer: "忙着追逐天空中的流星。", explanation: "수식어(天空中的)가 명사(流星) 앞에 옵니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 24,
+    questions: [
+      { type: "multipleChoice", question: "'理所当然'의 올바른 병음은 무엇입니까?", options: ["lǐ suǒ dāng rán", "lǐ suǒ dàng rán", "lí suǒ dāng rán", "lǐ suǒ dāng rǎn"], correctAnswer: "lǐ suǒ dāng rán", explanation: "4음절 성조를 모두 확인하세요.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'理所当然'의 성조 조합은 무엇입니까?", options: ["3-3-1-2", "2-3-1-2", "3-2-1-2", "3-3-4-2"], correctAnswer: "3-3-1-2", explanation: "lǐ(3)-suǒ(3)-dāng(1)-rán(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'理所当然'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'당연하게도'라는 방식/태도를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["忘记。", "人", "理所当然地", "人理所当然地"], correctAnswer: "人理所当然地忘记。", explanation: "주어(人) + 방식(理所当然地) + 동사(忘记)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'忘记'의 올바른 병음은 무엇입니까?", options: ["wàng jì", "wáng jì", "wàng jí", "wang jì"], correctAnswer: "wàng jì", explanation: "성조(4-4)를 정확히 고르세요.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'忘记'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-2", "3-4"], correctAnswer: "4-4", explanation: "wàng(4) + jì(4)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'忘记'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'잊다'라는 행동을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["理所当然地", "忘记。", "人"], correctAnswer: "人理所当然地忘记。", explanation: "주어가 문두에 옵니다.", difficulty: "easy" }
+    ]
+  },
+  {
+    sentenceIndex: 25,
+    questions: [
+      { type: "multipleChoice", question: "'默默'의 올바른 병음은 무엇입니까?", options: ["mò mò", "mó mò", "mò mó", "mo mò"], correctAnswer: "mò mò", explanation: "두 글자 모두 4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'默默'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-2", "3-4"], correctAnswer: "4-4", explanation: "mò(4) + mò(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'默默'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'어떤 방식으로'(말없이) 행동하는지 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一直", "是谁风里雨里，", "在原地。", "默默守护", "默默守护在原地。"], correctAnswer: "是谁风里雨里，一直默默守护在原地。", explanation: "앞 절 + 쉼표 + '一直'로 지속을 강조합니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'守护'의 올바른 병음은 무엇입니까?", options: ["shǒu hù", "shōu hù", "shǒu hú", "shou hù"], correctAnswer: "shǒu hù", explanation: "shǒu(3), hù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'守护'의 성조 조합은 무엇입니까?", options: ["3-4", "1-4", "3-2", "2-4"], correctAnswer: "3-4", explanation: "shǒu(3) + hù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'守护'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'지키다/보호하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一直", "默默", "守护", "在原地。", "风里雨里，"], correctAnswer: "是谁风里雨里，一直默默守护在原地。", explanation: "동사(守护) 뒤에 장소(在原地)가 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'原地'의 올바른 병음은 무엇입니까?", options: ["yuán dì", "yuǎn dì", "yuán dī", "yuan dì"], correctAnswer: "yuán dì", explanation: "yuán(2), dì(4)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'原地'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-1", "2-2"], correctAnswer: "2-4", explanation: "yuán(2) + dì(4)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'原地'는 위 문장에서 어떤 역할을 합니까?", options: ["장소 표현", "시간 표현", "동작 표현", "수량 표현"], correctAnswer: "장소 표현", explanation: "'在原地'로 위치(장소)를 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["在原地。", "一直默默", "守护", "是谁风里雨里，"], correctAnswer: "是谁风里雨里，一直默默守护在原地。", explanation: "전치사구(在原地)는 문장 끝에서 장소를 마무리합니다.", difficulty: "easy" }
+    ]
+  },
+  {
+    sentenceIndex: 26,
+    questions: [
+      { type: "multipleChoice", question: "'原来'의 올바른 병음은 무엇입니까?", options: ["yuán lái", "yuǎn lái", "yuán lǎi", "yuan lái"], correctAnswer: "yuán lái", explanation: "두 음절 모두 2성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'原来'의 성조 조합은 무엇입니까?", options: ["2-2", "3-2", "2-3", "1-2"], correctAnswer: "2-2", explanation: "yuán(2) + lái(2)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'原来'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'알고 보니'라는 깨달음/전환을 표시합니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["原来", "你是我", "最想留住的", "幸运。", "你是我最想留住的"], correctAnswer: "原来你是我最想留住的幸运。", explanation: "문두의 '原来'가 문장 전체를 이끕니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'留住'의 올바른 병음은 무엇입니까?", options: ["liú zhù", "liǔ zhù", "liú zhú", "liu zhù"], correctAnswer: "liú zhù", explanation: "liú(2), zhù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'留住'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-2", "4-4"], correctAnswer: "2-4", explanation: "liú(2) + zhù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'留住'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'붙잡아 두다'라는 행위를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["原来你是我", "最想", "留住的", "幸运。", "最想留住的"], correctAnswer: "原来你是我最想留住的幸运。", explanation: "'最想+동사'가 '…的'로 명사를 수식합니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'幸运'의 올바른 병음은 무엇입니까?", options: ["xìng yùn", "xīng yùn", "xìng yǔn", "xing yùn"], correctAnswer: "xìng yùn", explanation: "xìng(4), yùn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'幸运'의 성조 조합은 무엇입니까?", options: ["4-4", "1-4", "4-3", "2-4"], correctAnswer: "4-4", explanation: "xìng(4) + yùn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'幸运'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'你是…'의 보어로 '무엇인지'를 말합니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["原来", "你是我", "最想留住的", "幸运。"], correctAnswer: "原来你是我最想留住的幸运。", explanation: "'最想留住的'가 '幸运'을 꾸밉니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 27,
+    questions: [
+      { type: "multipleChoice", question: "'曾经'의 올바른 병음은 무엇입니까?", options: ["céng jīng", "cēng jīng", "céng jǐng", "ceng jīng"], correctAnswer: "céng jīng", explanation: "céng(2), jīng(1)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'曾经'의 성조 조합은 무엇입니까?", options: ["2-1", "1-1", "2-3", "3-1"], correctAnswer: "2-1", explanation: "céng(2) + jīng(1)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'曾经'는 위 문장에서 어떤 역할을 합니까?", options: ["시간 표현", "상태 묘사", "장소 표현", "수량 표현"], correctAnswer: "시간 표현", explanation: "과거의 어느 시점을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["原来我们和爱情", "曾经", "靠得那么近。", "那么近。"], correctAnswer: "原来我们和爱情曾经靠得那么近。", explanation: "시간부사(曾经)가 동작/상태 앞에 옵니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'靠近'의 올바른 병음은 무엇입니까?", options: ["kào jìn", "kǎo jìn", "kào jǐn", "kao jìn"], correctAnswer: "kào jìn", explanation: "kào(4), jìn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'靠近'의 성조 조합은 무엇입니까?", options: ["4-4", "3-4", "4-3", "2-4"], correctAnswer: "4-4", explanation: "kào(4) + jìn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'靠近'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'가깝다/가까워지다'의 상태를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["原来", "我们和爱情", "曾经", "靠得那么近。", "靠得那么近"], correctAnswer: "原来我们和爱情曾经靠得那么近。", explanation: "'靠得…近'가 '가까운 정도'를 나타냅니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 28,
+    questions: [
+      { type: "multipleChoice", question: "'对抗'의 올바른 병음은 무엇입니까?", options: ["duì kàng", "duí kàng", "duì kǎng", "dui kàng"], correctAnswer: "duì kàng", explanation: "duì(4), kàng(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'对抗'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-3", "3-4"], correctAnswer: "4-4", explanation: "duì(4) + kàng(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'对抗'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'세상과 맞서다'라는 행동을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["那为我", "对抗世界的决定，", "那陪我淋的雨。", "决定，"], correctAnswer: "那为我对抗世界的决定，那陪我淋的雨。", explanation: "두 구가 쉼표로 병렬 연결됩니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'决定'의 올바른 병음은 무엇입니까?", options: ["jué dìng", "juè dìng", "jué dǐng", "jue dìng"], correctAnswer: "jué dìng", explanation: "jué(2), dìng(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'决定'의 성조 조합은 무엇입니까?", options: ["2-4", "4-4", "2-3", "1-4"], correctAnswer: "2-4", explanation: "jué(2) + dìng(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'决定'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'那…的决定'로 '무엇'(결정)을 가리킵니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["那为我对抗世界的", "决定，", "那陪我淋的雨。", "那为我"], correctAnswer: "那为我对抗世界的决定，那陪我淋的雨。", explanation: "'…的决定'가 앞 구의 핵심 명사입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'淋雨'의 올바른 병음은 무엇입니까?", options: ["lín yǔ", "lǐn yǔ", "lín yù", "lin yǔ"], correctAnswer: "lín yǔ", explanation: "lín(2), yǔ(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'淋雨'의 성조 조합은 무엇입니까?", options: ["2-3", "3-3", "2-4", "1-3"], correctAnswer: "2-3", explanation: "lín(2) + yǔ(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'淋雨'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "수량 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'비를 맞다'라는 경험/행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["那陪我", "淋的雨。", "那为我对抗世界的决定，", "陪我淋的"], correctAnswer: "那为我对抗世界的决定，那陪我淋的雨。", explanation: "'陪我淋的雨'는 '나와 함께 맞은 비'입니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 29,
+    questions: [
+      { type: "multipleChoice", question: "'一幕幕'의 올바른 병음은 무엇입니까?", options: ["yí mù mù", "yì mù mù", "yí mú mù", "yi mù mù"], correctAnswer: "yí mù mù", explanation: "yí(2), mù(4), mù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一幕幕'의 성조 조합은 무엇입니까?", options: ["2-4-4", "4-4-4", "2-2-4", "2-4-2"], correctAnswer: "2-4-4", explanation: "yí(2)-mù(4)-mù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一幕幕'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "문장 주어로서 '무엇이'(장면들)를 가리킵니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一幕幕都是你，", "一尘不染的", "真心。", "都是你，"], correctAnswer: "一幕幕都是你，一尘不染的真心。", explanation: "쉼표 앞뒤 두 구를 원문대로 연결하세요.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一尘不染'의 올바른 병음은 무엇입니까?", options: ["yì chén bù rǎn", "yí chén bù rǎn", "yì chēn bù rǎn", "yì chén bú rǎn"], correctAnswer: "yì chén bù rǎn", explanation: "4음절 성조를 모두 확인하세요.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'一尘不染'의 성조 조합은 무엇입니까?", options: ["4-2-4-3", "2-2-4-3", "4-1-4-3", "4-2-2-3"], correctAnswer: "4-2-4-3", explanation: "yì(4)-chén(2)-bù(4)-rǎn(3)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'一尘不染'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "'真心'을 수식하며 '흠 없는 상태'를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一幕幕都是你，", "真心。", "一尘不染的", "都是你，"], correctAnswer: "一幕幕都是你，一尘不染的真心。", explanation: "'一尘不染的'는 뒤의 명사(真心)를 꾸밉니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'真心'의 올바른 병음은 무엇입니까?", options: ["zhēn xīn", "zhén xīn", "zhēn xín", "zhen xīn"], correctAnswer: "zhēn xīn", explanation: "둘 다 1성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'真心'의 성조 조합은 무엇입니까?", options: ["1-1", "2-1", "1-2", "1-3"], correctAnswer: "1-1", explanation: "zhēn(1) + xīn(1)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'真心'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "대상 표현", explanation: "앞의 수식(一尘不染的)을 받는 핵심 명사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一尘不染的", "真心。", "一幕幕都是你，", "都是你，"], correctAnswer: "一幕幕都是你，一尘不染的真心。", explanation: "앞 절 후반에 명사구가 이어집니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 30,
+    questions: [
+      { type: "multipleChoice", question: "'相遇'의 올바른 병음은 무엇입니까?", options: ["xiāng yù", "xiáng yù", "xiāng yǔ", "xiang yù"], correctAnswer: "xiāng yù", explanation: "xiāng(1), yù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'相遇'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "4-4"], correctAnswer: "1-4", explanation: "xiāng(1) + yù(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'相遇'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'만나다'라는 행위를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["与你", "相遇，", "好幸运。", "与你相遇，"], correctAnswer: "与你相遇，好幸运。", explanation: "전치사구(与你) + 동사(相遇) 뒤에 감탄이 옵니다.", difficulty: "medium" }
+    ]
+  },
+  {
+    sentenceIndex: 31,
+    questions: [
+      { type: "multipleChoice", question: "'泪流满面'의 올바른 병음은 무엇입니까?", options: ["lèi liú mǎn miàn", "lěi liú mǎn miàn", "lèi liǔ mǎn miàn", "lèi liú màn miàn"], correctAnswer: "lèi liú mǎn miàn", explanation: "4음절 성조(4-2-3-4)를 확인하세요.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'泪流满面'의 성조 조합은 무엇입니까?", options: ["4-2-3-4", "4-3-3-4", "2-2-3-4", "4-2-4-4"], correctAnswer: "4-2-3-4", explanation: "lèi(4)-liú(2)-mǎn(3)-miàn(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'泪流满面'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'어떤 상태로'(눈물이 가득한 상태)인지 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["可我也", "失去", "为你", "泪流满面的", "权利。"], correctAnswer: "可我也失去为你泪流满面的权利。", explanation: "핵심 동사(失去) 뒤에 '…的权利'가 옵니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'权利'의 올바른 병음은 무엇입니까?", options: ["quán lì", "quǎn lì", "quán lí", "quan lì"], correctAnswer: "quán lì", explanation: "quán(2), lì(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'权利'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-2", "1-4"], correctAnswer: "2-4", explanation: "quán(2) + lì(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'权利'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'失去'의 목적어(무엇을 잃었는가)입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["失去", "为你泪流满面的", "权利。", "可我也"], correctAnswer: "可我也失去为你泪流满面的权利。", explanation: "목적어가 길어도 '…的权利'는 끝에 옵니다.", difficulty: "medium" }
+    ]
+  },
+  { sentenceIndex: 32, questions: [] },
+  {
+    sentenceIndex: 33,
+    questions: [
+      { type: "multipleChoice", question: "'遇见'의 올바른 병음은 무엇입니까?", options: ["yù jiàn", "yǔ jiàn", "yù jiān", "yu jiàn"], correctAnswer: "yù jiàn", explanation: "yù(4), jiàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'遇见'의 성조 조합은 무엇입니까?", options: ["4-4", "3-4", "4-1", "2-4"], correctAnswer: "4-4", explanation: "yù(4) + jiàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'遇见'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'만나다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["遇见", "你的", "注定。", "遇见你的"], correctAnswer: "遇见你的注定。", explanation: "'你的'가 뒤 명사(注定)를 수식합니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'注定'의 올바른 병음은 무엇입니까?", options: ["zhù dìng", "zhú dìng", "zhù dǐng", "zhu dìng"], correctAnswer: "zhù dìng", explanation: "zhù(4), dìng(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'注定'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-3", "1-4"], correctAnswer: "4-4", explanation: "zhù(4) + dìng(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'注定'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "문장 핵심 명사로 '운명/정해짐'을 가리킵니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["你的", "注定。", "遇见"], correctAnswer: "遇见你的注定。", explanation: "원문은 짧은 명사구 형태입니다.", difficulty: "hard" }
+    ]
+  },
+  {
+    sentenceIndex: 34,
+    questions: [
+      { type: "multipleChoice", question: "'幸运'의 올바른 병음은 무엇입니까?", options: ["xìng yùn", "xīng yùn", "xìng yǔn", "xing yùn"], correctAnswer: "xìng yùn", explanation: "두 음절 모두 4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'幸运'의 성조 조합은 무엇입니까?", options: ["4-4", "1-4", "4-3", "2-4"], correctAnswer: "4-4", explanation: "xìng(4) + yùn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'幸运'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "'얼마나 행운인지'라는 상태를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["她", "会有", "多", "幸运。", "多幸运。"], correctAnswer: "她会有多幸运。", explanation: "'多+형용사'로 정도를 묻는 구조입니다.", difficulty: "medium" }
+    ]
+  },
   {
     sentenceIndex: 35,
     questions: [

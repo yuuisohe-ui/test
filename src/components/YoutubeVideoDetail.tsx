@@ -788,7 +788,7 @@ export default function YoutubeVideoDetail({
       const url = URL.createObjectURL(recordedAudioBlob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `录音_${title}_${new Date().getTime()}.webm`;
+      a.download = `${youtubePageTranslations.ko.downloadFilenameRecording}_${title}_${new Date().getTime()}.webm`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -1374,26 +1374,27 @@ export default function YoutubeVideoDetail({
     let filename = '';
     let pageTitle = '';
     
+    const t = youtubePageTranslations.ko;
     switch(type) {
       case 'standard':
         htmlContent = generateStandardModeHTML();
-        filename = `${title}_标准模式_${new Date().getTime()}.html`;
-        pageTitle = '标准模式';
+        filename = `${title}_${t.downloadFilenameStandard}_${new Date().getTime()}.html`;
+        pageTitle = t.modeStandard;
         break;
       case 'vocab':
         htmlContent = generateVocabModeHTML();
-        filename = `${title}_词汇训练_${new Date().getTime()}.html`;
-        pageTitle = '词汇训练';
+        filename = `${title}_${t.downloadFilenameVocab}_${new Date().getTime()}.html`;
+        pageTitle = t.modeVocab;
         break;
       case 'sentence':
         htmlContent = generateSentenceModeHTML();
-        filename = `${title}_句式训练_${new Date().getTime()}.html`;
-        pageTitle = '句式训练';
+        filename = `${title}_${t.downloadFilenameSentence}_${new Date().getTime()}.html`;
+        pageTitle = t.modeSentence;
         break;
       case 'lyricSentence':
         htmlContent = generateLyricAndSentenceHTML();
-        filename = `${title}_歌词和句式_${new Date().getTime()}.html`;
-        pageTitle = '本首歌的歌词+句式';
+        filename = `${title}_${t.downloadFilenameLyricSentence}_${new Date().getTime()}.html`;
+        pageTitle = t.modeLyricSentence;
         break;
     }
     
@@ -2682,8 +2683,9 @@ export default function YoutubeVideoDetail({
                   const sentenceIndex = idx + 1;
                   const vocab = getVocabForSentenceUtil(videoId, sentenceIndex);
                   const tokens: Token[] = convertVocabToTokens(vocab);
-                  // 提取行号和歌词内容（只提取一次）
+                  // 提取行号和歌词内容（只提取一次）；无行号时用句序号显示，保证界面总有行号
                   const { lineNumber, lyricText } = extractLineNumberAndText(sub.text);
+                  const displayLineNumber = lineNumber || String(sentenceIndex);
                   
                   return (
                     <div
@@ -3009,8 +3011,8 @@ export default function YoutubeVideoDetail({
                       <div className="mb-1 pr-32 relative">
                         <div className="text-lg leading-relaxed flex items-start gap-2">
                           {/* 行号 */}
-                          {lineNumber && (
-                            <span className="text-gray-500 font-medium flex-shrink-0 w-8">{lineNumber}</span>
+                          {displayLineNumber && (
+                            <span className="text-gray-500 font-medium flex-shrink-0 w-8">{displayLineNumber}</span>
                           )}
                           {/* 歌词内容 */}
                           <div className="flex-1 min-w-0 flex items-center gap-2">
@@ -3120,7 +3122,7 @@ export default function YoutubeVideoDetail({
                       {/* 拼音显示 */}
                       {(lyricMode === 'standard' || lyricMode === 'pronunciation' || lyricMode === 'vocab' || lyricMode === 'sentence') && (
                         <div className="text-xs text-gray-500 mb-2 leading-relaxed pr-32 flex items-start gap-2">
-                          {lineNumber && (
+                          {displayLineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
                           <span className="flex-1">{getPinyinForSentence(lyricText)}</span>
@@ -3130,7 +3132,7 @@ export default function YoutubeVideoDetail({
                       {/* 韩语翻译 - 标准模式和句式训练模式 */}
                       {(lyricMode === 'standard' || lyricMode === 'sentence') && (
                         <div className="text-sm text-gray-600 leading-relaxed mb-1 flex items-start gap-2">
-                          {lineNumber && (
+                          {displayLineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
                           <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
@@ -3160,7 +3162,7 @@ export default function YoutubeVideoDetail({
                       {/* 声音训练模式：显示翻译和拼音 */}
                       {lyricMode === 'pronunciation' && (
                         <div className="text-sm text-gray-600 leading-relaxed mb-1 flex items-start gap-2">
-                          {lineNumber && (
+                          {displayLineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
                           <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
@@ -3190,7 +3192,7 @@ export default function YoutubeVideoDetail({
                       {/* 词汇训练模式：显示韩文翻译 */}
                       {lyricMode === 'vocab' && (
                         <div className="text-sm text-gray-600 leading-relaxed mb-1 flex items-start gap-2">
-                          {lineNumber && (
+                          {displayLineNumber && (
                             <span className="flex-shrink-0 w-8"></span>
                           )}
                           <span className="flex-1">{getKoreanTranslationUtil(videoId, sentenceIndex) || ''}</span>
@@ -3372,13 +3374,27 @@ export default function YoutubeVideoDetail({
                         if (structureData.structure) {
                           const structureKey = `${sentenceIndex}-${structureData.structure}`;
                           const isStarred = starredStructures.has(structureKey);
+                          const level = structureData.level ?? 'beginner';
+                          const levelStructureClass = level === 'beginner'
+                            ? 'bg-green-100 text-green-800 border-green-200'
+                            : level === 'intermediate'
+                            ? 'bg-blue-100 text-blue-800 border-blue-200'
+                            : 'bg-purple-100 text-purple-800 border-purple-200';
+                          const levelLabel = level === 'beginner' ? '基础' : level === 'intermediate' ? '中级' : '高级';
                           
                           return (
                             <div className="mt-2 border-t border-gray-200 pt-2 space-y-2">
-                              {/* 句型 - 带收藏按钮 */}
+                              {/* 句型 - 按等级显示颜色，带收藏按钮 */}
                               <div className="text-xs text-gray-600 flex items-center gap-2">
                                 <span className="font-semibold">문형：</span>
-                                <span className="ml-1 flex-1">{structureData.structure}</span>
+                                <span className={`ml-1 flex-1 px-2 py-1 rounded border font-medium ${levelStructureClass}`}>
+                                  {structureData.structure}
+                                </span>
+                                <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                                  level === 'beginner' ? 'text-green-600 border-green-300 bg-green-50' : level === 'intermediate' ? 'text-blue-600 border-blue-300 bg-blue-50' : 'text-purple-600 border-purple-300 bg-purple-50'
+                                }`}>
+                                  {levelLabel}
+                                </span>
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -4151,7 +4167,7 @@ export default function YoutubeVideoDetail({
         const structureData = getSentenceStructureUtil(videoId, sentenceIndex);
         return (
           <div
-            className="bg-white rounded-lg shadow-xl border-2 border-green-300 p-4 flex flex-col z-[100]"
+            className="rounded-lg shadow-xl p-4 flex flex-col z-[100] border border-[rgb(226,205,184)] bg-[rgba(250,246,240,0.88)] backdrop-blur-[12px]"
             style={{
               position: 'fixed',
               left: sentenceDialogPosition.left,
@@ -4178,11 +4194,34 @@ export default function YoutubeVideoDetail({
               </button>
             </div>
             {structureData && (
-              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+              <div className={`mb-4 p-3 rounded-lg border ${
+                structureData.level === 'beginner'
+                  ? 'bg-green-50 border-green-200'
+                  : structureData.level === 'intermediate'
+                  ? 'bg-blue-50 border-blue-200'
+                  : 'bg-purple-50 border-purple-200'
+              }`}>
                 {structureData.structure && (
-                  <div className="text-base text-gray-800 mb-2">
-                    <span className="font-semibold">문형：</span>
-                    <span className="ml-2">{structureData.structure}</span>
+                  <div className="text-base mb-2 flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-gray-800">문형：</span>
+                    <span className={`ml-1 px-2 py-1 rounded border font-medium ${
+                      structureData.level === 'beginner'
+                        ? 'bg-green-100 text-green-800 border-green-200'
+                        : structureData.level === 'intermediate'
+                        ? 'bg-blue-100 text-blue-800 border-blue-200'
+                        : 'bg-purple-100 text-purple-800 border-purple-200'
+                    }`}>
+                      {structureData.structure}
+                    </span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${
+                      structureData.level === 'beginner'
+                        ? 'text-green-600 border-green-300 bg-green-50'
+                        : structureData.level === 'intermediate'
+                        ? 'text-blue-600 border-blue-300 bg-blue-50'
+                        : 'text-purple-600 border-purple-300 bg-purple-50'
+                    }`}>
+                      {structureData.level === 'beginner' ? '基础' : structureData.level === 'intermediate' ? '中级' : '高级'}
+                    </span>
                   </div>
                 )}
                 {!structureData.structure && structureData.expanded && (
@@ -4224,12 +4263,10 @@ export default function YoutubeVideoDetail({
               )}
               {isAnalyzingSentence && (
                 <div className="flex justify-start">
-                  <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-2">
-                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    老师正在思考...
+                  <div className="bg-gray-100 rounded-lg px-3 py-2 text-sm text-gray-600 flex items-center gap-1">
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '0ms' }} />
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '150ms' }} />
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-gray-500 animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                 </div>
               )}
@@ -4239,9 +4276,8 @@ export default function YoutubeVideoDetail({
                 <textarea
                   value={sentencePracticeInput}
                   onChange={(e) => setSentencePracticeInput(e.target.value)}
-                  placeholder="输入你造的句子..."
-                  className="flex-1 p-3 border border-gray-300 rounded-lg text-base resize-none"
-                  rows={2}
+                  className="flex-1 p-2 border border-gray-300 rounded-lg text-base resize-none min-h-[28px]"
+                  rows={1}
                   disabled={isAnalyzingSentence}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && !e.shiftKey) {
@@ -4255,9 +4291,9 @@ export default function YoutubeVideoDetail({
                 <button
                   onClick={() => handleSendMessage(sentenceIndex)}
                   disabled={isAnalyzingSentence || !sentencePracticeInput.trim()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  className="px-4 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                   </svg>
                 </button>

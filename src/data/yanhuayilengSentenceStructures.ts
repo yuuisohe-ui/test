@@ -179,6 +179,182 @@ export const yanhuayilengSentenceStructures: Record<number, SentenceStructure> =
     exampleKr: "그는 지도교수를 따라 연구를 한 지 벌써 3년이 되었다.",
     expanded: "",
     translationKr: ""
+  },
+  26: {
+    sentenceIndex: 26,
+    sentence: "雨纷纷 旧故里草木深",
+    structure: "",
+    explanation: "",
+    level: "beginner",
+    example: "",
+    exampleKr: "",
+    expanded: "雨纷纷落下，旧故里的草木长得很茂盛。",
+    translationKr: "비는 분분히 내리고, 옛 고향의 풀과 나무는 무성하구나。"
+  },
+  27: {
+    sentenceIndex: 27,
+    sentence: "我听闻 妳始终一个人",
+    structure: "始终",
+    explanation: "'처음부터 끝까지', '줄곧', '내내'라는 의미로 어떤 상태가 변함없이 지속됨을 나타냅니다.",
+    level: "intermediate",
+    example: "他始终没有放弃自己的梦想。",
+    exampleKr: "그는 끝내 자신의 꿈을 포기하지 않았다.",
+    expanded: "",
+    translationKr: ""
+  },
+  28: {
+    sentenceIndex: 28,
+    sentence: "斑驳的城门 盘踞着老树根",
+    structure: "V + 着",
+    explanation: "동사 뒤에 쓰여 동작의 지속이나 상태의 유지를 나타냅니다.",
+    level: "beginner",
+    example: "大门上关着锁。",
+    exampleKr: "대문에는 자물쇠가 채워져 있다.",
+    expanded: "",
+    translationKr: ""
+  },
+  29: {
+    sentenceIndex: 29,
+    sentence: "石板上回荡的是 再等",
+    structure: "……的是……",
+    explanation: "특정 부분을 강조하기 위한 구조로, '~한 것은 ~이다'라는 뜻으로 해석됩니다.",
+    level: "intermediate",
+    example: "我最想要的是一个安静的环境。",
+    exampleKr: "내가 가장 원하는 것은 조용한 환경이다.",
+    expanded: "",
+    translationKr: ""
+  },
+  30: {
+    sentenceIndex: 30,
+    sentence: "雨纷纷 旧故里草木深",
+    structure: "",
+    explanation: "",
+    level: "beginner",
+    example: "",
+    exampleKr: "",
+    expanded: "雨纷纷地落下，在那旧故里草木已长得深茂。",
+    translationKr: "비는 분분히 내리고 옛 고향 땅엔 풀과 나무가 우거졌네。"
+  },
+  31: {
+    sentenceIndex: 31,
+    sentence: "我听闻 你仍守着孤城",
+    structure: "仍",
+    explanation: "'여전히', '아직도'라는 의미로 이전의 상황이 계속되고 있음을 나타냅니다.",
+    level: "intermediate",
+    example: "尽管过了很多年，他仍居住在这里。",
+    exampleKr: "비록 많은 해가 지났지만, 그는 여전히 이곳에 거주하고 있다.",
+    expanded: "",
+    translationKr: ""
+  },
+  32: {
+    sentenceIndex: 32,
+    sentence: "城郊牧笛声 落在那座野村",
+    structure: "V + 落在……",
+    explanation: "동작의 결과나 주체가 특정 장소에 가 닿음을 나타내는 결과 보어 구조입니다.",
+    level: "intermediate",
+    example: "雪花落在了他的肩膀上。",
+    exampleKr: "눈송이가 그의 어깨 위에 내려앉았다.",
+    expanded: "",
+    translationKr: ""
+  },
+  33: {
+    sentenceIndex: 33,
+    sentence: "缘份落地生根是我们",
+    structure: "……是……",
+    explanation: "판단이나 정의를 나타내는 가장 기본적인 술어 구조입니다.",
+    level: "beginner",
+    example: "这本字典是我的。",
+    exampleKr: "이 사전은 내 것이다.",
+    expanded: "",
+    translationKr: ""
+  },
+  34: {
+    sentenceIndex: 34,
+    sentence: "雨纷纷 旧故里草木深 我听闻 妳始终一个人",
+    structure: "",
+    explanation: "",
+    level: "intermediate",
+    example: "",
+    exampleKr: "",
+    expanded: "雨纷纷地下，旧故里的草木繁茂，我听说妳直到现在还是一个人生活。",
+    translationKr: "비가 내리고 옛 고향의 풀과 나무는 무성한데, 듣자하니 당신은 줄곧 혼자라더군요。"
+  },
+  35: {
+    sentenceIndex: 35,
+    sentence: "斑驳的城门 盘踞着老树根 石板上回荡的是 再等",
+    structure: "",
+    explanation: "",
+    level: "advanced",
+    example: "",
+    exampleKr: "",
+    expanded: "斑驳的城门上盘踞着老树的根，而在石板上不断回荡着的话语是\"再等\"。",
+    translationKr: "얼룩진 성문엔 고목의 뿌리가 뒤엉켜 있고, 석판 위에 메아리치는 것은 다시 기다리겠다는 말뿐이네。"
+  },
+  36: {
+    sentenceIndex: 36,
+    sentence: "雨纷纷 雨纷纷 旧故里草木深",
+    structure: "",
+    explanation: "",
+    level: "beginner",
+    example: "",
+    exampleKr: "",
+    expanded: "雨不停地纷纷落下，旧故里的草木已经长得很深了。",
+    translationKr: "비는 내리고 또 내리는데, 옛 고향의 풀과 나무만 무성해졌구나。"
+  },
+  37: {
+    sentenceIndex: 37,
+    sentence: "我听闻 我听闻 妳仍守着孤城",
+    structure: "仍",
+    explanation: "변함없는 상태를 강조하며 '여전히'라는 뜻으로 사용됩니다.",
+    level: "intermediate",
+    example: "虽然失败了，他仍不丧气。",
+    exampleKr: "비록 실패했지만, 그는 여전히 낙담하지 않는다.",
+    expanded: "",
+    translationKr: ""
+  },
+  38: {
+    sentenceIndex: 38,
+    sentence: "城郊牧笛声 落在那座野村",
+    structure: "V + 落在……",
+    explanation: "동작의 작용점이 특정 위치에 도달함을 강조합니다.",
+    level: "intermediate",
+    example: "目光落在了那张旧照片上。",
+    exampleKr: "시선이 그 낡은 사진 위에 머물렀다.",
+    expanded: "",
+    translationKr: ""
+  },
+  39: {
+    sentenceIndex: 39,
+    sentence: "缘份落地生根是我们",
+    structure: "",
+    explanation: "",
+    level: "intermediate",
+    example: "",
+    exampleKr: "",
+    expanded: "缘份在地上扎根生长的结果就是我们。",
+    translationKr: "인연이 땅에 내려 뿌리 내린 것은 바로 우리라네。"
+  },
+  40: {
+    sentenceIndex: 40,
+    sentence: "缘份落地生根是我们",
+    structure: "",
+    explanation: "",
+    level: "intermediate",
+    example: "",
+    exampleKr: "",
+    expanded: "那落地生根的缘分，指的就是我们的故事。",
+    translationKr: "땅에 뿌리 내린 그 인연은 바로 우리의 모습이라네。"
+  },
+  41: {
+    sentenceIndex: 41,
+    sentence: "伽蓝寺听雨声盼永恒",
+    structure: "",
+    explanation: "",
+    level: "advanced",
+    example: "",
+    exampleKr: "",
+    expanded: "在伽蓝寺里听着雨声，期盼着能够拥有永恒。",
+    translationKr: "가람사에서 빗소리를 들으며 영원함을 바라네。"
   }
 };
 

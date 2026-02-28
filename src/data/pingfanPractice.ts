@@ -234,107 +234,323 @@ export const pingfanPracticeData: SentencePractice[] = [
       { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["就算下大雨，", "我也要", "按时到达。"], correctAnswer: "就算下大雨，我也要按时到达。", explanation: "가정(就算...) + 결과(也要...) 순서입니다.", difficulty: "medium" }
     ]
   },
-  { sentenceIndex: 28, questions: [] },
+  {
+    sentenceIndex: 28,
+    questions: [
+      { type: "multipleChoice", question: "'向前走'의 올바른 병음은 무엇입니까?", options: ["xiàng qián zǒu", "xiǎng qián zǒu", "xiàng qiān zǒu", "xiang qián zǒu"], correctAnswer: "xiàng qián zǒu", explanation: "xiàng(4)-qián(2)-zǒu(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'의 성조 조합은 무엇입니까?", options: ["4-2-3", "3-2-3", "4-1-3", "4-2-4"], correctAnswer: "4-2-3", explanation: "4-2-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'앞으로 나아가다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我都会", "向前走。", "不管多难，", "都会向前走。"], correctAnswer: "不管多难，我都会向前走。", explanation: "조건절 뒤에 주절이 옵니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 29,
     questions: [
-      { type: "multipleChoice", question: "'夺走'의 올바른 병음은 무엇입니까?", options: ["duó zǒu", "duō zǒu", "tuó zǒu", "duó zóu"], correctAnswer: "duó zǒu", explanation: "夺走의 병음은 duó zǒu입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'夺走'의 성조 조합은 무엇입니까?", options: ["2-3", "1-3", "2-4", "4-3"], correctAnswer: "2-3", explanation: "duó(2성) zǒu(3성) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'夺走'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "장소 표현", "时间 표현"], correctAnswer: "동작 표현", explanation: "빼앗아 가는 강한 동작을 나타냅니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["地震", "夺走了", "许多人的生命。"], correctAnswer: "地震夺走了许多人的生命。", explanation: "주어(원인) + 동사 + 목적어 순서로 배열합니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'夺走'의 올바른 병음은 무엇입니까?", options: ["duó zǒu", "duǒ zǒu", "duó zōu", "duo zǒu"], correctAnswer: "duó zǒu", explanation: "duó(2) + zǒu(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'夺走'의 성조 조합은 무엇입니까?", options: ["2-3", "3-3", "2-4", "1-3"], correctAnswer: "2-3", explanation: "2-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'夺走'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'빼앗아 가다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["夺走了", "时间", "很多东西。", "时间夺走了"], correctAnswer: "时间夺走了很多东西。", explanation: "주어 + 동사 + 목적어입니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 30, questions: [] },
+  {
+    sentenceIndex: 30,
+    questions: [
+      { type: "multipleChoice", question: "'向前走'의 올바른 병음은 무엇입니까?", options: ["xiàng qián zǒu", "xiǎng qián zǒu", "xiàng qiān zǒu", "xiang qián zǒu"], correctAnswer: "xiàng qián zǒu", explanation: "xiàng(4)-qián(2)-zǒu(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'의 성조 조합은 무엇입니까?", options: ["4-2-3", "4-2-4", "3-2-3", "4-1-3"], correctAnswer: "4-2-3", explanation: "4-2-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'나아가다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["也要", "向前走。", "跌倒了", "跌倒了也要"], correctAnswer: "跌倒了也要向前走。", explanation: "앞 절(跌倒了) 뒤에 '也要'가 옵니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 31,
     questions: [
-      { type: "multipleChoice", question: "'错过'의 올바른 병음은 무엇입니까?", options: ["cuò guò", "cuō guò", "chuò guò", "cuò guó"], correctAnswer: "cuò guò", explanation: "错过의 병음은 cuò guò입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'错过'의 성조 조합은 무엇입니까?", options: ["4-4", "4-0", "1-4", "3-4"], correctAnswer: "4-4", explanation: "cuò(4성) guò(4성) 조합입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'错过'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "경험 표현", "时间 표현"], correctAnswer: "동작 표현", explanation: "기회를 놓치는 구체적인 상황을 나타내는 동사입니다.", difficulty: "medium" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["因为堵车，", "他错过了", "最后一班火车。"], correctAnswer: "因为堵车，他错过了最后一班火车。", explanation: "이유(因为) + 동사구 + 목적어 순서입니다.", difficulty: "medium" }
+      { type: "multipleChoice", question: "'错过'의 올바른 병음은 무엇입니까?", options: ["cuò guò", "cuó guò", "cuò guǒ", "cuo guò"], correctAnswer: "cuò guò", explanation: "cuò(4) + guò(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'错过'의 성조 조합은 무엇입니까?", options: ["4-4", "4-3", "2-4", "3-4"], correctAnswer: "4-4", explanation: "4-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'错过'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'놓치다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我不想", "错过", "这次机会。", "错过这次机会。"], correctAnswer: "我不想错过这次机会。", explanation: "'不想' 뒤에 동사구가 옵니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 32, questions: [] },
+  {
+    sentenceIndex: 32,
+    questions: [
+      { type: "multipleChoice", question: "'向前走'의 올바른 병음은 무엇입니까?", options: ["xiàng qián zǒu", "xiǎng qián zǒu", "xiàng qiān zǒu", "xiang qián zǒu"], correctAnswer: "xiàng qián zǒu", explanation: "xiàng(4)-qián(2)-zǒu(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'의 성조 조합은 무엇입니까?", options: ["4-2-3", "4-2-4", "3-2-3", "4-1-3"], correctAnswer: "4-2-3", explanation: "4-2-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'向前走'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'계속 걷다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["别回头，", "继续", "向前走。", "继续向前走。"], correctAnswer: "别回头，继续向前走。", explanation: "쉼표 뒤에 동작 지시가 옵니다.", difficulty: "medium" },
+    ]
+  },
   { sentenceIndex: 33, questions: [] },
-  { sentenceIndex: 34, questions: [] },
-  { sentenceIndex: 35, questions: [] },
-  { sentenceIndex: 36, questions: [] },
-  { sentenceIndex: 37, questions: [] },
-  { sentenceIndex: 38, questions: [] },
-  { sentenceIndex: 39, questions: [] },
-  { sentenceIndex: 40, questions: [] },
-  { sentenceIndex: 41, questions: [] },
-  { sentenceIndex: 42, questions: [] },
-  { sentenceIndex: 43, questions: [] },
-  { sentenceIndex: 44, questions: [] },
-  { sentenceIndex: 45, questions: [] },
-  { sentenceIndex: 46, questions: [] },
-  { sentenceIndex: 47, questions: [] },
+  {
+    sentenceIndex: 34,
+    questions: [
+      { type: "multipleChoice", question: "'跨过'의 올바른 병음은 무엇입니까?", options: ["kuà guò", "kuá guò", "kuà guǒ", "kua guò"], correctAnswer: "kuà guò", explanation: "kuà(4) + guò(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'跨过'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-3", "3-4"], correctAnswer: "4-4", explanation: "4-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'跨过'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'넘어서다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我想", "跨过", "山和大海。", "跨过山和大海。"], correctAnswer: "我想跨过山和大海。", explanation: "'想' 뒤에 동사구가 옵니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 35,
+    questions: [
+      { type: "multipleChoice", question: "'穿过'의 올바른 병음은 무엇입니까?", options: ["chuān guò", "chuán guò", "chuān guǒ", "chuan guò"], correctAnswer: "chuān guò", explanation: "chuān(1) + guò(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'穿过'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "4-4"], correctAnswer: "1-4", explanation: "1-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'穿过'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'통과하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我", "穿过", "人山人海", "去找你。", "穿过人山人海"], correctAnswer: "我穿过人山人海去找你。", explanation: "동작(穿过) 뒤에 목적(去找你)이 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'人山人海'의 올바른 병음은 무엇입니까?", options: ["rén shān rén hǎi", "rén shān rěn hǎi", "rén shǎn rén hǎi", "ren shān rén hǎi"], correctAnswer: "rén shān rén hǎi", explanation: "rén(2)-shān(1)-rén(2)-hǎi(3)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'人山人海'의 성조 조합은 무엇입니까?", options: ["2-1-2-3", "2-2-2-3", "1-1-2-3", "2-1-3-3"], correctAnswer: "2-1-2-3", explanation: "2-1-2-3 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'人山人海'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "사람이 매우 많은 상태를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["广场上", "人山人海。", "广场", "上人山人海。"], correctAnswer: "广场上人山人海。", explanation: "장소 + 상태 표현입니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 36,
+    questions: [
+      { type: "multipleChoice", question: "'拥有'의 올바른 병음은 무엇입니까?", options: ["yōng yǒu", "yǒng yǒu", "yōng yòu", "yong yǒu"], correctAnswer: "yōng yǒu", explanation: "yōng(1) + yǒu(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'拥有'의 성조 조합은 무엇입니까?", options: ["1-3", "3-3", "1-4", "2-3"], correctAnswer: "1-3", explanation: "1-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'拥有'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "장소 표현", "시간 표현"], correctAnswer: "동작 표현", explanation: "'소유하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我想", "拥有", "一切。", "拥有一切。"], correctAnswer: "我想拥有一切。", explanation: "'想' 뒤에 동사구가 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一切'의 올바른 병음은 무엇입니까?", options: ["yí qiè", "yì qiè", "yí qiě", "yi qiè"], correctAnswer: "yí qiè", explanation: "yí(2) + qiè(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一切'의 성조 조합은 무엇입니까?", options: ["2-4", "4-4", "2-3", "1-4"], correctAnswer: "2-4", explanation: "2-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'一切'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "수량 표현", "동작 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'拥有'의 목적어입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["拥有", "一切。", "我想", "我想拥有"], correctAnswer: "我想拥有一切。", explanation: "주어 + 의도 + 동사 + 목적어입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 37,
+    questions: [
+      { type: "multipleChoice", question: "'转眼'의 올바른 병음은 무엇입니까?", options: ["zhuǎn yǎn", "zhuàn yǎn", "zhuǎn yàn", "zhuan yǎn"], correctAnswer: "zhuǎn yǎn", explanation: "zhuǎn(3) + yǎn(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'转眼'의 성조 조합은 무엇입니까?", options: ["3-3", "4-3", "3-4", "2-3"], correctAnswer: "3-3", explanation: "3-3 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'转眼'는 위 문장에서 어떤 역할을 합니까?", options: ["시간 표현", "동작 표현", "장소 표현", "수량 표현"], correctAnswer: "시간 표현", explanation: "'눈 깜짝할 사이'라는 시간/순간을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["一年", "就过去了。", "转眼间", "一年就过去了。"], correctAnswer: "转眼间一年就过去了。", explanation: "시간부사(转眼间)가 문두에 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'飘散如烟'의 올바른 병음은 무엇입니까?", options: ["piāo sàn rú yān", "piáo sàn rú yān", "piāo sǎn rú yān", "piao sàn rú yān"], correctAnswer: "piāo sàn rú yān", explanation: "piāo(1)-sàn(4)-rú(2)-yān(1)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'飘散如烟'의 성조 조합은 무엇입니까?", options: ["1-4-2-1", "1-3-2-1", "2-4-2-1", "1-4-1-1"], correctAnswer: "1-4-2-1", explanation: "1-4-2-1 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'飘散如烟'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "'回忆'의 상태(흩어짐)를 비유로 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["回忆", "飘散如烟。", "如烟。", "飘散"], correctAnswer: "回忆飘散如烟。", explanation: "주어 + 비유적 서술입니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 38,
+    questions: [
+      { type: "multipleChoice", question: "'失落'의 올바른 병음은 무엇입니까?", options: ["shī luò", "shí luò", "shī luō", "shi luò"], correctAnswer: "shī luò", explanation: "shī(1) + luò(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失落'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-1", "3-4"], correctAnswer: "1-4", explanation: "1-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失落'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "상태 묘사", explanation: "감정/상태를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我", "感到", "很", "失落。", "感到很失落。"], correctAnswer: "我感到很失落。", explanation: "동사(感到) 뒤에 정도 + 상태가 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失望'의 올바른 병음은 무엇입니까?", options: ["shī wàng", "shí wàng", "shī wǎng", "shi wàng"], correctAnswer: "shī wàng", explanation: "shī(1) + wàng(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失望'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "4-4"], correctAnswer: "1-4", explanation: "1-4 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失望'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "감정 상태를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "对结果", "很", "失望。", "对结果很失望。"], correctAnswer: "他对结果很失望。", explanation: "'对+대상' 뒤에 상태가 옵니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'失掉'의 올바른 병음은 무엇입니까?", options: ["shī diào", "shí diào", "shī diāo", "shi diào"], correctAnswer: "shī diào", explanation: "shī(1) + diào(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'失掉'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-1", "3-4"], correctAnswer: "1-4", explanation: "1-4 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'失掉'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "시간 표현", "장소 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'잃다'라는 행동을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "失掉了", "方向。", "失掉了方向。"], correctAnswer: "他失掉了方向。", explanation: "동사(失掉了) 뒤에 목적어가 옵니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'方向'의 올바른 병음은 무엇입니까?", options: ["fāng xiàng", "fáng xiàng", "fāng xiǎng", "fang xiàng"], correctAnswer: "fāng xiàng", explanation: "fāng(1) + xiàng(4)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'方向'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "4-4"], correctAnswer: "1-4", explanation: "1-4 조합입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'方向'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "수량 표현", "동작 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'失掉'의 목적어입니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["方向。", "他", "失掉了", "他失掉了"], correctAnswer: "他失掉了方向。", explanation: "주어 + 동사 + 목적어입니다.", difficulty: "easy" },
+    ]
+  },
+  {
+    sentenceIndex: 39,
+    questions: [
+      { type: "multipleChoice", question: "'平凡'의 올바른 병음은 무엇입니까?", options: ["píng fán", "pǐng fán", "píng fàn", "bíng fán"], correctAnswer: "píng fán", explanation: "平凡는 píng fán으로 읽으며 2성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'平凡'의 성조 조합은 무엇입니까?", options: ["2-2", "2-4", "1-2", "3-2"], correctAnswer: "2-2", explanation: "píng(2성)과 fán(2성)이므로 성조 조합은 2-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'平凡'는 '他虽然是个平凡的人，但工作很刻苦。'에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "平凡는 사람의 특성이 평범함을 묘사하는 형용사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他虽然是个", "平凡的人，", "但工作", "很刻苦。"], correctAnswer: "他虽然是个平凡的人，但工作很刻苦。", explanation: "虽然...但... 전환 구조로 앞절과 뒷절을 연결합니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'唯一'의 올바른 병음은 무엇입니까?", options: ["wéi yī", "wèi yī", "wéi yí", "wěi yī"], correctAnswer: "wéi yī", explanation: "唯一는 wéi yī로 읽으며 2성+1성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'唯一'의 성조 조합은 무엇입니까?", options: ["2-1", "4-1", "2-4", "3-1"], correctAnswer: "2-1", explanation: "wéi(2성)와 yī(1성)이므로 성조 조합은 2-1입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'唯一'는 '这是他唯一的机会。'에서 어떤 역할을 합니까?", options: ["수량 및 범위 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "수량 및 범위 표현", explanation: "唯一는 오직 하나뿐임을 한정하는 관형어입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这是他", "唯一的", "机会。"], correctAnswer: "这是他唯一的机会。", explanation: "주어+是+관형어+목적어 구조입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 40,
+    questions: [
+      { type: "multipleChoice", question: "'毁'의 올바른 병음은 무엇입니까?", options: ["huǐ", "huì", "huí", "huī"], correctAnswer: "huǐ", explanation: "毁는 huǐ로 읽으며 3성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'毁'의 성조 조합은 무엇입니까?", options: ["3", "4", "2", "1"], correctAnswer: "3", explanation: "huǐ는 3성 단음절입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'毁'는 '这场火灾毁了他的房子。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "毁는 무언가를 파괴하는 동작을 나타내는 동사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这场火灾", "毁了", "他的房子。"], correctAnswer: "这场火灾毁了他的房子。", explanation: "주어+동사+목적어 구조입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 41,
+    questions: [
+      { type: "multipleChoice", question: "'永远'의 올바른 병음은 무엇입니까?", options: ["yǒng yuǎn", "yōng yuǎn", "yóng yuǎn", "yǒng yuān"], correctAnswer: "yǒng yuǎn", explanation: "永远는 yǒng yuǎn으로 읽으며 3성+3성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'永远'의 성조 조합은 무엇입니까?", options: ["3-3", "1-3", "3-2", "4-3"], correctAnswer: "3-3", explanation: "yǒng(3성)과 yuǎn(3성)이므로 성조 조합은 3-3입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'永远'는 '我会永远记得这一天。'에서 어떤 역할을 합니까?", options: ["시간 표현", "장소 표현", "동작 표현", "상태 묘사"], correctAnswer: "시간 표현", explanation: "永远는 영원히 계속됨을 나타내는 시간 부사입니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我会", "永远记得", "这一天。"], correctAnswer: "我会永远记得这一天。", explanation: "주어+조동사+시간부사+동사+목적어 구조입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'离开'의 올바른 병음은 무엇입니까?", options: ["lí kāi", "lì kāi", "lí kài", "lǐ kāi"], correctAnswer: "lí kāi", explanation: "离开는 lí kāi로 읽으며 2성+1성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'离开'의 성조 조합은 무엇입니까?", options: ["2-1", "4-1", "2-4", "3-1"], correctAnswer: "2-1", explanation: "lí(2성)와 kāi(1성)이므로 성조 조합은 2-1입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'离开'는 '他悄悄地离开了房间。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "离开는 어떤 장소나 사람 곁을 떠나는 동작을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他悄悄地", "离开了", "房间。"], correctAnswer: "他悄悄地离开了房间。", explanation: "주어+방식부사구+동사+목적어 구조입니다.", difficulty: "easy" },
+    ]
+  },
+  {
+    sentenceIndex: 42,
+    questions: [
+      { type: "multipleChoice", question: "'堕入'의 올바른 병음은 무엇입니까?", options: ["duò rù", "duó rù", "duò rú", "duǒ rù"], correctAnswer: "duò rù", explanation: "堕入는 duò rù로 읽으며 4성+4성입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'堕入'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-2", "3-4"], correctAnswer: "4-4", explanation: "duò(4성)와 rù(4성)이므로 성조 조합은 4-4입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'堕入'는 '他堕入了无尽的黑暗之中。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "堕入는 어떤 상태나 처지로 빠져드는 동작을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他堕入了", "无尽的", "黑暗之中。"], correctAnswer: "他堕入了无尽的黑暗之中。", explanation: "주어+동사+관형어+목적어 구조입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'黑暗'의 올바른 병음은 무엇입니까?", options: ["hēi àn", "hěi àn", "hēi ān", "hēi án"], correctAnswer: "hēi àn", explanation: "黑暗는 hēi àn으로 읽으며 1성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'黑暗'의 성조 조합은 무엇입니까?", options: ["1-4", "1-1", "3-4", "2-4"], correctAnswer: "1-4", explanation: "hēi(1성)와 àn(4성)이므로 성조 조합은 1-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'黑暗'는 '屋子里一片黑暗。'에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "대상 표현"], correctAnswer: "상태 묘사", explanation: "黑暗는 빛이 없어 어두운 상태를 묘사합니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["屋子里", "一片", "黑暗。"], correctAnswer: "屋子里一片黑暗。", explanation: "장소어+수량묘사+상태명사 구조입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 43,
+    questions: [
+      { type: "multipleChoice", question: "'挣扎'의 올바른 병음은 무엇입니까?", options: ["zhēng zhá", "zhèng zhá", "zhēng zhǎ", "zhēn zhá"], correctAnswer: "zhēng zhá", explanation: "挣扎는 zhēng zhá로 읽으며 1성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'挣扎'의 성조 조합은 무엇입니까?", options: ["1-2", "4-2", "1-3", "1-1"], correctAnswer: "1-2", explanation: "zhēng(1성)과 zhá(2성)이므로 성조 조합은 1-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'挣扎'는 '他在水中拼命挣扎。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "挣扎는 어려움에서 벗어나려 몸부림치는 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "在水中", "拼命挣扎。"], correctAnswer: "他在水中拼命挣扎。", explanation: "주어+장소구+정도부사+동사 구조입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'无法自拔'의 올바른 병음은 무엇입니까?", options: ["wú fǎ zì bá", "wù fǎ zì bá", "wú fā zì bá", "wú fǎ zì bǎ"], correctAnswer: "wú fǎ zì bá", explanation: "无法自拔는 wú fǎ zì bá로 읽으며 2-3-4-2성입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'无法自拔'의 성조 조합은 무엇입니까?", options: ["2-3-4-2", "2-3-4-4", "2-4-4-2", "1-3-4-2"], correctAnswer: "2-3-4-2", explanation: "wú(2)·fǎ(3)·zì(4)·bá(2) 성조 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'无法自拔'는 '他陷入痛苦，无法自拔。'에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "无法自拔는 빠져나올 수 없는 상태를 묘사하는 관용표현입니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他陷入痛苦，", "无法", "自拔。"], correctAnswer: "他陷入痛苦，无法自拔。", explanation: "원인절+결과표현 구조입니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 44,
+    questions: [
+      { type: "multipleChoice", question: "'野草野花'의 올바른 병음은 무엇입니까?", options: ["yě cǎo yě huā", "yè cǎo yě huā", "yě cǎo yè huā", "yě chǎo yě huā"], correctAnswer: "yě cǎo yě huā", explanation: "野草野花는 yě cǎo yě huā로 읽으며 3-3-3-1성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'野草野花'의 성조 조합은 무엇입니까?", options: ["3-3-3-1", "4-3-3-1", "3-3-4-1", "3-1-3-1"], correctAnswer: "3-3-3-1", explanation: "yě(3)·cǎo(3)·yě(3)·huā(1) 성조 조합입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'野草野花'는 '山坡上到处都是野草野花。'에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "상태 묘사"], correctAnswer: "대상 표현", explanation: "野草野花는 존재하는 사물을 나타내는 명사 목적어입니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["山坡上", "到处都是", "野草野花。"], correctAnswer: "山坡上到处都是野草野花。", explanation: "장소어+부사+동사+목적어 구조입니다.", difficulty: "easy" },
+    ]
+  },
+  {
+    sentenceIndex: 45,
+    questions: [
+      { type: "multipleChoice", question: "'绝望'의 올바른 병음은 무엇입니까?", options: ["jué wàng", "juě wàng", "jué wāng", "juè wàng"], correctAnswer: "jué wàng", explanation: "绝望는 jué wàng으로 읽으며 2성+4성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'绝望'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-1", "1-4"], correctAnswer: "2-4", explanation: "jué(2성)와 wàng(4성)이므로 성조 조합은 2-4입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'绝望'는 '在最绝望的时候，他也没有放弃。'에서 어떤 역할을 합니까?", options: ["심리 상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "심리 상태 묘사", explanation: "绝望는 희망이 완전히 사라진 심리적 상태를 묘사합니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["在最绝望的", "时候，", "他也没有", "放弃。"], correctAnswer: "在最绝望的时候，他也没有放弃。", explanation: "시간전치사구+주어+부정부사구+동사 구조입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'渴望'의 올바른 병음은 무엇입니까?", options: ["kě wàng", "kè wàng", "kě wǎng", "ké wàng"], correctAnswer: "kě wàng", explanation: "渴望는 kě wàng으로 읽으며 3성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'渴望'의 성조 조합은 무엇입니까?", options: ["3-4", "4-4", "3-2", "2-4"], correctAnswer: "3-4", explanation: "kě(3성)와 wàng(4성)이므로 성조 조합은 3-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'渴望'는 '他渴望得到别人的认可。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "渴望는 무언가를 간절히 바라는 심리적 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他渴望", "得到", "别人的认可。"], correctAnswer: "他渴望得到别人的认可。", explanation: "주어+동사+보충동사구+목적어 구조입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 46,
+    questions: [
+      { type: "multipleChoice", question: "'平凡'의 올바른 병음은 무엇입니까?", options: ["píng fán", "pǐng fán", "píng fàn", "bíng fán"], correctAnswer: "píng fán", explanation: "平凡는 píng fán으로 읽으며 2성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'平凡'의 성조 조합은 무엇입니까?", options: ["2-2", "2-4", "1-2", "3-2"], correctAnswer: "2-2", explanation: "píng(2성)과 fán(2성)이므로 성조 조합은 2-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'平凡'는 '他虽然是个平凡的人，但工作很刻苦。'에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "平凡는 사람의 특성이 평범함을 묘사하는 형용사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他虽然是个", "平凡的人，", "但工作", "很刻苦。"], correctAnswer: "他虽然是个平凡的人，但工作很刻苦。", explanation: "虽然...但... 전환 구조로 앞절과 뒷절을 연결합니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 47,
+    questions: [
+      { type: "multipleChoice", question: "'跨过'의 올바른 병음은 무엇입니까?", options: ["kuà guò", "kuā guò", "kuà guó", "kuǎ guò"], correctAnswer: "kuà guò", explanation: "跨过는 kuà guò로 읽으며 4성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'跨过'의 성조 조합은 무엇입니까?", options: ["4-4", "1-4", "4-2", "3-4"], correctAnswer: "4-4", explanation: "kuà(4성)와 guò(4성)이므로 성조 조합은 4-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'跨过'는 '我们要努力跨过这个难关。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "대상 표현", "시간 표현"], correctAnswer: "동작 표현", explanation: "跨过는 어려움을 넘어서는 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我们要", "努力跨过", "这个难关。"], correctAnswer: "我们要努力跨过这个难关。", explanation: "주어+조동사+부사+동사+목적어 구조입니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 48,
     questions: [
-      { type: "multipleChoice", question: "'问遍'의 올바른 병음은 무엇입니까?", options: ["wèn biàn", "wèn biān", "wén biàn", "wèn piàn"], correctAnswer: "wèn biàn", explanation: "问遍의 병음은 wèn biàn입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'问遍'의 성조 조합은 무엇입니까?", options: ["4-4", "4-1", "2-4", "3-4"], correctAnswer: "4-4", explanation: "wèn(4성) biàn(4성) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'问遍'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "장소 표현", "时间 표현"], correctAnswer: "동작 표현", explanation: "모두 물어보았다는 동작의 완료와 범위를 나타냅니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我问遍了所有人，", "但没一个", "知道他的下落。"], correctAnswer: "我问遍了所有人，但没一个知道他的下落。", explanation: "전제 조건 + 전환 접속사 + 부정 결과 순서입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'穿过'의 올바른 병음은 무엇입니까?", options: ["chuān guò", "chuǎn guò", "chuān guó", "chuàn guò"], correctAnswer: "chuān guò", explanation: "穿过는 chuān guò로 읽으며 1성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'穿过'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-2", "4-4"], correctAnswer: "1-4", explanation: "chuān(1성)과 guò(4성)이므로 성조 조합은 1-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'穿过'는 '他穿过森林，找到了出口。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "穿过는 어떤 공간을 통과하는 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他穿过森林，", "找到了", "出口。"], correctAnswer: "他穿过森林，找到了出口。", explanation: "동작절+결과절 구조입니다.", difficulty: "medium" },
     ]
   },
   {
     sentenceIndex: 49,
     questions: [
-      { type: "multipleChoice", question: "'从来'의 올바른 병음은 무엇입니까?", options: ["cóng lái", "chóng lái", "cōng lái", "cóng nái"], correctAnswer: "cóng lái", explanation: "从来의 병음은 cóng lái입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'从来'의 성조 조합은 무엇입니까?", options: ["2-2", "1-2", "2-4", "3-2"], correctAnswer: "2-2", explanation: "cóng(2성) lái(2성) 조합입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'从来'는 위 문장에서 어떤 역할을 합니까?", options: ["시간 표현", "동작 표현", "장소 표현", "대상 표현"], correctAnswer: "시간 표현", explanation: "과거부터 현재까지의 시간을 나타내는 부사입니다.", difficulty: "medium" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我从来没见过", "这么漂亮的", "景色。"], correctAnswer: "我从来没见过这么漂亮的景色。", explanation: "부사+부정동사 + 관형어 + 목적어 순서입니다.", difficulty: "medium" }
+      { type: "multipleChoice", question: "'问遍'의 올바른 병음은 무엇입니까?", options: ["wèn biàn", "wén biàn", "wèn biān", "wěn biàn"], correctAnswer: "wèn biàn", explanation: "问遍는 wèn biàn으로 읽으며 4성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'问遍'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-3", "3-4"], correctAnswer: "4-4", explanation: "wèn(4성)과 biàn(4성)이므로 성조 조합은 4-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'问遍'는 '他问遍了所有的人，都没有得到答案。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "장소 표현", "시간 표현"], correctAnswer: "동작 표현", explanation: "问遍는 빠짐없이 모두 물어보는 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他问遍了", "所有的人，", "都没有", "得到答案。"], correctAnswer: "他问遍了所有的人，都没有得到答案。", explanation: "동작절+결과절 구조입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'整个'의 올바른 병음은 무엇입니까?", options: ["zhěng gè", "zhèng gè", "zhěng gē", "zěng gè"], correctAnswer: "zhěng gè", explanation: "整个는 zhěng gè로 읽으며 3성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'整个'의 성조 조합은 무엇입니까?", options: ["3-4", "4-4", "3-1", "2-4"], correctAnswer: "3-4", explanation: "zhěng(3성)과 gè(4성)이므로 성조 조합은 3-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'整个'는 '整个下午我都在看书。'에서 어떤 역할을 합니까?", options: ["수량 및 범위 표현", "동작 표현", "장소 표현", "상태 묘사"], correctAnswer: "수량 및 범위 표현", explanation: "整个는 전체 범위를 한정하는 관형어 역할을 합니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["整个下午", "我都在", "看书。"], correctAnswer: "整个下午我都在看书。", explanation: "시간범위어+주어+부사+진행술어 구조입니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 50, questions: [] },
+  {
+    sentenceIndex: 50,
+    questions: [
+      { type: "multipleChoice", question: "'从来'의 올바른 병음은 무엇입니까?", options: ["cóng lái", "cōng lái", "cǒng lái", "còng lái"], correctAnswer: "cóng lái", explanation: "从来는 cóng lái로 읽으며 2성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'从来'의 성조 조합은 무엇입니까?", options: ["2-2", "1-2", "2-1", "4-2"], correctAnswer: "2-2", explanation: "cóng(2성)과 lái(2성)이므로 성조 조합은 2-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'从来'는 '他从来不迟到。'에서 어떤 역할을 합니까?", options: ["시간 표현", "장소 표현", "대상 표현", "수량 표현"], correctAnswer: "시간 표현", explanation: "从来는 과거부터 현재까지를 나타내는 시간 부사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "从来不", "迟到。"], correctAnswer: "他从来不迟到。", explanation: "주어+시간부사+부정어+동사 구조입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'得到'의 올바른 병음은 무엇입니까?", options: ["dé dào", "dě dào", "dé dāo", "dè dào"], correctAnswer: "dé dào", explanation: "得到는 dé dào로 읽으며 2성+4성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'得到'의 성조 조합은 무엇입니까?", options: ["2-4", "2-2", "4-4", "1-4"], correctAnswer: "2-4", explanation: "dé(2성)와 dào(4성)이므로 성조 조합은 2-4입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'得到'는 '他终于得到了想要的结果。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "得到는 무언가를 얻거나 획득하는 동작을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他终于", "得到了", "想要的结果。"], correctAnswer: "他终于得到了想要的结果。", explanation: "주어+부사+동사+관형절+목적어 구조입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'答案'의 올바른 병음은 무엇입니까?", options: ["dá àn", "dǎ àn", "dá ān", "dà àn"], correctAnswer: "dá àn", explanation: "答案는 dá àn으로 읽으며 2성+4성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'答案'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-1", "4-4"], correctAnswer: "2-4", explanation: "dá(2성)와 àn(4성)이므로 성조 조합은 2-4입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'答案'는 '这道题的答案很简单。'에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "答案는 서술의 주체가 되는 명사로 대상을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这道题的", "答案", "很简单。"], correctAnswer: "这道题的答案很简单。", explanation: "관형어+주어+술어 구조입니다.", difficulty: "easy" },
+    ]
+  },
   {
     sentenceIndex: 51,
     questions: [
-      { type: "multipleChoice", question: "'冥冥中'의 올바른 병음은 무엇입니까?", options: ["míng míng zhōng", "mǐng mǐng zhōng", "mín mín zhōng", "míng míng zhòng"], correctAnswer: "míng míng zhōng", explanation: "冥冥中의 병음은 míng míng zhōng입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'冥冥中'의 성조 조합은 무엇입니까?", options: ["2-2-1", "2-2-4", "3-3-1", "1-1-1"], correctAnswer: "2-2-1", explanation: "míng(2) míng(2) zhōng(1) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'冥冥中'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "장소 표현", "동작 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "어떤 신비로운 운명적 분위기를 묘사합니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["冥冥中，", "我感觉", "我们还会", "再见面。"], correctAnswer: "冥冥中，我感觉我们还会再见面。", explanation: "상황 제시 + 주어 + 미래 추측 순서입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'不过'의 올바른 병음은 무엇입니까?", options: ["bù guò", "bú guò", "bù guō", "bù guó"], correctAnswer: "bù guò", explanation: "不过는 bù guò로 읽으며 4성+4성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'不过'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-1", "4-2"], correctAnswer: "4-4", explanation: "bù(4성)와 guò(4성)이므로 성조 조합은 4-4입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'不过'는 '我不过是开个玩笑。'에서 어떤 역할을 합니까?", options: ["범위 및 정도 제한", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "범위 및 정도 제한", explanation: "不过는 '~일 뿐이다'라는 제한적 의미를 나타내는 부사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我不过是", "开个", "玩笑。"], correctAnswer: "我不过是开个玩笑。", explanation: "주어+부사구+동사+목적어 구조입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'冥冥中'의 올바른 병음은 무엇입니까?", options: ["míng míng zhōng", "mǐng mǐng zhōng", "míng míng zhòng", "mín mín zhōng"], correctAnswer: "míng míng zhōng", explanation: "冥冥中는 míng míng zhōng으로 읽으며 2-2-1성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'冥冥中'의 성조 조합은 무엇입니까?", options: ["2-2-1", "2-2-4", "3-3-1", "1-1-1"], correctAnswer: "2-2-1", explanation: "míng(2)·míng(2)·zhōng(1) 성조 조합입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'冥冥中'는 '冥冥中好像有一股力量在指引他。'에서 어떤 역할을 합니까?", options: ["상태 및 상황 묘사", "장소 표현", "동작 표현", "수량 표현"], correctAnswer: "상태 및 상황 묘사", explanation: "冥冥中는 보이지 않는 운명적 상황을 묘사하는 부사적 성분입니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["冥冥中", "好像有一股", "力量在指引他。"], correctAnswer: "冥冥中好像有一股力量在指引他。", explanation: "상황부사+추측부사+존재구+동작진행 구조입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'唯一'의 올바른 병음은 무엇입니까?", options: ["wéi yī", "wèi yī", "wéi yí", "wěi yī"], correctAnswer: "wéi yī", explanation: "唯一는 wéi yī로 읽으며 2성+1성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'唯一'의 성조 조합은 무엇입니까?", options: ["2-1", "4-1", "2-4", "3-1"], correctAnswer: "2-1", explanation: "wéi(2성)와 yī(1성)이므로 성조 조합은 2-1입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'唯一'는 '这是他唯一的机会。'에서 어떤 역할을 합니까?", options: ["수량 및 범위 표현", "동작 표현", "시간 표현", "상태 묘사"], correctAnswer: "수량 및 범위 표현", explanation: "唯一는 오직 하나뿐임을 한정하는 관형어입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这是他", "唯一的", "机会。"], correctAnswer: "这是他唯一的机会。", explanation: "주어+是+관형어+목적어 구조입니다.", difficulty: "medium" },
     ]
   },
   {
     sentenceIndex: 52,
     questions: [
-      { type: "multipleChoice", question: "'无言'의 올바른 병음은 무엇입니까?", options: ["wú yán", "wú yǎn", "wǔ yán", "fú yán"], correctAnswer: "wú yán", explanation: "无言의 병음은 wú yán입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'无言'의 성조 조합은 무엇입니까?", options: ["2-2", "2-3", "4-2", "1-2"], correctAnswer: "2-2", explanation: "wú(2성) yán(2성) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'无言'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "말을 할 수 없거나 하지 않는 상태를 나타냅니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["事实摆在面前，", "他", "无言以对。"], correctAnswer: "事实摆在面前，他无言以对。", explanation: "상황 제시 + 주어 + 결과 상태 순입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'无言'의 올바른 병음은 무엇입니까?", options: ["wú yán", "wǔ yán", "wú yàn", "wù yán"], correctAnswer: "wú yán", explanation: "无言는 wú yán으로 읽으며 2성+2성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'无言'의 성조 조합은 무엇입니까?", options: ["2-2", "3-2", "2-4", "1-2"], correctAnswer: "2-2", explanation: "wú(2성)와 yán(2성)이므로 성조 조합은 2-2입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'无言'는 '他默默无言地走开了。'에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "无言는 말이 없는 고요한 상태를 묘사합니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "默默无言地", "走开了。"], correctAnswer: "他默默无言地走开了。", explanation: "주어+상태부사구(地포함)+동사구 구조입니다.", difficulty: "easy" },
     ]
   },
   {
     sentenceIndex: 53,
     questions: [
-      { type: "multipleChoice", question: "'如此这般'의 올바른 병음은 무엇입니까?", options: ["rú cǐ zhè bān", "rú cī zhè bān", "lú cǐ zhè bān", "rú cǐ zhè bǎn"], correctAnswer: "rú cǐ zhè bān", explanation: "如此这般의 병음은 rú cǐ zhè bān입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'如此这般'의 성조 조합은 무엇입니까?", options: ["2-3-4-1", "2-3-4-3", "2-4-4-1", "4-3-4-1"], correctAnswer: "2-3-4-1", explanation: "rú(2) cǐ(3) zhè(4) bān(1) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'如此这般'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "구체적인 방식이나 과정을 '이러저러하게'라고 묘사합니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他如此这般地", "向经理", "汇报了情况。"], correctAnswer: "他如此这般地向经理汇报了情况。", explanation: "방식 부사구 + 대상 + 동사구 순서입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'如此这般'의 올바른 병음은 무엇입니까?", options: ["rú cǐ zhè bān", "rù cǐ zhè bān", "rú cǐ zhè bǎn", "rú chǐ zhè bān"], correctAnswer: "rú cǐ zhè bān", explanation: "如此这般는 rú cǐ zhè bān으로 읽으며 2-3-4-1성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'如此这般'의 성조 조합은 무엇입니까?", options: ["2-3-4-1", "2-3-1-1", "4-3-4-1", "2-2-4-1"], correctAnswer: "2-3-4-1", explanation: "rú(2)·cǐ(3)·zhè(4)·bān(1) 성조 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'如此这般'는 '他如此这般地向我解释了一番。'에서 어떤 역할을 합니까?", options: ["방식 묘사", "장소 표현", "대상 표현", "시간 표현"], correctAnswer: "방식 묘사", explanation: "如此这般는 구체적인 방식이나 과정을 나타내는 부사구입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "如此这般地", "向我解释了", "一番。"], correctAnswer: "他如此这般地向我解释了一番。", explanation: "주어+방식부사+대상및동사+수량보어 구조입니다.", difficulty: "medium" },
     ]
   },
   {
     sentenceIndex: 54,
     questions: [
-      { type: "multipleChoice", question: "'眼前'의 올바른 병음은 무엇입니까?", options: ["yǎn qián", "yán qián", "yǎn qiān", "yàn qián"], correctAnswer: "yǎn qián", explanation: "眼前의 병음은 yǎn qián입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'眼前'의 성조 조합은 무엇입니까?", options: ["3-2", "2-2", "3-1", "4-2"], correctAnswer: "3-2", explanation: "yǎn(3성) qián(2성) 조합입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'眼前'는 위 문장에서 어떤 역할을 합니까?", options: ["장소 표현", "동작 표현", "대상 표현", "수량 표현"], correctAnswer: "장소 표현", explanation: "눈앞이라는 위치/장소를 나타냅니다.", difficulty: "medium" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["幸福就在眼前，", "我们要", "好好珍惜。"], correctAnswer: "幸福就在眼前，我们要好好珍惜。", explanation: "상태 제시 후 당부/결의 순서로 배열합니다.", difficulty: "medium" }
+      { type: "multipleChoice", question: "'眼前'의 올바른 병음은 무엇입니까?", options: ["yǎn qián", "yàn qián", "yǎn qiān", "yán qián"], correctAnswer: "yǎn qián", explanation: "眼前는 yǎn qián으로 읽으며 3성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'眼前'의 성조 조합은 무엇입니까?", options: ["3-2", "4-2", "3-1", "2-2"], correctAnswer: "3-2", explanation: "yǎn(3성)과 qián(2성)이므로 성조 조합은 3-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'眼前'는 '要把眼前的学习任务完成好。'에서 어떤 역할을 합니까?", options: ["시간 및 장소 표현", "동작 표현", "상태 묘사", "수량 표현"], correctAnswer: "시간 및 장소 표현", explanation: "眼前는 눈앞이라는 물리적 위치 혹은 현재를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["要把", "眼前的", "学习任务", "完成好。"], correctAnswer: "要把眼前的学习任务完成好。", explanation: "把자문 구조로 관형어+목적어를 술어 앞에 배치합니다.", difficulty: "medium" },
     ]
   },
   {
     sentenceIndex: 55,
     questions: [
-      { type: "multipleChoice", question: "'依然'의 올바른 병음은 무엇입니까?", options: ["yī rán", "yí rán", "yī lán", "yǐ rán"], correctAnswer: "yī rán", explanation: "依然의 병음은 yī rán입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'依然'의 성조 조합은 무엇입니까?", options: ["1-2", "2-2", "1-4", "4-2"], correctAnswer: "1-2", explanation: "yī(1성) rán(2성) 조합입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'依然'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "时间 표현"], correctAnswer: "상태 묘사", explanation: "변화 없이 지속되는 상태를 나타내는 부사입니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["虽然离开了家乡，", "他依然", "想念那里。"], correctAnswer: "虽然离开了家乡，他依然想念那里。", explanation: "양보(虽然) 뒤에 변함없는 상태(依然)가 옵니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'依然'의 올바른 병음은 무엇입니까?", options: ["yī rán", "yí rán", "yī rǎn", "yì rán"], correctAnswer: "yī rán", explanation: "依然는 yī rán으로 읽으며 1성+2성입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'依然'의 성조 조합은 무엇입니까?", options: ["1-2", "1-1", "2-2", "4-2"], correctAnswer: "1-2", explanation: "yī(1성)와 rán(2성)이므로 성조 조합은 1-2입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'依然'는 '这么多年过去了，他依然很年轻。'에서 어떤 역할을 합니까?", options: ["상태 지속 묘사", "동작 표현", "장소 표현", "대상 표현"], correctAnswer: "상태 지속 묘사", explanation: "依然는 변함없이 예전 상태를 유지함을 나타내는 부사입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这么多年过去了，", "他依然", "很年轻。"], correctAnswer: "这么多年过去了，他依然很年轻。", explanation: "시간경과절+주어+부사+형용사술어 구조입니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 56, questions: [] }
+  {
+    sentenceIndex: 56,
+    questions: [
+      { type: "multipleChoice", question: "'讲到'의 올바른 병음은 무엇입니까?", options: ["jiǎng dào", "jiāng dào", "jiǎng dāo", "jiàng dào"], correctAnswer: "jiǎng dào", explanation: "讲到는 jiǎng dào로 읽으며 3성+4성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'讲到'의 성조 조합은 무엇입니까?", options: ["3-4", "1-4", "3-2", "4-4"], correctAnswer: "3-4", explanation: "jiǎng(3성)과 dào(4성)이므로 성조 조합은 3-4입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'讲到'는 '老师讲到这里，停了下来。'에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "讲到는 말하거나 설명하는 동작이 어떤 지점에 이르렀음을 나타냅니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["老师讲到", "这里，", "停了下来。"], correctAnswer: "老师讲到这里，停了下来。", explanation: "주어+동사+목적어+결과절 구조입니다.", difficulty: "easy" },
+    ]
+  },
 ];
 
 // 获取指定句子的练习题

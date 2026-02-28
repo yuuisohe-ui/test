@@ -379,16 +379,64 @@ export const yanhuayilengVocabAnalysis: Record<number, WordAnalysis[]> = {
       exampleKr: "그는 젊었을 때 천하를 유랑했다."
     }
   ],
+  26: [
+    { word: "纷纷", pinyin: "fēn fēn", level: "advanced", meaning: "接连不断的", meaningKr: "끊임없이 내리다", example: "雪花纷纷落下。", exampleKr: "" },
+    { word: "故里", pinyin: "gù lǐ", level: "advanced", meaning: "故乡", meaningKr: "고향", example: "他终于回到了阔别多年的故里。", exampleKr: "" },
+    { word: "草木", pinyin: "cǎo mù", level: "advanced", meaning: "草和树木", meaningKr: "초목", example: "春天到了，草木都发芽了。", exampleKr: "" }
+  ],
+  27: [
+    { word: "听闻", pinyin: "tīng wén", level: "advanced", meaning: "听到，听说", meaningKr: "듣다, 소문을 듣다", example: "我听闻他已经出国了。", exampleKr: "" },
+    { word: "始终", pinyin: "shǐ zhōng", level: "advanced", meaning: "从开始到最后", meaningKr: "시종, 처음부터 끝까지", example: "他始终没有放弃理想。", exampleKr: "" }
+  ],
+  28: [
+    { word: "斑驳", pinyin: "bān bó", level: "advanced", meaning: "颜色深浅不一", meaningKr: "얼룩덜룩하다", example: "墙上的油漆已经斑驳了。", exampleKr: "" },
+    { word: "盘踞", pinyin: "pán jù", level: "advanced", meaning: "盘结据守", meaningKr: "(세력 등이) 자리를 잡다", example: "老树根盘踞在地面上。", exampleKr: "" }
+  ],
+  29: [
+    { word: "回荡", pinyin: "huí dàng", level: "advanced", meaning: "声音在回响", meaningKr: "(소리가) 울려 퍼지다", example: "歌声在山谷中回荡。", exampleKr: "" }
+  ],
+  30: [
+    { word: "纷纷", pinyin: "fēn fēn", level: "advanced", meaning: "接连不断的", meaningKr: "끊임없이 내리다", example: "雨纷纷落下。", exampleKr: "" },
+    { word: "故里", pinyin: "gù lǐ", level: "advanced", meaning: "故乡", meaningKr: "고향", example: "故里的一草一木都让他怀念。", exampleKr: "" }
+  ],
+  31: [
+    { word: "守", pinyin: "shǒu", level: "intermediate", meaning: "看护，坚持", meaningKr: "지키다", example: "军人守着祖国的边疆。", exampleKr: "" },
+    { word: "孤城", pinyin: "gū chéng", level: "advanced", meaning: "孤立无援的城市", meaningKr: "외로운 성", example: "将军独自守着那一座孤城。", exampleKr: "" }
+  ],
+  32: [
+    { word: "城郊", pinyin: "chéng jiāo", level: "intermediate", meaning: "城市的郊外", meaningKr: "교외", example: "城郊的空气非常新鲜。", exampleKr: "" },
+    { word: "牧笛", pinyin: "mù dí", level: "advanced", meaning: "牧人吹的笛子", meaningKr: "목동의 피리 소리", example: "远处传来了悠扬的牧笛声。", exampleKr: "" }
+  ],
+  33: [
+    { word: "缘分", pinyin: "yuán fèn", level: "advanced", meaning: "人与人之间遇合的机会", meaningKr: "인연", example: "能遇见你就是一种缘分。", exampleKr: "" },
+    { word: "落地生根", pinyin: "luò dì shēng gēn", level: "advanced", meaning: "比喻在某地定居或扎根", meaningKr: "뿌리를 내리다", example: "我们要在这里落地生根。", exampleKr: "" }
+  ],
+  34: [
+    { word: "听闻", pinyin: "tīng wén", level: "advanced", meaning: "听到，听说", meaningKr: "듣다", example: "听闻他近况不错。", exampleKr: "" },
+    { word: "始终", pinyin: "shǐ zhōng", level: "advanced", meaning: "一直", meaningKr: "줄곧", example: "他始终一个人生活。", exampleKr: "" }
+  ],
+  35: [
+    { word: "斑驳", pinyin: "bān bó", level: "advanced", meaning: "色彩杂乱", meaningKr: "어른거리는", example: "阳光透过树叶留下斑驳的影子。", exampleKr: "" },
+    { word: "回荡", pinyin: "huí dàng", level: "advanced", meaning: "回响", meaningKr: "메아리치다", example: "钟声在校园里回荡。", exampleKr: "" }
+  ],
+  36: [
+    { word: "纷纷", pinyin: "fēn fēn", level: "advanced", meaning: "形容多而杂乱", meaningKr: "분분하다", example: "落叶纷纷。", exampleKr: "" }
+  ],
+  37: [
+    { word: "守", pinyin: "shǒu", level: "intermediate", meaning: "保持，守卫", meaningKr: "지키다", example: "他在这里守了整整一夜。", exampleKr: "" }
+  ],
+  38: [
+    { word: "城郊", pinyin: "chéng jiāo", level: "intermediate", meaning: "城市附近的郊野", meaningKr: "성곽 주변", example: "我们在城郊租了一间房。", exampleKr: "" }
+  ],
+  39: [
+    { word: "缘分", pinyin: "yuán fèn", level: "advanced", meaning: "因果报应", meaningKr: "인연", example: "缘分是不可捉摸的。", exampleKr: "" }
+  ],
+  40: [
+    { word: "落地生根", pinyin: "luò dì shēng gēn", level: "advanced", meaning: "在新的地方安家", meaningKr: "정착하다", example: "新移民已经在当地落地生根。", exampleKr: "" }
+  ],
   41: [
-    {
-      word: "永恒",
-      pinyin: "yǒng héng",
-      level: "advanced",
-      meaning: "永远不变",
-      meaningKr: "영원하다",
-      example: "世界上没有什么是永恒不变的。",
-      exampleKr: "세상에 영원히 변하지 않는 것은 없다."
-    }
+    { word: "盼", pinyin: "pàn", level: "intermediate", meaning: "希望，期待", meaningKr: "바라다", example: "盼着早日重逢。", exampleKr: "" },
+    { word: "永恒", pinyin: "yǒng héng", level: "advanced", meaning: "永远不变", meaningKr: "영원", example: "没有人能拥有永恒的青春。", exampleKr: "" }
   ]
 };
 

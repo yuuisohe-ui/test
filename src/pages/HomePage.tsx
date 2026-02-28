@@ -245,7 +245,7 @@ function CardItem({ card, onClick }: CardProps) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: card.isDashboard ? "rgba(255,255,255,0.45)" : CARD_COLORS.card,
+        background: CARD_COLORS.card,
         borderRadius: 14,
         padding: "26px 24px 22px",
         position: "relative",
@@ -253,16 +253,14 @@ function CardItem({ card, onClick }: CardProps) {
         cursor: "pointer",
         transition: "transform 0.28s ease, box-shadow 0.28s ease",
         transform: hovered ? "translateY(-3px)" : "none",
-        boxShadow: card.isDashboard ? "none" : hovered ? "0 10px 30px rgba(122,79,45,0.14)" : "0 2px 14px rgba(122,79,45,0.10)",
-        border: card.isDashboard ? `1.5px ${hovered ? "solid" : "dashed"} ${CARD_COLORS.brownPale}` : "none",
+        boxShadow: hovered ? "0 10px 30px rgba(122,79,45,0.14)" : "0 2px 14px rgba(122,79,45,0.10)",
+        border: "none",
         display: "flex",
         flexDirection: "column" as const,
       }}
     >
-      {/* 底部强调线 */}
-      {!card.isDashboard && (
-        <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 3, background: hovered ? CARD_COLORS.brown : CARD_COLORS.brownPale, transition: "background 0.28s" }} />
-      )}
+      {/* 底部强调线 - 所有卡片统一 */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 3, background: hovered ? CARD_COLORS.brown : CARD_COLORS.brownPale, transition: "background 0.28s" }} />
       <div style={{ fontSize: 10, letterSpacing: "2px", color: CARD_COLORS.ink3, marginBottom: 12, opacity: 0.65 }}>{card.num}</div>
       <div style={{ fontSize: 24, marginBottom: 10, lineHeight: 1 }}>{card.icon}</div>
       <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 15, fontWeight: 600, color: CARD_COLORS.ink, marginBottom: 7, lineHeight: 1.4 }}>{card.title}</h3>

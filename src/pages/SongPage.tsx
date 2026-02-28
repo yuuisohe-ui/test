@@ -764,6 +764,19 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
   });
   const [studyMode, setStudyMode] = useState<"整段学习" | "分句学习">("分句学习");
   const [showLevelWarning, setShowLevelWarning] = useState(false);
+  const [showReplaceConfirmModal, setShowReplaceConfirmModal] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!showExportMenu) return;
+    const onOutside = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [showExportMenu]);
   // ⭐ 从首页进入歌曲页时同步 nz_level → userLevel（否则首页选的等级不会生效，分析按钮会无反应）
   useEffect(() => {
     if (!isVisible) return;
@@ -844,91 +857,98 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
     return filtered.slice(start, start + pageSize);
   }, [filtered, currentPage]);
 
-  // 导出 HTML（本页）
-  function exportCurrentPage() {
-    const items = pageItems;
+  // 导出 HTML：一句一个框，按行显示（行号 / 中文 / 韩文 / 拼音 / 문장 성조 구조）
+  function exportToHtml(items: Array<{ item: any; lineNo: number; starred?: boolean }>, filenameSuffix: string) {
     const title = songPageTranslations['ko'].exportTitle;
     const modeTitle = reviewMode === "sentence"
       ? songPageTranslations['ko'].exportModeReview
       : songPageTranslations['ko'].exportModeNormal;
 
+    const rowLabel = {
+      lineNo: "행 번호",
+      zh: "중국어",
+      kr: "한국어",
+      pinyin: songPageTranslations['ko'].pinyin,
+      tone: "문장 성조 구조",
+    };
+
     const blocks = items
       .map((it: any) => {
-        const data = makeFallbackSentenceData(it.line);
-        const tokensRows = (data.tokens ?? []).map((t) => `
-          <tr>
-            <td>${escapeHtml(t.text ?? "")}</td>
-            <td>${escapeHtml(t.glossZh ?? "")}</td>
-            <td>${escapeHtml(t.glossKr ?? "")}</td>
-            <td>${escapeHtml(t.example ?? "")}</td>
-          </tr>
-        `).join("");
-
-        const chunksRows = (data.chunks ?? []).map((c) => `
-          <tr>
-            <td>${escapeHtml(c.text ?? "")}</td>
-            <td>${escapeHtml(c.pinyin ?? "")}</td>
-            <td>${escapeHtml(c.tones ?? "")}</td>
-          </tr>
-        `).join("");
+        const lineItem = it.item;
+        const zhSentence = lineItem?.zhSentence ?? "";
+        const displayLine = lineItem?.displayLine ?? "";
+        const pinyinStr = (lineItem?.chunks ?? [])
+          .map((c: any) => (c.pinyin ?? "").trim())
+          .filter((p: string) => p.length > 0)
+          .join(" ") || "";
+        const toneStr = (lineItem?.chunks ?? [])
+          .map((c: any) => (c.tones ?? "").trim())
+          .filter((p: string) => p.length > 0)
+          .join(" ") || "";
 
         return `
-          <section style="margin:24px 0; padding:16px; border:1px solid #ddd; border-radius:12px;">
-            <h2 style="margin:0 0 8px 0;">${formatLineNo(it.lineNo)}. ${escapeHtml(it.line)}</h2>
-
-            <h3 style="margin:16px 0 8px 0;">${songPageTranslations['ko'].vocabTable}</h3>
-            <table style="width:100%; border-collapse:collapse;">
-              <thead>
-                <tr>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].word}</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].chineseMeaning}</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].koreanMeaning}</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].example}</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tokensRows || `<tr><td colspan="4" style="padding:8px; color:#777;">${songPageTranslations['ko'].noData}</td></tr>`}
-              </tbody>
-            </table>
-
-            <h3 style="margin:16px 0 8px 0;">${songPageTranslations['ko'].chunkTable}</h3>
-            <table style="width:100%; border-collapse:collapse;">
-              <thead>
-                <tr>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].chunk}</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].pinyin}</th>
-                  <th style="text-align:left; border-bottom:1px solid #eee; padding:8px;">${songPageTranslations['ko'].tonePattern}</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${chunksRows || `<tr><td colspan="3" style="padding:8px; color:#777;">${songPageTranslations['ko'].noData}</td></tr>`}
-              </tbody>
-            </table>
+          <section style="margin:20px 0; padding:20px; border:1px solid #e2cdb8; border-radius:12px; background:#fff; box-sizing:border-box; break-inside:avoid;">
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="display:flex; align-items:baseline; gap:10px;"><span style="min-width:100px; font-weight:600; color:#5a3e2b;">${rowLabel.lineNo}</span><span>${formatLineNo(it.lineNo)}</span></div>
+              <div style="display:flex; align-items:baseline; gap:10px;"><span style="min-width:100px; font-weight:600; color:#5a3e2b;">${rowLabel.zh}</span><span style="word-break:break-all;">${escapeHtml(zhSentence)}</span></div>
+              <div style="display:flex; align-items:baseline; gap:10px;"><span style="min-width:100px; font-weight:600; color:#5a3e2b;">${rowLabel.kr}</span><span style="word-break:break-all;">${escapeHtml(displayLine)}</span></div>
+              <div style="display:flex; align-items:baseline; gap:10px;"><span style="min-width:100px; font-weight:600; color:#5a3e2b;">${rowLabel.pinyin}</span><span style="word-break:break-all;">${escapeHtml(pinyinStr)}</span></div>
+              <div style="display:flex; align-items:baseline; gap:10px;"><span style="min-width:100px; font-weight:600; color:#5a3e2b;">${rowLabel.tone}</span><span style="word-break:break-all;">${escapeHtml(toneStr)}</span></div>
+            </div>
           </section>
         `;
       })
       .join("");
 
+    const dateStr = (() => {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${y}-${m}-${day}`;
+    })();
+
     const html = `
       <!doctype html>
-      <html lang="zh">
+      <html lang="ko">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <title>${title}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; padding: 24px; color: #2c1a0e; background: #faf6f0; }
+          .wrap { max-width: 720px; margin: 0 auto; }
+          h1 { margin: 0 0 8px 0; font-size: 1.5rem; }
+          .meta { margin: 0 0 24px 0; color: #5a3e2b; font-size: 0.9rem; }
+          table { width: 100%; }
+          td, th { word-break: break-all; overflow-wrap: break-word; }
+        </style>
       </head>
-      <body style="font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial; margin:24px; color:#111;">
-        <h1 style="margin:0 0 8px 0;">${title}</h1>
-        <p style="margin:0 0 24px 0; color:#555;">${modeTitle} · ${songPageTranslations['ko'].exportTime}${new Date().toLocaleString()}</p>
-        ${blocks || `<p style="color:#777;">${songPageTranslations['ko'].noContent}</p>`}
+      <body>
+        <div class="wrap">
+          <h1>${title}</h1>
+          <p class="meta">${modeTitle} · ${songPageTranslations['ko'].exportTime}${new Date().toLocaleString()}</p>
+          ${blocks || `<p style="color:#777;">${songPageTranslations['ko'].noContent}</p>`}
+        </div>
       </body>
       </html>
     `;
 
-    const filename = reviewMode === "sentence" 
-      ? `review_sentence_page_${currentPage}.html` 
-      : `page_${currentPage}.html`;
+    const filename = reviewMode === "sentence"
+      ? `${dateStr}_review_sentence_${filenameSuffix}.html`
+      : `${dateStr}_${filenameSuffix}.html`;
     downloadHtml(filename, html);
+  }
+
+  function exportCurrentPage() {
+    exportToHtml(pageItems, `page_${currentPage}`);
+    setShowExportMenu(false);
+  }
+
+  function exportAll() {
+    exportToHtml(filtered, "all");
+    setShowExportMenu(false);
   }
 
   // 音频拖拽（仅 UI）
@@ -1070,15 +1090,11 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
 
   // API 호출 (ChatGPT 우선, Opal 대체, Mock 폴백)
   async function onClickTranscribe() {
-    // 如果正在分析，则暂停
+    // 如果正在分析，则暂停（再点击一次可取消）
     if (isLoading) {
       handleCancelAnalysis();
       return;
     }
-    
-    // ⭐ 生成 requestId
-    const requestId = Date.now();
-    console.log(`🆔 [Request Start] requestId: ${requestId}`);
     
     // 检查是否选择了中文水平
     if (!userLevel) {
@@ -1089,13 +1105,18 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
     }
     setShowLevelWarning(false);
     
-    // 如果已经有分析结果，显示确认提示
+    // 如果已经有分析结果，显示确认弹窗（HomePage 风格）
     if (opalPayload && opalPayload.status === 'ok' && opalPayload.lines && opalPayload.lines.length > 0) {
-      const confirmed = window.confirm(songPageTranslations['ko'].confirmReplace);
-      if (!confirmed) {
-        return; // 用户取消，不执行分析
-      }
+      setShowReplaceConfirmModal(true);
+      return;
     }
+    
+    await doTranscribe();
+  }
+
+  async function doTranscribe() {
+    const requestId = Date.now();
+    console.log(`🆔 [Request Start] requestId: ${requestId}`);
     
     // 创建新的AbortController
     abortControllerRef.current = new AbortController();
@@ -3841,8 +3862,29 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
   const showEmpty = linesAll.length === 0;
   const [showExample, setShowExample] = useState(true); // 默认显示示例
 
+  const COLORS_MODAL = { ink: '#2c1a0e', ink2: '#5a3e2b', ink3: '#9c7b60', brown: '#7a4f2d', brownPale: '#e2cdb8' };
+
   return (
     <div className="min-h-screen flex" style={{ background: '#faf6f0' }}>
+      {/* 替换确认弹窗（HomePage 风格） */}
+      {showReplaceConfirmModal && (
+        <div
+          onClick={() => setShowReplaceConfirmModal(false)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(44,26,14,0.48)', backdropFilter: 'blur(6px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: '44px 36px', maxWidth: 350, width: '90%', textAlign: 'center' }}>
+            <div style={{ fontSize: 42, marginBottom: 12 }}>⚠️</div>
+            <h3 style={{ fontFamily: "'Noto Serif KR', serif", fontSize: 18, color: COLORS_MODAL.ink, marginBottom: 10 }}>이미 학습 내용이 있어요</h3>
+            <p style={{ fontSize: 13, color: COLORS_MODAL.ink3, lineHeight: 1.8, marginBottom: 24 }}>
+              새로 분석하면 현재 내용이 바뀝니다. 계속할까요?
+            </p>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+              <button onClick={() => setShowReplaceConfirmModal(false)} style={{ padding: '10px 22px', borderRadius: 8, border: `1.5px solid ${COLORS_MODAL.brownPale}`, background: 'transparent', color: COLORS_MODAL.ink2, fontSize: 13, cursor: 'pointer', fontFamily: "'Noto Sans KR', sans-serif" }}>닫기</button>
+              <button onClick={() => { setShowReplaceConfirmModal(false); void doTranscribe(); }} style={{ padding: '10px 22px', borderRadius: 8, border: `1.5px solid ${COLORS_MODAL.brown}`, background: COLORS_MODAL.brown, color: '#fff', fontSize: 13, cursor: 'pointer', fontFamily: "'Noto Sans KR', sans-serif" }}>계속하기</button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* 主内容区 */}
       <div className="flex-1">
       {/* 顶部固定输入区 */}
@@ -4035,7 +4077,6 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                         )}
                         <button
                           onClick={onClickTranscribe}
-                          disabled={isLoading}
                           style={{
                             padding: '14px 64px',
                             borderRadius: 32,
@@ -4044,14 +4085,14 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                             fontSize: 16,
                             fontWeight: 600,
                             border: 'none',
-                            cursor: isLoading ? 'not-allowed' : 'pointer',
+                            cursor: 'pointer',
                             fontFamily: "'Noto Sans KR', sans-serif",
                             transition: 'background 0.2s',
                             letterSpacing: '0.5px',
                             boxShadow: '0 4px 16px rgba(45,122,94,0.25)',
                           }}
                         >
-                          {isLoading ? '분석 중...' : '분석 시작 →'}
+                          {isLoading ? '분석 취소' : '분석 시작 →'}
                         </button>
                         {isLoading && (
                           <div style={{ width: '100%', maxWidth: 420, padding: '0 16px' }}>
@@ -4277,11 +4318,10 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
               </div>
             )}
 
-            {opalPayload?.status === 'ok' && pageItems.length > 0 && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0' }}>
+            {opalPayload?.status === 'ok' && filtered.length > 0 && (
+              <div ref={exportMenuRef} style={{ display: 'flex', justifyContent: 'flex-end', padding: '16px 0', position: 'relative' }}>
                 <button
-                  onClick={exportCurrentPage}
-                  disabled={pageItems.length === 0}
+                  onClick={() => setShowExportMenu((v) => !v)}
                   style={{
                     padding: '8px 20px',
                     borderRadius: 8,
@@ -4295,6 +4335,58 @@ export default function SongPage({ initialLyrics, isVisible = true }: SongPagePr
                 >
                   ↓ HTML 내보내기
                 </button>
+                {showExportMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      right: 0,
+                      marginBottom: 4,
+                      background: '#fff',
+                      border: '1px solid #e8f4f0',
+                      borderRadius: 8,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                      zIndex: 50,
+                      minWidth: 140,
+                    }}
+                  >
+                    <button
+                      onClick={exportCurrentPage}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 16px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: 13,
+                        color: '#2d7a5e',
+                        cursor: 'pointer',
+                        fontFamily: "'Noto Sans KR', sans-serif",
+                        textAlign: 'left',
+                        borderBottom: '1px solid #eee',
+                      }}
+                    >
+                      {songPageTranslations['ko'].exportCurrentPageOption}
+                    </button>
+                    <button
+                      onClick={exportAll}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 16px',
+                        border: 'none',
+                        background: 'none',
+                        fontSize: 13,
+                        color: '#2d7a5e',
+                        cursor: 'pointer',
+                        fontFamily: "'Noto Sans KR', sans-serif",
+                        textAlign: 'left',
+                      }}
+                    >
+                      {songPageTranslations['ko'].exportAllOption}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </>

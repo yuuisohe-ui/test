@@ -10,6 +10,10 @@ export interface Word {
   theme?: string;
   frequency: number; // 1-5星
   examples: string[];
+  /** 例句韩文翻译（테마 어휘 등） */
+  exampleKr?: string;
+  /** 例句拼音（테마 어휘 등） */
+  examplePinyin?: string;
 }
 
 // 主题词汇数据

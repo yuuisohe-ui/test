@@ -7,6 +7,8 @@ export const songPageTranslations = {
     sentenceReview: '가사 복습',
     exitSentenceReview: '가사 복습 종료',
     exportHTML: '이 페이지 HTML 내보내기',
+    exportCurrentPageOption: '현재 페이지',
+    exportAllOption: '전체 내용',
 
     // 音频上传区域
     uploadAudioTitle: '오디오를 업로드하면 더 완성도 높은 학습 자료를 받을 수 있어요',
@@ -84,7 +86,7 @@ export const songPageTranslations = {
     ttsTitleResume: '계속 읽기',
     startReadAlong: '따라 읽기 시작',
     restartReadAlong: '다시 따라 읽기',
-    aiReadAlongFeedback: 'AI 따라 읽기 피드백',
+    aiReadAlongFeedback: '읽기 피드백',
     feedbackSection1: '1. 이번 발음 표현',
     feedbackSection2: '2. 전체 평가',
     feedbackSection3: '3. 이번 주요 문제',

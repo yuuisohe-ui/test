@@ -489,7 +489,7 @@ export default function YoutubePage() {
   };
 
   // 随机选择推荐歌曲（选择足够多的歌曲用于自动滚动）
-  // 根据首页「나의 수준」(nz_level) 推荐 3 首：主等级优先 + 次等级若干，随机
+  // 根据首页「나의 수준」(nz_level) 推荐 3 首；若用户选择了风格(스타일)，优先推荐同风格歌曲
   const recommendedSongs = useMemo((): Song[] => {
     if (!showRecommendationSection) return [];
     const userLevelKo = typeof window !== "undefined" ? (localStorage.getItem("nz_level") || "중급") : "중급";
@@ -503,13 +503,31 @@ export default function YoutubePage() {
     const primarySongs = allSongs.filter((s) => s.level === primary);
     const secondarySongs = allSongs.filter((s) => s.level === secondary);
     const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
-    // 尽量主等级为主：2 或 3 首来自主等级，不足时用次等级补足
-    const primaryCount = 2 + Math.floor(Math.random() * 2); // 2 或 3
+
+    // 若用户选择了风格，优先推荐与视频标签(song.style)一致的同风格歌曲；不足 3 首时从同风格但不同等级的歌曲里补足
+    if (style && style.trim() !== "") {
+      const sameStylePrimary = primarySongs.filter((s) => s.style === style);
+      const sameStyleSecondary = secondarySongs.filter((s) => s.style === style);
+      const result: Song[] = [];
+      const fromSameStyle = [...shuffle(sameStylePrimary), ...shuffle(sameStyleSecondary)].slice(0, 3);
+      result.push(...fromSameStyle);
+      let need = 3 - result.length;
+      if (need > 0) {
+        const sameStyleOtherLevels = shuffle(
+          allSongs.filter((s) => s.style === style && s.level !== primary && s.level !== secondary)
+        );
+        result.push(...sameStyleOtherLevels.slice(0, need));
+      }
+      return shuffle(result);
+    }
+
+    // 未选风格：主等级优先 + 次等级若干，随机
+    const primaryCount = 2 + Math.floor(Math.random() * 2);
     const fromPrimary = shuffle(primarySongs).slice(0, Math.min(primaryCount, primarySongs.length));
     const need = Math.max(0, 3 - fromPrimary.length);
     const fromSecondary = shuffle(secondarySongs).slice(0, need);
     return shuffle([...fromPrimary, ...fromSecondary]);
-  }, [showRecommendationSection, recommendationRefreshKey]);
+  }, [showRecommendationSection, recommendationRefreshKey, style]);
 
   // 滚动容器引用
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -693,8 +711,8 @@ export default function YoutubePage() {
                       <div className="flex items-center gap-2 mb-3">
                         <span className={`px-2 py-1 text-xs rounded ${
                           song.level === '初级' ? 'bg-green-100 text-green-700' :
-                          song.level === '中级' ? 'bg-[#f5ede3] text-[#a06c3e]' :
-                          song.level === '高级' ? 'bg-[#f0e6dc] text-[#7a4f2d]' :
+                          song.level === '中级' ? 'bg-blue-100 text-blue-700' :
+                          song.level === '高级' ? 'bg-purple-100 text-purple-700' :
                           'bg-red-100 text-red-700'
                         }`}>
                           {getLevelLabelKo(song.level)}
@@ -841,7 +859,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">달은 내 마음을 대신해-月亮代表我的心</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(yueliang.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -880,7 +898,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">친구-朋友</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(pengyou.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -919,7 +937,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">반짝반짝 작은 별-一闪一闪亮晶晶</h4>
                           <div className="text-xs text-yellow-500 mb-2">★☆☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{getStyleLabelKo("童谣")}</span>
+                            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs rounded">{getStyleLabelKo(yishanyishan.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -958,7 +976,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">그 후에-后来</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(houlai.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -997,7 +1015,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">닝샤-宁夏</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(ningxia.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1036,7 +1054,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">새로운 못 다한 사랑-新不了情</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(xinbuliao.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1075,7 +1093,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">너의 부드러움처럼-恰似你的温柔</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(qiasini.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1114,7 +1132,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">해상의 꽃-海上花</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(haishanghua.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1153,7 +1171,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">옆자리의 너-同桌的你</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(tongzhuodeni.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1263,7 +1281,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">첨밀밀-甜蜜蜜</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(tianmimi.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1302,7 +1320,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">할머니의 펑후만-外婆的澎湖湾</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(waipo.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1341,7 +1359,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">거품-泡沫</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo("悲伤")}</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo(paomo.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1380,7 +1398,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">우애-雨爱</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo("悲伤")}</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo(yuai.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1419,7 +1437,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">지문-指纹</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(zhiven.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1458,7 +1476,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">작은 행운-小幸运</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(xiaoxingyun.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1497,7 +1515,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">내가 그리워하는 것-我怀念的</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(wohuainian.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1536,7 +1554,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">광년 밖에서-光年之外</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(guangnian.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1575,7 +1593,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">용기-勇气</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★☆☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(yongqi.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1614,7 +1632,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">누구를 위해 만든 노래도 아니야-不为谁做的歌</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★☆☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(buweishuierzuodege.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1724,7 +1742,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">여전히 방황 중이야-还在流浪</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo(haizailiulang.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1763,7 +1781,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">평범한 길-平凡之路</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo(pingfan.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1802,7 +1820,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">야상곡-夜曲</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★★</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded">R&B</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo(yequ.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1841,7 +1859,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">불꽃은 쉽게 식는다-烟花易冷</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo(yanhuayileng.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1880,7 +1898,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">나 같은 사람-像我这样的人</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo(xiangwozheyangderen.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1919,7 +1937,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">근심을 없애다-消愁</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo(xiaochou.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1958,7 +1976,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">과거로 돌아가-回到过去</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded">{getStyleLabelKo(huidaoguoqu.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">{youtubePageTranslations.ko.clickToStartLearning}</p>
                         </div>
@@ -1997,7 +2015,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">노래 한 곡만큼의 시간-给我一首歌的时间</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(geiwoyishougedeshijian.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">15세 이상</p>
                         </div>
@@ -2036,7 +2054,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">기묘한 능력의 노래-奇妙能力歌</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo(qimiaonengliges.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">15세 이상</p>
                         </div>
@@ -2075,7 +2093,7 @@ export default function YoutubePage() {
                           <h4 className="font-semibold text-gray-900 mb-2 text-sm">원하는 건 다 가져가-你要的全拿走</h4>
                           <div className="text-xs text-yellow-500 mb-2">★★★★☆</div>
                           <div className="flex flex-wrap gap-1 mb-2">
-                            <span className="px-2 py-1 bg-pink-100 text-pink-700 text-xs rounded">{getStyleLabelKo("抒情")}</span>
+                            <span className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">{getStyleLabelKo(niyaodequannazous.style)}</span>
                           </div>
                           <p className="text-xs text-gray-500">15세 이상</p>
                         </div>

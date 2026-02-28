@@ -254,69 +254,229 @@ export const yequPracticeData: SentencePractice[] = [
       { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["双胞胎之间", "往往有一种", "特别的感应。"], correctAnswer: "双胞胎之间往往有一种特别的感应。", explanation: "범위부사어+빈도+동사+수량+목적어 순서입니다.", difficulty: "hard" }
     ]
   },
-  { sentenceIndex: 25, questions: [] },
-  { sentenceIndex: 26, questions: [] },
+  {
+    sentenceIndex: 25,
+    questions: [
+      { type: "multipleChoice", question: "'怀念'의 올바른 병음은 무엇입니까?", options: ["huái niàn", "huǎi niàn", "huái niǎn", "huai niàn"], correctAnswer: "huái niàn", explanation: "huái(2) + niàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'怀念'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-3", "4-4"], correctAnswer: "2-4", explanation: "2성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'怀念'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "상태 묘사", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'그리워하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["在大学里的", "我很", "时光。", "怀念", "我很怀念"], correctAnswer: "我很怀念在大学里的时光。", explanation: "동사(怀念) 뒤에 대상이 옵니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 26,
+    questions: [
+      { type: "multipleChoice", question: "'森林'의 올바른 병음은 무엇입니까?", options: ["sēn lín", "sěn lín", "sēn lǐn", "sen lín"], correctAnswer: "sēn lín", explanation: "sēn(1) + lín(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'森林'의 성조 조합은 무엇입니까?", options: ["1-2", "3-2", "1-3", "2-2"], correctAnswer: "1-2", explanation: "1성-2성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'森林'는 위 문장에서 어떤 역할을 합니까?", options: ["장소 표현", "대상 표현", "동작 표현", "시간 표현"], correctAnswer: "장소 표현", explanation: "'森林里'로 장소를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["住着", "森林里", "许多", "小动物。", "许多小动物"], correctAnswer: "森林里住着许多小动物。", explanation: "장소 + 동사 + 수량/명사 순서입니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 27,
     questions: [
-      { type: "multipleChoice", question: "'丝毫'의 올바른 병음은 무엇입니까?", options: ["sī háo", "shī háo", "sī hǎo", "sì háo"], correctAnswer: "sī háo", explanation: "'丝毫(털끝만큼)'의 정확한 병음은 sī háo입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'丝毫'의 성조 조합은 무엇입니까?", options: ["1-2", "1-1", "1-3", "4-2"], correctAnswer: "1-2", explanation: "sī는 1성, háo는 2성입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'丝毫'는 위 문장에서 어떤 역할을 합니까?", options: ["수량 표현", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "수량 표현", explanation: "정도가 매우 작음을 나타내는 양적인 강조 부사어입니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他对这件事", "丝毫", "不在意。"], correctAnswer: "他对这件事丝毫不在意。", explanation: "대상어+정도부사어+부정 술어 구조입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'丝毫'의 올바른 병음은 무엇입니까?", options: ["sī háo", "sí háo", "sī hǎo", "si háo"], correctAnswer: "sī háo", explanation: "sī(1) + háo(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'丝毫'의 성조 조합은 무엇입니까?", options: ["1-2", "2-2", "1-3", "1-4"], correctAnswer: "1-2", explanation: "1성-2성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'丝毫'는 위 문장에서 어떤 역할을 합니까?", options: ["수량 표현", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "수량 표현", explanation: "'조금도'처럼 정도/분량을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他对这件事", "丝毫", "不在意。", "这件事", "对这件事丝毫"], correctAnswer: "他对这件事丝毫不在意。", explanation: "'对…' 뒤에 정도부사(丝毫)가 옵니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'同情'의 올바른 병음은 무엇입니까?", options: ["tóng qíng", "tǒng qíng", "tóng qīng", "tong qíng"], correctAnswer: "tóng qíng", explanation: "tóng(2) + qíng(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'同情'의 성조 조합은 무엇입니까?", options: ["2-2", "2-4", "3-2", "1-2"], correctAnswer: "2-2", explanation: "2성-2성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'同情'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'동정하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我们", "应该", "同情", "那些不幸的人。", "不幸的人。"], correctAnswer: "我们应该同情那些不幸的人。", explanation: "조동사(应该) 뒤에 동사(同情)가 옵니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 28, questions: [] },
+  {
+    sentenceIndex: 28,
+    questions: [
+      { type: "multipleChoice", question: "'浑浊'의 올바른 병음은 무엇입니까?", options: ["hún zhuó", "hǔn zhuó", "hún zhuō", "hun zhuó"], correctAnswer: "hún zhuó", explanation: "hún(2) + zhuó(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'浑浊'의 성조 조합은 무엇입니까?", options: ["2-2", "2-4", "3-2", "1-2"], correctAnswer: "2-2", explanation: "2성-2성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'浑浊'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "강물의 상태(탁함)를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["河水", "在大雨后", "变得很", "浑浊。", "变得很浑浊。"], correctAnswer: "河水在大雨后变得很浑浊。", explanation: "주어 + 시간/상황 + 변화 + 상태 순서입니다.", difficulty: "hard" },
+    ]
+  },
   {
     sentenceIndex: 29,
     questions: [
-      { type: "multipleChoice", question: "'笑容'의 올바른 병음은 무엇입니까?", options: ["xiào róng", "xiǎo róng", "xiào lóng", "xiāo róng"], correctAnswer: "xiào róng", explanation: "'笑容(웃음)'의 정확한 병음은 xiào róng입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'笑容'의 성조 조합은 무엇입니까?", options: ["4-2", "1-2", "4-1", "3-2"], correctAnswer: "4-2", explanation: "xiào는 4성, róng은 2성입니다.", difficulty: "medium" },
-      { type: "multipleChoice", question: "'笑容'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "대상 표현", explanation: "웃는 얼굴 모습이라는 주체(명사)로 쓰였습니다.", difficulty: "medium" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["她的", "笑容", "非常", "灿烂。"], correctAnswer: "她的笑容非常灿烂。", explanation: "관형어+주어+정도부사+형용사술어 순서입니다.", difficulty: "medium" }
+      { type: "multipleChoice", question: "'笑容'의 올바른 병음은 무엇입니까?", options: ["xiào róng", "xiāo róng", "xiào rǒng", "xiao róng"], correctAnswer: "xiào róng", explanation: "xiào(4) + róng(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'笑容'의 성조 조합은 무엇입니까?", options: ["4-2", "4-3", "1-2", "2-2"], correctAnswer: "4-2", explanation: "4성-2성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'笑容'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'灿烂'의 대상(웃는 표정)입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["她的", "笑容", "非常", "灿烂。", "非常灿烂。"], correctAnswer: "她的笑容非常灿烂。", explanation: "소유(她的) + 명사 + 정도 + 형용사입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'阴影'의 올바른 병음은 무엇입니까?", options: ["yīn yǐng", "yín yǐng", "yīn yìng", "yin yǐng"], correctAnswer: "yīn yǐng", explanation: "yīn(1) + yǐng(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'阴影'의 성조 조합은 무엇입니까?", options: ["1-3", "2-3", "1-4", "1-2"], correctAnswer: "1-3", explanation: "1성-3성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'阴影'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "장소 표현", "동작 표현", "시간 표현"], correctAnswer: "대상 표현", explanation: "'留下了'의 목적어(남긴 것)입니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["童年的不幸", "给他", "留下了", "心理阴影。", "留下了心理阴影。"], correctAnswer: "童年的不幸给他留下了心理阴影。", explanation: "원인(童年的不幸) + 결과(留下了…) 구조입니다.", difficulty: "medium" },
     ]
   },
-  { sentenceIndex: 30, questions: [] },
+  {
+    sentenceIndex: 30,
+    questions: [
+      { type: "multipleChoice", question: "'青苔'의 올바른 병음은 무엇입니까?", options: ["qīng tái", "qíng tái", "qīng tài", "qing tái"], correctAnswer: "qīng tái", explanation: "qīng(1) + tái(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'青苔'의 성조 조합은 무엇입니까?", options: ["1-2", "2-2", "1-4", "1-3"], correctAnswer: "1-2", explanation: "1성-2성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'青苔'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "장소 표현", "동작 표현", "시간 표현"], correctAnswer: "대상 표현", explanation: "'长满了'의 대상(무엇이 가득 자랐는가)입니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["潮湿的", "墙角", "长满了", "青苔。", "潮湿的墙角"], correctAnswer: "潮湿的墙角长满了青苔。", explanation: "장소/대상 + 동사 + 목적어 순서입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'嘲笑'의 올바른 병음은 무엇입니까?", options: ["cháo xiào", "chāo xiào", "cháo xiāo", "chao xiào"], correctAnswer: "cháo xiào", explanation: "cháo(2) + xiào(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'嘲笑'의 성조 조합은 무엇입니까?", options: ["2-4", "1-4", "2-1", "2-3"], correctAnswer: "2-4", explanation: "2성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'嘲笑'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'비웃다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["不要", "嘲笑", "别人的", "缺点。", "别人的缺点。"], correctAnswer: "不要嘲笑别人的缺点。", explanation: "금지(不要) + 동사 + 목적어 순서입니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 31,
     questions: [
-      { type: "multipleChoice", question: "'枯井'의 올바른 병음은 무엇입니까?", options: ["kū jǐng", "kǔ jǐng", "gū jǐng", "kū jīng"], correctAnswer: "kū jǐng", explanation: "'枯井(마른 우물)'의 정확한 병음은 kū jǐng입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'枯井'의 성조 조합은 무엇입니까?", options: ["1-3", "1-1", "4-3", "2-3"], correctAnswer: "1-3", explanation: "kū는 1성, jǐng은 3성입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'枯井'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "대상 표현", explanation: "존재하는 구체적인 사물을 지칭하는 목적어입니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["村子口", "有一口", "废弃的枯井。"], correctAnswer: "村子口有一口废弃的枯井。", explanation: "장소+존재동사+수량+관형어+목적어 순서입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'枯井'의 올바른 병음은 무엇입니까?", options: ["kū jǐng", "kǔ jǐng", "kū jīng", "ku jǐng"], correctAnswer: "kū jǐng", explanation: "kū(1) + jǐng(3)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'枯井'의 성조 조합은 무엇입니까?", options: ["1-3", "3-3", "1-2", "1-4"], correctAnswer: "1-3", explanation: "1성-3성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'枯井'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "장소 표현", "동작 표현", "시간 표현"], correctAnswer: "대상 표현", explanation: "'有'의 대상(무엇이 있는가)입니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["村子口", "有", "一口", "废弃的枯井。", "一口废弃的枯井。"], correctAnswer: "村子口有一口废弃的枯井。", explanation: "장소 + 有 + 수량 + 명사구 순서입니다.", difficulty: "hard" },
     ]
   },
   {
     sentenceIndex: 32,
     questions: [
-      { type: "multipleChoice", question: "'后悔莫及'의 올바른 병음은 무엇입니까?", options: ["hòu huǐ mò jí", "hòu huǐ méi jí", "hǒu huǐ mò jí", "hòu huǐ mò jǐ"], correctAnswer: "hòu huǐ mò jí", explanation: "'后悔莫及(후회해도 소용없다)'의 병음은 hòu huǐ mò jí입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'后悔莫及'의 성조 조합은 무엇입니까?", options: ["4-3-4-2", "4-3-2-2", "1-3-4-2", "4-4-4-2"], correctAnswer: "4-3-4-2", explanation: "각 글자의 성조는 4성, 3성, 4성, 2성입니다.", difficulty: "hard" },
-      { type: "multipleChoice", question: "'后悔莫及'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "상태 묘사", explanation: "더 이상 돌이킬 수 없는 후회의 상태를 나타냅니다.", difficulty: "hard" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["如果不", "早点出发，", "恐怕会", "后悔莫及。"], correctAnswer: "如果不早点出发，恐怕会后悔莫及。", explanation: "가정절+추측 부사어+술어 구조입니다.", difficulty: "hard" }
+      { type: "multipleChoice", question: "'描绘'의 올바른 병음은 무엇입니까?", options: ["miáo huì", "miǎo huì", "miáo huī", "miao huì"], correctAnswer: "miáo huì", explanation: "miáo(2) + huì(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'描绘'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-1", "2-2"], correctAnswer: "2-4", explanation: "2성-4성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'描绘'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'묘사하다'라는 행동을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["作者", "生动地", "描绘了", "农村的风光。", "生动地描绘了"], correctAnswer: "作者生动地描绘了农村的风光。", explanation: "부사(生动地) + 동사(描绘了) 순서입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'后悔莫及'의 올바른 병음은 무엇입니까?", options: ["hòu huǐ mò jí", "hòu huì mò jí", "hóu huǐ mò jí", "hòu huǐ mò jì"], correctAnswer: "hòu huǐ mò jí", explanation: "hòu(4)-huǐ(3)-mò(4)-jí(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'后悔莫及'의 성조 조합은 무엇입니까?", options: ["4-3-4-2", "4-4-4-2", "2-3-4-2", "4-3-2-2"], correctAnswer: "4-3-4-2", explanation: "4-3-4-2 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'后悔莫及'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "장소 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'너무 늦어 후회해도 소용없는 상태'를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["如果不早点出发，", "恐怕", "会", "后悔莫及。", "恐怕会后悔莫及。"], correctAnswer: "如果不早点出发，恐怕会后悔莫及。", explanation: "조건절 뒤에 결과(恐怕会…)가 옵니다.", difficulty: "hard" },
     ]
   },
-  { sentenceIndex: 33, questions: [] },
+  {
+    sentenceIndex: 33,
+    questions: [
+      { type: "multipleChoice", question: "'纪念'의 올바른 병음은 무엇입니까?", options: ["jì niàn", "jí niàn", "jì niǎn", "ji niàn"], correctAnswer: "jì niàn", explanation: "jì(4) + niàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'纪念'의 성조 조합은 무엇입니까?", options: ["4-4", "2-4", "4-3", "3-4"], correctAnswer: "4-4", explanation: "4성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'纪念'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'这是…'의 핵심 명사로 '기념(물)'을 말합니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这是", "我们友谊的", "纪念。", "友谊的纪念。"], correctAnswer: "这是我们友谊的纪念。", explanation: "지시(这是) + 수식 + 명사입니다.", difficulty: "medium" },
+    ]
+  },
   {
     sentenceIndex: 34,
     questions: [
-      { type: "multipleChoice", question: "'声音'의 올바른 병음은 무엇입니까?", options: ["shēng yīn", "shěng yīn", "shēng yǐn", "shēn yīn"], correctAnswer: "shēng yīn", explanation: "'声音(소리)'의 정확한 병음은 shēng yīn입니다.", difficulty: "easy" },
-      { type: "multipleChoice", question: "'声音'의 성조 조합은 무엇입니까?", options: ["1-1", "1-3", "2-1", "1-4"], correctAnswer: "1-1", explanation: "shēng과 yīn 모두 1성입니다.", difficulty: "easy" },
-      { type: "multipleChoice", question: "'声音'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "장소 표현", "시간 표현"], correctAnswer: "대상 표현", explanation: "들리는 대상을 나타내는 목적어입니다.", difficulty: "easy" },
-      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我听到了", "外面", "有声音。"], correctAnswer: "我听到了外面有声音。", explanation: "동사+장소어+존재문 형태의 목적절 구조입니다.", difficulty: "easy" }
+      { type: "multipleChoice", question: "'声音'의 올바른 병음은 무엇입니까?", options: ["shēng yīn", "shéng yīn", "shēng yǐn", "sheng yīn"], correctAnswer: "shēng yīn", explanation: "둘 다 1성입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'声音'의 성조 조합은 무엇입니까?", options: ["1-1", "2-1", "1-3", "1-4"], correctAnswer: "1-1", explanation: "1성-1성 조합입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'声音'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'有'의 대상(무엇이 있는가)입니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我", "听到了", "外面", "有声音。", "外面有声音。"], correctAnswer: "我听到了外面有声音。", explanation: "'听到了' 뒤에 내용(외면에 소리)이 옵니다.", difficulty: "easy" },
     ]
   },
-  { sentenceIndex: 35, questions: [] },
-  { sentenceIndex: 36, questions: [] },
-  { sentenceIndex: 37, questions: [] },
-  { sentenceIndex: 38, questions: [] },
-  { sentenceIndex: 39, questions: [] },
-  { sentenceIndex: 40, questions: [] },
-  { sentenceIndex: 41, questions: [] },
-  { sentenceIndex: 42, questions: [] },
-  { sentenceIndex: 43, questions: [] },
-  { sentenceIndex: 44, questions: [] },
-  { sentenceIndex: 45, questions: [] },
-  { sentenceIndex: 46, questions: [] },
-  { sentenceIndex: 47, questions: [] }
+  {
+    sentenceIndex: 35,
+    questions: [
+      { type: "multipleChoice", question: "'思念'의 올바른 병음은 무엇입니까?", options: ["sī niàn", "sí niàn", "sī niǎn", "si niàn"], correctAnswer: "sī niàn", explanation: "sī(1) + niàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'思念'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "1-2"], correctAnswer: "1-4", explanation: "1성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'思念'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "문장 주어/대상인 '그리움'을 가리킵니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["我对妳的", "思念", "从未", "停止。", "从未停止。"], correctAnswer: "我对妳的思念从未停止。", explanation: "부사(从未)가 동사(停止) 앞에 옵니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 36,
+    questions: [
+      { type: "multipleChoice", question: "'埋葬'의 올바른 병음은 무엇입니까?", options: ["mái zàng", "mǎi zàng", "mái zāng", "mai zàng"], correctAnswer: "mái zàng", explanation: "mái(2) + zàng(4)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'埋葬'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-1", "2-3"], correctAnswer: "2-4", explanation: "2성-4성 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'埋葬'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'묻다'라는 행동을 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "将", "痛苦", "埋葬", "在心底。"], correctAnswer: "他将痛苦埋葬在心底。", explanation: "'将+목적어+동사' 구조입니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 37,
+    questions: [
+      { type: "multipleChoice", question: "'演奏'의 올바른 병음은 무엇입니까?", options: ["yàn zòu", "yǎn zòu", "yàn zǒu", "yan zòu"], correctAnswer: "yàn zòu", explanation: "yàn(4) + zòu(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'演奏'의 성조 조합은 무엇입니까?", options: ["4-4", "3-4", "4-3", "2-4"], correctAnswer: "4-4", explanation: "4성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'演奏'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'연주하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "在舞台上", "演奏", "小提琴。", "演奏小提琴。"], correctAnswer: "他在舞台上演奏小提琴。", explanation: "장소 + 동사 + 목적어 순서입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 38,
+    questions: [
+      { type: "multipleChoice", question: "'隐姓埋名'의 올바른 병음은 무엇입니까?", options: ["yǐn xìng mái míng", "yìn xìng mái míng", "yǐn xīng mái míng", "yǐn xìng mǎi míng"], correctAnswer: "yǐn xìng mái míng", explanation: "yǐn(3)-xìng(4)-mái(2)-míng(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'隐姓埋名'의 성조 조합은 무엇입니까?", options: ["3-4-2-2", "4-4-2-2", "3-1-2-2", "3-4-3-2"], correctAnswer: "3-4-2-2", explanation: "3-4-2-2 조합입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'隐姓埋名'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'이름을 숨기고 살다'라는 행동/상태를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这位英雄", "从此", "隐姓埋名。", "从此隐姓埋名。"], correctAnswer: "这位英雄从此隐姓埋名。", explanation: "시간부사(从此) 뒤에 성어가 옵니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 39,
+    questions: [
+      { type: "multipleChoice", question: "'亲近'의 올바른 병음은 무엇입니까?", options: ["qīn jìn", "qín jìn", "qīn jǐn", "qin jìn"], correctAnswer: "qīn jìn", explanation: "qīn(1) + jìn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'亲近'의 성조 조합은 무엇입니까?", options: ["1-4", "2-4", "1-3", "4-4"], correctAnswer: "1-4", explanation: "1성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'亲近'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "상태 묘사", explanation: "관계의 상태(가깝다)를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他们的关系", "非常", "亲近。", "关系非常亲近。"], correctAnswer: "他们的关系非常亲近。", explanation: "주어 + 정도부사 + 형용사입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 40,
+    questions: [
+      { type: "multipleChoice", question: "'怀念'의 올바른 병음은 무엇입니까?", options: ["huái niàn", "huǎi niàn", "huái niǎn", "huai niàn"], correctAnswer: "huái niàn", explanation: "huái(2) + niàn(4)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'怀念'의 성조 조합은 무엇입니까?", options: ["2-4", "3-4", "2-3", "4-4"], correctAnswer: "2-4", explanation: "2성-4성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'怀念'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "장소 표현", "시간 표현", "수량 표현"], correctAnswer: "동작 표현", explanation: "'그리워하다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["老人们", "总是", "怀念", "过去。", "总是怀念"], correctAnswer: "老人们总是怀念过去。", explanation: "부사(总是)가 동사(怀念) 앞에 옵니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 41,
+    questions: [
+      { type: "multipleChoice", question: "'吸引'의 올바른 병음은 무엇입니까?", options: ["xī yǐn", "xí yǐn", "xī yìn", "xi yǐn"], correctAnswer: "xī yǐn", explanation: "xī(1) + yǐn(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'吸引'의 성조 조합은 무엇입니까?", options: ["1-3", "2-3", "1-4", "1-2"], correctAnswer: "1-3", explanation: "1성-3성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'吸引'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'끌어당기다'라는 행동을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["磁铁", "可以", "吸引", "iron 钉。", "可以吸引"], correctAnswer: "磁铁可以吸引 iron 钉。", explanation: "조동사(可以) 뒤에 동사(吸引)가 옵니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 42,
+    questions: [
+      { type: "multipleChoice", question: "'孤独'의 올바른 병음은 무엇입니까?", options: ["gū dú", "gǔ dú", "gū dúo", "gu dú"], correctAnswer: "gū dú", explanation: "gū(1) + dú(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'孤独'의 성조 조합은 무엇입니까?", options: ["1-2", "3-2", "1-3", "2-2"], correctAnswer: "1-2", explanation: "1성-2성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'孤独'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "느낌/상태(외로움)를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["他", "在异乡", "感到", "非常", "孤独。"], correctAnswer: "他在异乡感到非常孤独。", explanation: "장소 + 동사(感到) + 정도 + 상태입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 43,
+    questions: [
+      { type: "multipleChoice", question: "'分明'의 올바른 병음은 무엇입니까?", options: ["fēn míng", "fèn míng", "fēn míng ", "fen míng"], correctAnswer: "fēn míng", explanation: "표준 발음은 fēn míng(1-2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'分明'의 성조 조합은 무엇입니까?", options: ["1-2", "4-2", "1-4", "2-2"], correctAnswer: "1-2", explanation: "fēn(1) + míng(2)입니다.", difficulty: "hard" },
+      { type: "multipleChoice", question: "'分明'는 위 문장에서 어떤 역할을 합니까?", options: ["상태 묘사", "동작 표현", "시간 표현", "수량 표현"], correctAnswer: "상태 묘사", explanation: "'黑白'의 상태(뚜렷함)를 나타냅니다.", difficulty: "hard" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["黑白", "分明。", "黑白分明。"], correctAnswer: "黑白分明。", explanation: "짧은 판단문 형태입니다.", difficulty: "hard" },
+    ]
+  },
+  {
+    sentenceIndex: 44,
+    questions: [
+      { type: "multipleChoice", question: "'关心'의 올바른 병음은 무엇입니까?", options: ["guān xīn", "guǎn xīn", "guān xín", "guan xīn"], correctAnswer: "guān xīn", explanation: "guān(1) + xīn(1)입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'关心'의 성조 조합은 무엇입니까?", options: ["1-1", "3-1", "1-2", "1-4"], correctAnswer: "1-1", explanation: "1성-1성 조합입니다.", difficulty: "easy" },
+      { type: "multipleChoice", question: "'关心'는 위 문장에서 어떤 역할을 합니까?", options: ["대상 표현", "동작 표현", "시간 표현", "장소 표현"], correctAnswer: "대상 표현", explanation: "'谢谢'의 이유가 되는 '배려'를 가리킵니다.", difficulty: "easy" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["谢谢你", "对我的", "关心。", "对我的关心。"], correctAnswer: "谢谢你对我的关心。", explanation: "감사 표현 + 전치사구(对…) + 명사입니다.", difficulty: "easy" },
+    ]
+  },
+  {
+    sentenceIndex: 45,
+    questions: [
+      { type: "multipleChoice", question: "'象征'의 올바른 병음은 무엇입니까?", options: ["xiàng zhēng", "xiǎng zhēng", "xiàng zhěng", "xiang zhēng"], correctAnswer: "xiàng zhēng", explanation: "xiàng(4) + zhēng(1)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'象征'의 성조 조합은 무엇입니까?", options: ["4-1", "3-1", "4-3", "4-2"], correctAnswer: "4-1", explanation: "4성-1성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'象征'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "장소 표현", "시간 표현"], correctAnswer: "동작 표현", explanation: "'상징하다'라는 동작을 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["红色", "象征着", "热情。", "象征着热情。"], correctAnswer: "红色象征着热情。", explanation: "주어 + 동사 + 목적어 구조입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 46,
+    questions: [
+      { type: "multipleChoice", question: "'广场'의 올바른 병음은 무엇입니까?", options: ["guǎng chǎng", "guāng chǎng", "guǎng chāng", "guang chǎng"], correctAnswer: "guǎng chǎng", explanation: "guǎng(3) + chǎng(3)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'广场'의 성조 조합은 무엇입니까?", options: ["3-3", "3-4", "2-3", "1-3"], correctAnswer: "3-3", explanation: "3성-3성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'广场'는 위 문장에서 어떤 역할을 합니까?", options: ["장소 표현", "대상 표현", "동작 표현", "수량 표현"], correctAnswer: "장소 표현", explanation: "'广场上'로 장소를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["广场上", "人山人海。", "广场", "上人山人海。"], correctAnswer: "广场上人山人海。", explanation: "장소(广场上) + 상태(人山人海)입니다.", difficulty: "medium" },
+    ]
+  },
+  {
+    sentenceIndex: 47,
+    questions: [
+      { type: "multipleChoice", question: "'形容'의 올바른 병음은 무엇입니까?", options: ["xíng róng", "xǐng róng", "xíng rǒng", "xing róng"], correctAnswer: "xíng róng", explanation: "xíng(2) + róng(2)입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'形容'의 성조 조합은 무엇입니까?", options: ["2-2", "2-4", "3-2", "1-2"], correctAnswer: "2-2", explanation: "2성-2성 조합입니다.", difficulty: "medium" },
+      { type: "multipleChoice", question: "'形容'는 위 문장에서 어떤 역할을 합니까?", options: ["동작 표현", "대상 표현", "시간 표현", "장소 표현"], correctAnswer: "동작 표현", explanation: "'묘사하다'라는 행위를 나타냅니다.", difficulty: "medium" },
+      { type: "sentenceOrder", question: "다음 문장을 올바른 순서로 배열하세요.", options: ["这景色", "美得", "难以", "形容。", "难以形容。"], correctAnswer: "这景色美得难以形容。", explanation: "'美得+결과/정도' 구조입니다.", difficulty: "medium" },
+    ]
+  },
 ];
 
 // 获取指定句子的练习题

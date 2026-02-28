@@ -359,29 +359,247 @@ export const xiaoxingyunVocabAnalysis: Record<number, WordAnalysis[]> = {
       exampleKr: "그는 마침내 용기를 내어 그녀에게 고백했다."
     }
   ],
-  22: [],
-  23: [],
-  24: [],
-  25: [],
-  26: [],
-  27: [],
-  28: [],
-  29: [],
-  30: [],
-  31: [],
-  32: [
+  22: [
     {
-      word: "双翼",
-      pinyin: "shuāng yì",
-      level: "advanced",
-      meaning: "两个翅膀",
-      meaningKr: "양 날개",
-      example: "雄鹰张开双翼在高空翱翔。",
-      exampleKr: "독수리가 양 날개를 펴고 높은 하늘을 날고 있다."
+      word: "也许",
+      pinyin: "yě xǔ",
+      level: "beginner",
+      meaning: "表示不十分肯定的推测",
+      meaningKr: "아마/어쩌면",
+      example: "也许当时我没说出口。"
+    },
+    {
+      word: "当时",
+      pinyin: "dāng shí",
+      level: "beginner",
+      meaning: "指那个时候",
+      meaningKr: "그때/당시",
+      example: "也许当时我还不懂。"
     }
   ],
-  33: [],
-  34: [],
+  23: [
+    {
+      word: "忙着",
+      pinyin: "máng zhe",
+      level: "intermediate",
+      meaning: "正忙于做某事",
+      meaningKr: "~하느라 바쁘다",
+      example: "忙着微笑和哭泣，忙着追逐天空中的流星。"
+    },
+    {
+      word: "追逐",
+      pinyin: "zhuī zhú",
+      level: "intermediate",
+      meaning: "追赶；追求",
+      meaningKr: "쫓아가다/뒤쫓다",
+      example: "忙着追逐天空中的流星。"
+    },
+    {
+      word: "流星",
+      pinyin: "liú xīng",
+      level: "intermediate",
+      meaning: "夜空中快速划过的发光天体",
+      meaningKr: "유성",
+      example: "我看见天空中的流星划过。"
+    }
+  ],
+  24: [
+    {
+      word: "理所当然",
+      pinyin: "lǐ suǒ dāng rán",
+      level: "advanced",
+      meaning: "按道理应当如此；完全正常",
+      meaningKr: "당연하다/지극히 자연스럽다",
+      example: "人理所当然地忘记。"
+    },
+    {
+      word: "忘记",
+      pinyin: "wàng jì",
+      level: "beginner",
+      meaning: "记不起来；不再记得",
+      meaningKr: "잊다",
+      example: "人理所当然地忘记。"
+    }
+  ],
+  25: [
+    {
+      word: "默默",
+      pinyin: "mò mò",
+      level: "intermediate",
+      meaning: "不出声地；不张扬地",
+      meaningKr: "묵묵히/말없이",
+      example: "是谁风里雨里，一直默默守护在原地。"
+    },
+    {
+      word: "守护",
+      pinyin: "shǒu hù",
+      level: "intermediate",
+      meaning: "守卫并保护",
+      meaningKr: "지키다/보호하다",
+      example: "他一直守护在原地。"
+    },
+    {
+      word: "原地",
+      pinyin: "yuán dì",
+      level: "beginner",
+      meaning: "原来的地方；不移动的位置",
+      meaningKr: "제자리/원래 자리",
+      example: "他站在原地等我。"
+    }
+  ],
+  26: [
+    {
+      word: "原来",
+      pinyin: "yuán lái",
+      level: "beginner",
+      meaning: "表示发现真实情况；原先如此",
+      meaningKr: "알고 보니/원래",
+      example: "原来你是我最想留住的幸运。"
+    },
+    {
+      word: "留住",
+      pinyin: "liú zhù",
+      level: "intermediate",
+      meaning: "使不离开；挽留住",
+      meaningKr: "붙잡다/떠나지 못하게 하다",
+      example: "我最想留住的幸运。"
+    },
+    {
+      word: "幸运",
+      pinyin: "xìng yùn",
+      level: "intermediate",
+      meaning: "运气好；令人感到走运",
+      meaningKr: "행운/운이 좋다",
+      example: "原来你是我最想留住的幸运。"
+    }
+  ],
+  27: [
+    {
+      word: "曾经",
+      pinyin: "céng jīng",
+      level: "beginner",
+      meaning: "从前；以前有过",
+      meaningKr: "한때/예전에",
+      example: "原来我们和爱情曾经靠得那么近。"
+    },
+    {
+      word: "靠近",
+      pinyin: "kào jìn",
+      level: "intermediate",
+      meaning: "挨近；接近",
+      meaningKr: "가까이 다가가다/가까워지다",
+      example: "我们曾经靠得那么近。"
+    }
+  ],
+  28: [
+    {
+      word: "对抗",
+      pinyin: "duì kàng",
+      level: "advanced",
+      meaning: "对立抵抗；抗衡",
+      meaningKr: "맞서 싸우다/대항하다",
+      example: "那为我对抗世界的决定。"
+    },
+    {
+      word: "决定",
+      pinyin: "jué dìng",
+      level: "intermediate",
+      meaning: "做出选择并确定下来",
+      meaningKr: "결정하다/결정",
+      example: "那为我对抗世界的决定。"
+    },
+    {
+      word: "淋雨",
+      pinyin: "lín yǔ",
+      level: "intermediate",
+      meaning: "被雨水淋湿",
+      meaningKr: "비를 맞다",
+      example: "那陪我淋的雨。"
+    }
+  ],
+  29: [
+    {
+      word: "一幕幕",
+      pinyin: "yí mù mù",
+      level: "intermediate",
+      meaning: "一段段场景；一件件画面",
+      meaningKr: "장면장면/하나하나의 장면",
+      example: "一幕幕都是你。"
+    },
+    {
+      word: "一尘不染",
+      pinyin: "yì chén bù rǎn",
+      level: "advanced",
+      meaning: "非常干净；也形容纯洁无瑕",
+      meaningKr: "티끌 하나 없이 깨끗하다/흠이 없다",
+      example: "一尘不染的真心。"
+    },
+    {
+      word: "真心",
+      pinyin: "zhēn xīn",
+      level: "intermediate",
+      meaning: "真实的心意；诚意",
+      meaningKr: "진심",
+      example: "一尘不染的真心。"
+    }
+  ],
+  30: [
+    {
+      word: "相遇",
+      pinyin: "xiāng yù",
+      level: "intermediate",
+      meaning: "彼此遇见；碰到",
+      meaningKr: "만나다/우연히 마주치다",
+      example: "与你相遇，好幸运。"
+    }
+  ],
+  31: [
+    {
+      word: "泪流满面",
+      pinyin: "lèi liú mǎn miàn",
+      level: "advanced",
+      meaning: "眼泪流得满脸都是",
+      meaningKr: "눈물이 얼굴을 가득 적시다",
+      example: "可我也失去为你泪流满面的权利。"
+    },
+    {
+      word: "权利",
+      pinyin: "quán lì",
+      level: "intermediate",
+      meaning: "依法或依理应享有的利益与资格",
+      meaningKr: "권리",
+      example: "可我也失去为你泪流满面的权利。"
+    }
+  ],
+  32: [],
+  33: [
+    {
+      word: "遇见",
+      pinyin: "yù jiàn",
+      level: "intermediate",
+      meaning: "碰到；见到",
+      meaningKr: "만나다/우연히 마주치다",
+      example: "遇见你的注定。"
+    },
+    {
+      word: "注定",
+      pinyin: "zhù dìng",
+      level: "advanced",
+      meaning: "预先决定；命运所决定",
+      meaningKr: "운명적으로 정해지다",
+      example: "遇见你的注定。"
+    }
+  ],
+  34: [
+    {
+      word: "幸运",
+      pinyin: "xìng yùn",
+      level: "intermediate",
+      meaning: "运气好；令人感到走运",
+      meaningKr: "행운/운이 좋다",
+      example: "她会有多幸运。"
+    }
+  ],
   35: [
     {
       word: "赞",

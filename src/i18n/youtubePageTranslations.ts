@@ -124,6 +124,12 @@ export const youtubePageTranslations = {
     thisSentenceVocabShort: '이 문장 핵심 어휘',
     exampleSentence: '예문:',
     download: '다운로드',
+    // 下载文件名用（韩文）
+    downloadFilenameStandard: '표준모드',
+    downloadFilenameVocab: '어휘연습',
+    downloadFilenameSentence: '문형연습',
+    downloadFilenameLyricSentence: '가사문형',
+    downloadFilenameRecording: '녹음',
     htmlFullContent: 'HTML 파일에 전체 내용이 포함되어 있으며, 낭독 기능을 지원하고 오프라인에서도 이용할 수 있습니다.',
     noRecording: '녹음 파일이 없어요.',
     recordingError: '녹음 중 오류가 발생했어요. 다시 시도해 주세요.',
