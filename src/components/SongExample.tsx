@@ -17,8 +17,8 @@ import { songPageTranslations } from "../i18n/songPageTranslations";
 // YouTube IFrame Player API 类型声明
 declare global {
   interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
   }
 }
 

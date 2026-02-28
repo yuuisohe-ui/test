@@ -211,12 +211,6 @@ const WORD_DICT: Record<string, {
     typeKr: "인명",
     desc: "西晋의 건국자예요. 삼국을 끝낸 '통일의 마지막 손'으로 기억돼요.",
   },
-  "曹丕": {
-    pinyin: "cáo pī",
-    type: "인명",
-    typeKr: "인명",
-    desc: "위나라를 건국한 초대 황제. 조조의 아들이자 뛰어난 문학가이기도 해요.",
-  },
   "司馬炎": {
     pinyin: "sī mǎ yán",
     type: "인명",
@@ -576,60 +570,6 @@ const WORD_DICT: Record<string, {
     type: "인명",
     typeKr: "신화인물",
     desc: "중국 창세 신화의 거인. 혼돈의 알을 깨고 하늘과 땅을 만들었으며, '开天辟地' 성어의 주인공이에요."
-  },
-  "汉朝": {
-    pinyin: "hàn cháo",
-    type: "国名",
-    typeKr: "나라 이름",
-    desc: "기원전 206년 유방이 세운 왕조로, 한자·한족·한문의 어원이 된 중국 역사의 핵심 왕조."
-  },
-  "刘邦": {
-    pinyin: "liú bāng",
-    type: "人名",
-    typeKr: "인물 이름",
-    desc: "한나라를 세운 초대 황제. 평민 출신으로 항우를 꺾고 천하를 통일했어."
-  },
-  "蔡伦": {
-    pinyin: "cài lún",
-    type: "人名",
-    typeKr: "인물 이름",
-    desc: "한나라의 관리로, 종이 제조법을 획기적으로 개량해 인류 문명에 큰 영향을 줬어."
-  },
-  "张骞": {
-    pinyin: "zhāng qiān",
-    type: "人名",
-    typeKr: "인물 이름",
-    desc: "한 무제의 명으로 서역을 탐험해 실크로드를 개척한 외교관이자 탐험가."
-  },
-  "丝绸之路": {
-    pinyin: "sī chóu zhī lù",
-    type: "地名",
-    typeKr: "지명·경로",
-    desc: "한나라와 서역을 연결한 무역로. 비단·종이·도자기가 서쪽으로, 불교·포도·호두가 동쪽으로 전해졌어."
-  },
-  "竹简": {
-    pinyin: "zhú jiǎn",
-    type: "典籍",
-    typeKr: "기록 매체",
-    desc: "종이가 보급되기 전 대나무를 얇게 쪼개 글을 쓰던 도구. 무겁고 불편해서 종이로 대체됐어."
-  },
-  "说文解字": {
-    pinyin: "shuō wén jiě zì",
-    type: "典籍",
-    typeKr: "문헌·책 이름",
-    desc: "한나라 허신이 편찬한 최초의 체계적 한자 사전. 9,353자를 수록했어."
-  },
-  "汉武帝": {
-    pinyin: "hàn wǔ dì",
-    type: "称谓",
-    typeKr: "칭호·인물",
-    desc: "한나라 최전성기를 이끈 황제. 실크로드 개척과 유교 국교화로 유명해."
-  },
-  "宣纸": {
-    pinyin: "xuān zhǐ",
-    type: "典籍",
-    typeKr: "공예·재료",
-    desc: "중국 전통 종이. 청단나무를 원료로 만들며 '지수천년(纸寿千年)'이라 불릴 만큼 보존력이 뛰어나."
   }
 }
 
@@ -1044,7 +984,7 @@ export default function DynastyDetailPage({ dynasty, onBack, onNavigateToDynasty
       })
       
       // 转换为 blob
-      canvas.toBlob((blob) => {
+      canvas.toBlob((blob: Blob | null) => {
         if (!blob) {
           alert('다운로드 준비 중이에요. 잠시 후 다시 시도해주세요.')
           setIsDownloading(false)

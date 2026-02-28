@@ -2,6 +2,7 @@
 // 根据视频ID动态加载对应的练习题数据，确保所有视频使用相同的接口
 
 import { PracticeQuestion } from '../data/tianmimiPractice';
+export type { PracticeQuestion } from '../data/tianmimiPractice';
 import * as tianmimiPractice from '../data/tianmimiPractice';
 import * as pingfanPractice from '../data/pingfanPractice';
 import * as waipoPractice from '../data/waipoPractice';

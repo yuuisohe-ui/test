@@ -4,7 +4,7 @@
 export interface WordAnalysis {
   word: string;        // 词汇
   pinyin: string;     // 拼音
-  level: 'basic' | 'intermediate' | 'advanced'; // 难度等级
+  level: 'basic' | 'beginner' | 'intermediate' | 'advanced'; // 难度等级
   meaning: string;     // 中文释义
   meaningKr?: string; // 韩语释义
   example?: string;   // 例句

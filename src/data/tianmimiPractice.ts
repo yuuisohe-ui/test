@@ -1,10 +1,12 @@
 // 甜蜜蜜词汇训练题海战术数据
 
 export interface PracticeQuestion {
+  id?: string;
+  word?: string;
   type: 'multipleChoice' | 'translation' | 'fillBlank' | 'sentenceOrder';
   question: string;
   options: string[];
-  correctAnswer: string;
+  correctAnswer: string | string[];
   explanation: string;
   difficulty: 'easy' | 'medium' | 'hard';
 }

@@ -803,14 +803,14 @@ BC 227년, 荆轲가 易水를 건너기 전 남긴 말에서 탄생한 성어�
   };
 
 
-  // TTS朗读功能
-  const speakText = (text: string) => {
+  // TTS朗读功能（可选语速）
+  const speakText = (text: string, rate: number = 0.7) => {
     if ('speechSynthesis' in window) {
       // 停止之前的朗读
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'zh-CN';
-      utterance.rate = 0.7;
+      utterance.rate = rate;
       utterance.pitch = 1.0;
       utterance.volume = 1;
       window.speechSynthesis.speak(utterance);

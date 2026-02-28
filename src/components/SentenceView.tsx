@@ -131,7 +131,7 @@ export const SentenceView = ({
 
   // 根据 token 的 level 或 hskLevel 得到难度背景色（初级绿、中级蓝、高级紫）
   const getDifficultyBg = (t?: Token): string => {
-    let level: 'basic' | 'intermediate' | 'advanced' | undefined = t?.level;
+    let level: 'basic' | 'intermediate' | 'advanced' | undefined = t?.level === 'beginner' ? 'basic' : t?.level;
     if (level == null && t?.hskLevel != null) {
       const n = Number(t.hskLevel);
       if (n >= 1 && n <= 2) level = 'basic';
@@ -150,7 +150,7 @@ export const SentenceView = ({
     const tokenId = key;
     const isActive = globalActiveTokenId === tokenId;
     
-    let level: 'basic' | 'intermediate' | 'advanced' | undefined = token?.level;
+    let level: 'basic' | 'intermediate' | 'advanced' | undefined = token?.level === 'beginner' ? 'basic' : token?.level;
     if (level == null && token?.hskLevel != null) {
       const n = Number(token.hskLevel);
       if (n >= 1 && n <= 2) level = 'basic';

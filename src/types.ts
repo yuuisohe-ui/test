@@ -3,10 +3,11 @@ export interface Token {
   glossZh: string;
   glossKr?: string;
   example: string;
+  pinyin?: string;
   /** HSK 1-6，用于难度背景色：1-2 初级绿、3-4 中级蓝、5-6 高级紫 */
   hskLevel?: number;
-  /** 词汇训练用：basic | intermediate | advanced，与 hskLevel 二选一 */
-  level?: 'basic' | 'intermediate' | 'advanced';
+  /** 词汇训练用：basic | beginner | intermediate | advanced，与 hskLevel 二选一 */
+  level?: 'basic' | 'beginner' | 'intermediate' | 'advanced';
 }
 
 export interface ChunkSegment {

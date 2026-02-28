@@ -19,8 +19,8 @@ import { extractLineNumberAndText as extractLineNumberAndTextUtil } from "../uti
 // YouTube IFrame Player API 类型声明
 declare global {
   interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
   }
 }
 
@@ -44,7 +44,7 @@ export default function YoutubeVideoDetail({
   const [currentSubtitleIndex, setCurrentSubtitleIndex] = useState<number | null>(null);
   const [playerReady, setPlayerReady] = useState(false);
   // vocabMode 已移除，现在只显示所有词汇
-  const [selectedLevel, setSelectedLevel] = useState<'all' | 'basic' | 'intermediate' | 'advanced'>('all'); // 等级筛选
+  const [selectedLevel, setSelectedLevel] = useState<'all' | 'basic' | 'beginner' | 'intermediate' | 'advanced'>('all'); // 等级筛选
   const [videoSize, setVideoSize] = useState<'small' | 'medium' | 'large'>('medium');
   const [globalActiveTokenId, setGlobalActiveTokenId] = useState<string | null>(null);
   const [playingSubtitleIndex, setPlayingSubtitleIndex] = useState<number | null>(null); // 当前正在播放的歌词索引
@@ -1786,8 +1786,9 @@ export default function YoutubeVideoDetail({
       return allVocab;
     }
     // 将 selectedLevel 转换为对应的 level 值
-    const levelMap: Record<string, 'basic' | 'intermediate' | 'advanced'> = {
+    const levelMap: Record<string, 'basic' | 'beginner' | 'intermediate' | 'advanced'> = {
       'basic': 'basic',
+      'beginner': 'basic',
       'intermediate': 'intermediate',
       'advanced': 'advanced'
     };
@@ -1848,7 +1849,7 @@ export default function YoutubeVideoDetail({
       index: number;
       length: number;
       type: 'structure' | 'vocab';
-      level?: 'basic' | 'intermediate' | 'advanced';
+      level?: 'basic' | 'beginner' | 'intermediate' | 'advanced';
       colorClass: string;
     }
     
@@ -2073,8 +2074,9 @@ export default function YoutubeVideoDetail({
   };
 
   // 获取词汇颜色样式（淡色系）
-  const getVocabColorClass = (level: 'basic' | 'intermediate' | 'advanced') => {
-    switch (level) {
+  const getVocabColorClass = (level: 'basic' | 'beginner' | 'intermediate' | 'advanced') => {
+    const l = level === 'beginner' ? 'basic' : level;
+    switch (l) {
       case 'basic':
         return 'bg-green-50 border-green-200 text-green-700';
       case 'intermediate':
@@ -2085,8 +2087,9 @@ export default function YoutubeVideoDetail({
   };
 
   // 获取歌词中词汇的背景颜色
-  const getLyricWordBgClass = (level: 'basic' | 'intermediate' | 'advanced') => {
-    switch (level) {
+  const getLyricWordBgClass = (level: 'basic' | 'beginner' | 'intermediate' | 'advanced') => {
+    const l = level === 'beginner' ? 'basic' : level;
+    switch (l) {
       case 'basic':
         return 'bg-green-100';
       case 'intermediate':
@@ -2096,8 +2099,9 @@ export default function YoutubeVideoDetail({
     }
   };
 
-  const getLevelLabel = (level: 'basic' | 'intermediate' | 'advanced') => {
-    switch (level) {
+  const getLevelLabel = (level: 'basic' | 'beginner' | 'intermediate' | 'advanced') => {
+    const l = level === 'beginner' ? 'basic' : level;
+    switch (l) {
       case 'basic':
         return youtubePageTranslations.ko.tabBasic;
       case 'intermediate':
@@ -2115,8 +2119,9 @@ export default function YoutubeVideoDetail({
   };
 
   // 获取等级颜色（用于圈起来）
-  const getLevelColor = (level: 'basic' | 'intermediate' | 'advanced') => {
-    switch (level) {
+  const getLevelColor = (level: 'basic' | 'beginner' | 'intermediate' | 'advanced') => {
+    const l = level === 'beginner' ? 'basic' : level;
+    switch (l) {
       case 'basic':
         return 'text-green-500 border-green-500';
       case 'intermediate':
@@ -2747,18 +2752,27 @@ export default function YoutubeVideoDetail({
                           if (!userAnswer) return false;
                           if (currentQuestion.type === 'sentenceOrder') {
                             // 排序题：比较拼接后的字符串（去除空格）
-                            return userAnswer.replace(/\s+/g, '') === currentQuestion.correctAnswer.replace(/\s+/g, '');
+                            const correctStr = Array.isArray(currentQuestion.correctAnswer)
+                              ? currentQuestion.correctAnswer.join('')
+                              : currentQuestion.correctAnswer;
+                            return userAnswer.replace(/\s+/g, '') === correctStr.replace(/\s+/g, '');
                           }
-                          return userAnswer === currentQuestion.correctAnswer;
+                          const correctVal = Array.isArray(currentQuestion.correctAnswer)
+                            ? currentQuestion.correctAnswer.join('')
+                            : currentQuestion.correctAnswer;
+                          return userAnswer === correctVal;
                         })();
                         const hasAnswered = currentQuestion && userAnswers[currentQuestionIndex] !== undefined;
                         const isResultShown = currentQuestion && showResult[currentQuestionIndex];
 
                         // 计算答题统计
                         const answeredCount = Object.keys(userAnswers).length;
-                        const correctCount = questions.filter((q, idx) => 
-                          userAnswers[idx] !== undefined && userAnswers[idx] === q.correctAnswer
-                        ).length;
+                        const correctCount = questions.filter((q, idx) => {
+                          const u = userAnswers[idx];
+                          if (u === undefined) return false;
+                          const c = Array.isArray(q.correctAnswer) ? q.correctAnswer.join('') : q.correctAnswer;
+                          return u === c;
+                        }).length;
                         const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
                         return (

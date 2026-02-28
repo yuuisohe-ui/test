@@ -87,8 +87,6 @@ function chooseBestBreakIndex(s: string, min: number = 12, max: number = 22): nu
     }
     
     // 4. 避免切断常见结构 -80
-    const _beforeText = s.substring(0, i);
-    const _afterText = s.substring(i);
     for (const struct of structures) {
       const fullMatch = s.match(struct.pattern);
       if (fullMatch) {
