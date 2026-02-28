@@ -554,8 +554,7 @@ export default function YoutubePage() {
 
       // 计算单组内容的宽度（因为我们复制了3次，所以是总宽度的1/3）
       const singleGroupWidth = container.scrollWidth / 3;
-      const visibleWidth = container.clientWidth;
-      
+
       // 当滚动到第一组末尾时，平滑重置到开始位置
       // 在距离第一组末尾还有一张卡片宽度时开始重置，确保无缝衔接
       const resetThreshold = singleGroupWidth - cardWidthWithGap;
@@ -606,7 +605,7 @@ export default function YoutubePage() {
       <YoutubeVideoDetail
         videoId={selectedSong.videoId}
         title={selectedSong.name}
-        titleKr={selectedSong.nameKr}
+        titleKr={selectedSong.nameKr ?? ''}
         srtContent={selectedSong.srtContent || ""}
         onBack={() => setSelectedSong(null)}
       />
@@ -771,7 +770,7 @@ export default function YoutubePage() {
                   if (expandedLevels.beginner && !hasConfiguredSong) {
                     const songId = `beginner-${idx + 1}`;
                     return (
-                      <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                      <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
@@ -1180,7 +1179,7 @@ export default function YoutubePage() {
                   }
                   const songId = `beginner-${idx + 1}`;
                   return (
-                    <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
+                    <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden hover:shadow-md transition-shadow">
                       <div className="relative w-full h-32 bg-gray-200">
                         <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                           <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>
@@ -1232,7 +1231,7 @@ export default function YoutubePage() {
                   if (expandedLevels.intermediate && !hasConfiguredSong) {
                     const songId = `intermediate-${idx + 9}`;
                     return (
-                      <div key={idx} className="bg-white rounded-lg shadow-sm border overflow-hidden">
+                      <div key={songId} className="bg-white rounded-lg shadow-sm border overflow-hidden">
                         <div className="relative w-full h-32 bg-gray-200">
                           <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <span className="text-gray-400 text-sm">{youtubePageTranslations.ko.placeholderAddLater}</span>

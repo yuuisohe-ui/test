@@ -42,7 +42,7 @@ function wordAnalysisToWord(item: WordAnalysis, videoId: string): Word {
     frequency: 0,
     examples: item.example ? [item.example] : [],
     exampleKr: item.exampleKr,
-    examplePinyin: item.example ? (pinyin(item.example, { toneType: 'tone', separator: ' ' }) || '') : undefined,
+    examplePinyin: item.example ? (pinyin(item.example, { toneType: 'symbol', separator: ' ' }) || '') : undefined,
   };
 }
 
@@ -68,7 +68,7 @@ function enrichWordForDisplay(w: Word): Word {
   let pinyinVal = w.pinyin;
   if (!pinyinVal?.trim() && w.word?.trim()) {
     try {
-      pinyinVal = (pinyin(w.word, { toneType: 'tone', separator: ' ' }) as string) || '';
+      pinyinVal = (pinyin(w.word, { toneType: 'symbol', separator: ' ' }) as string) || '';
     } catch {
       pinyinVal = '';
     }
@@ -2221,7 +2221,7 @@ function LyricsDictationPlayingScreen({
             <p style={{ color: '#2c1a0e' }}>{pureText}</p>
             {pureText && (
               <p className="mt-1.5 text-sm text-gray-500">
-                {pinyin(pureText, { toneType: 'tone', separator: ' ' })}
+                {pinyin(pureText, { toneType: 'symbol', separator: ' ' })}
               </p>
             )}
           </div>

@@ -1528,9 +1528,9 @@ export default function YoutubeVideoDetail({
   // 获取句子的拼音（接收的已经是去掉行号的歌词内容）
   const getPinyinForSentence = (lyricText: string): string => {
     try {
-      // pinyin-pro: toneType: 'tone' 表示带声调符号（ā á ǎ à）
+      // pinyin-pro: toneType: 'symbol' 表示带声调符号（ā á ǎ à）
       return pinyin(lyricText, {
-        toneType: 'tone',  // 带声调符号
+        toneType: 'symbol',  // 带声调符号
       });
     } catch (error) {
       console.warn('拼音转换失败:', error);
