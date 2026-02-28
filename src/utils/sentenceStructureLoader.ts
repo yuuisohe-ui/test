@@ -33,9 +33,9 @@ import * as geiwoyishougedeshijianSentenceStructures from '../data/geiwoyishouge
 import * as qimiaonengligesSentenceStructures from '../data/qimiaonengligesSentenceStructures';
 import * as niyaodequannazousSentenceStructures from '../data/niyaodequannazousSentenceStructures';
 
-// 视频ID到句式结构模块的映射
+// 视频ID到句式结构模块的映射（部分模块返回 null，在 getSentenceStructure 中统一转为 undefined）
 const sentenceStructureModules: Record<string, {
-  getSentenceStructure: (sentenceIndex: number) => SentenceStructure | undefined;
+  getSentenceStructure: (sentenceIndex: number) => SentenceStructure | undefined | null;
 }> = {
   'OMVlGjmppeY': tianmimiSentenceStructures, // 甜蜜蜜
   'wk9R0ugm5AE': pingfanSentenceStructures,  // 平凡之路
@@ -78,7 +78,7 @@ const sentenceStructureModules: Record<string, {
 export function getSentenceStructure(videoId: string, sentenceIndex: number): SentenceStructure | undefined {
   const structureModule = sentenceStructureModules[videoId];
   if (structureModule && typeof structureModule.getSentenceStructure === 'function') {
-    return structureModule.getSentenceStructure(sentenceIndex);
+    return structureModule.getSentenceStructure(sentenceIndex) ?? undefined;
   }
   // 如果没有找到对应的模块或模块未导出该函数，返回undefined
   return undefined;

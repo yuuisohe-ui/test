@@ -61,6 +61,11 @@ class AudioManager {
     return this.currentAudio;
   }
 
+  // 获取当前 TTS（用于 noUnusedLocals）
+  getCurrentTTS(): SpeechSynthesisUtterance | null {
+    return this.currentTTS;
+  }
+
   // 检查是否是当前音频
   isCurrentAudio(audio: HTMLAudioElement): boolean {
     return this.currentAudio === audio;

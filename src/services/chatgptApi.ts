@@ -1449,7 +1449,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
   
   // ⭐ 如果强制指定了语言，基于转写文本内容来检测实际语言（更准确）
   let detectedLang: 'ko' | 'zh' | null = null;
-  if (languageMode !== 'auto') {
+  if ((languageMode as 'ko' | 'zh' | 'auto') !== 'auto') {
     // 强制语言模式下，基于转写文本内容检测实际语言
     const hasChinese = /[\u4e00-\u9fff]/.test(transcribedText);
     const hasKorean = /[\uac00-\ud7a3]/.test(transcribedText);
@@ -1617,8 +1617,8 @@ export async function callChatGPTApiWithAudioAndTranscription(
           console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
           // 为每个分段找到对应的 words
           // 构建完整的 words 文本（去除空格和标点），用于匹配
-          const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
-          let currentWordIdx = 0; // 当前已匹配到的 word 索引
+          const _fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
+          let _currentWordIdx = 0; // 当前已匹配到的 word 索引
           
           finalSegments = punctuationSplit.map((text, index) => {
             // 移除标点和空格，用于匹配
@@ -1763,7 +1763,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
               console.log('✅ [Single Segment] 使用 word-level timestamps 分配时间戳');
               // 为每个分段找到对应的 words
               // 构建完整的 words 文本（去除空格和标点），用于匹配
-              const fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
+              const _fullWordsText = words.map((w: any) => w.word.replace(/\s+/g, '')).join('');
               
               finalSegments = semanticSegments.map((text, index) => {
                 // 移除标点和空格，用于匹配
@@ -1980,7 +1980,7 @@ export async function callChatGPTApiWithAudioAndTranscription(
   }));
 
   console.log('🎤 [Segments-Driven] baseLines 生成:', baseLines.length, '个 lines');
-  console.log('🎤 [Segments-Driven] baseLines 示例 (前3个):', baseLines.slice(0, 3).map((line, idx) => ({
+  console.log('🎤 [Segments-Driven] baseLines 示例 (前3个):', baseLines.slice(0, 3).map((line) => ({
     lineNo: line.lineNo,
     displayLine: line.displayLine.substring(0, 30) + '...',
     startSec: line.startSec,

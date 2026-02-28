@@ -31,6 +31,7 @@ export type OpalLine = {
   endSec?: number;
   tokensZh?: OpalToken[];
   chunks?: OpalChunk[];
+  chunkSegments?: Array<{ chunkZh?: string; pinyin?: string; tones?: string }>;
 };
 
 export type SongPayload = {
